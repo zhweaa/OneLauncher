@@ -79,7 +79,6 @@ public class UserModel
     }
     [JsonConstructor]
     public UserModel(
-        Guid UserID,
         string Name,
         Guid uuid,
         string accessToken,
@@ -89,7 +88,6 @@ public class UserModel
         YggdrasilInfo? yggdrasilInfo
         )
     {
-        this.UserID = UserID;
         this.Name = Name;
         this.uuid = uuid;
         AccessToken = accessToken;
@@ -167,7 +165,8 @@ public class UserModel
     }
 
     // --- 属性 ---
-    public Guid UserID { get; init; }
+    [JsonIgnore]
+    public Guid UserID { get; set; }
     public string Name { get; init; }
     public Guid uuid { get; init; }
     public string AccessToken { get; set; }

@@ -13,7 +13,7 @@ public class GameDataTag
     public string Name { get; init; }
     public Guid ID { get; init; }
 }
-public class GameDataRoot
+public class GameDataRoot : IJsonOnDeserialized
 {
     /// <summary>
     /// 存储所有游戏数据实例的字典。
@@ -41,6 +41,29 @@ public class GameDataRoot
     /// </summary>
     [JsonPropertyName("tagMap")]
     public Dictionary<string,Guid> TagMap { get; set; } = new();
+
+    public void OnDeserialized()
+    {
+        // 修复 Instances 中的 ID
+        foreach (var kvp in Instances)
+        {
+            if (kvp.Value != null)
+            {
+                kvp.Value.InstanceId = kvp.Key;
+            }
+        }
+
+        // 如果 Tags 也有同样问题（Tag对象里也有ID），可以在这里一并处理
+        //foreach (var kvp in Tags)
+        //{
+        //    if (kvp.Value != null)
+        //    {
+        //        // 假设 GameDataTag 也有 [JsonIgnore] public Guid ID {get;init;}
+        //        // 注意：init 属性在构造后无法修改，可能需要改为 set 或通过反射/构造函数处理
+        //        // 这里仅作逻辑演示
+        //    }
+        //}
+    }
 }
 // 以便AOT编译
 [JsonSerializable(typeof(List<GameData>))]
