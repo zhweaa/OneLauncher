@@ -76,7 +76,6 @@ internal class Game
                 }
                 catch(OlanException ex)
                 {
-
                     _ = OlanExceptionWorker.ForOlanException(ex);
                 }
             };

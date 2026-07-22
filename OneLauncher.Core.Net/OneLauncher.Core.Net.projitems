@@ -12,8 +12,6 @@
     <Compile Include="$(MSBuildThisFileDirectory)Account\Yggdrasil\JsonModels.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Account\Yggdrasil\ServiceProviders\LittleSkinAuthenticator.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Account\Yggdrasil\YggdrasilAuthenticator.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)Agent\GeminiService.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)Agent\Prompts.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)ConnectToolPower\IConnectService.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)JavaProviders\GraalVMGetter.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)JavaProviders\MicrosoftBuildofOpenJDKGetter.cs" />

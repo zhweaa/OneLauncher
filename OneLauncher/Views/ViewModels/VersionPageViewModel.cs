@@ -46,7 +46,7 @@ internal partial class VersionItem : BaseViewModel
     [RelayCommand]
     public void ReadMoreInformations()
     {
-        /* 给未来预留的 */
+        Tools.OpenWebsite($"https://zh.minecraft.wiki/w/Java版{versionExp.VersionID}");
     }
     [RelayCommand]
     public void OpenServerFolder()

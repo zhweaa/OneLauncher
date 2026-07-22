@@ -5,7 +5,6 @@
         mc:Ignorable="d" d:DesignWidth="300" d:DesignHeight="230"
         x:Class="OneLauncher.Views.Windows.ExceptionTip"
 		ExtendClientAreaToDecorationsHint="True"
-		ExtendClientAreaChromeHints="NoChrome"
 		ExtendClientAreaTitleBarHeightHint="30"
 		Width="300" Height="230"
         Title="异常窗口">

@@ -8,8 +8,8 @@
         Icon="/Assets/window-logo.ico"
         Title="OneLauncher"
         TransparencyLevelHint="AcrylicBlur"
-        Background="{DynamicResource MainWindowBackground}"
         ExtendClientAreaToDecorationsHint="True"
+		Background="{DynamicResource MainWindowBackground}"
         Width="880"
         Height="560"
         x:Name="MainWindowLabel">

@@ -13,10 +13,10 @@ public class SearchModrinth
     public async Task<ModrinthSearch> ToSearch(string Key)
     {
         // 搜索仅限支持fabric或支持neoforge的模组
-        string SearchUrl = $"https://api.modrinth.com/v2/search?query=\"{Key}\"&facets=[[\"categories:neoforge\",\"categories:fabric\",\"categories:quilt\"],[\"project_type:mod\"]]&index=downloads";
-        Debug.WriteLine($"[OneLauncher.Core.Net.ModService.Modrinth.SearchModrinth.ToSearch] 正在请求{SearchUrl}");
-
-        HttpResponseMessage response = await httpClient.GetAsync(SearchUrl);
+        string searchUrl = $"https://api.modrinth.com/v2/search?query=\"{Key}\"&facets=[[\"categories:neoforge\",\"categories:fabric\",\"categories:quilt\"],[\"project_type:mod\"]]&index=downloads";
+        if (string.IsNullOrEmpty(Key))
+            searchUrl = $"https://api.modrinth.com/v2/search?query=&facets=[[\"categories:neoforge\",\"categories:fabric\",\"categories:quilt\"],[\"project_type:mod\"]]&index=downloads";
+        HttpResponseMessage response = await httpClient.GetAsync(searchUrl);
         response.EnsureSuccessStatusCode();
 
         Stream jsonResponse = await response.Content.ReadAsStreamAsync();
@@ -24,6 +24,6 @@ public class SearchModrinth
         // 使用带有选项的源生成器反序列化
         info = await JsonSerializer.DeserializeAsync<ModrinthSearch>(jsonResponse,ModrinthSearchJsonContext.Default.ModrinthSearch);
 
-        return info ?? throw new OlanException("无法搜索模型信息",$"服务器地址‘{SearchUrl}’结果无法被序列化");
+        return info ?? throw new OlanException("无法搜索模型信息",$"服务器地址‘{searchUrl}’结果无法被序列化");
     }
 }

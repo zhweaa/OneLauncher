@@ -1,6 +1,5 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 	<PropertyGroup>
-		<TargetFramework>net9.0</TargetFramework>
 		<ImplicitUsings>enable</ImplicitUsings>
 		<Nullable>enable</Nullable>
 	</PropertyGroup>
@@ -15,12 +14,11 @@
 	</PropertyGroup>
 	<Import Project="..\OneLauncher.Core.Net\OneLauncher.Core.Net.projitems" Label="Shared" />
 	<ItemGroup Condition="$([MSBuild]::IsOSPlatform('Windows'))">
-		<PackageReference Include="Microsoft.Identity.Client.Broker" Version="4.74.0" />
+		<PackageReference Include="Microsoft.Identity.Client.Broker" Version="4.86.1" />
 	</ItemGroup>
 	<ItemGroup>
-	  <PackageReference Include="Google.GenAI" Version="0.9.0" />
-	  <PackageReference Include="Microsoft.Extensions.Hosting" Version="9.0.7" />
-	  <PackageReference Include="Microsoft.Identity.Client" Version="4.74.0" />
-	  <PackageReference Include="Microsoft.Identity.Client.Extensions.Msal" Version="4.74.0" />
+	  <PackageReference Include="Microsoft.Extensions.Hosting" Version="10.0.10" />
+	  <PackageReference Include="Microsoft.Identity.Client" Version="4.86.1" />
+	  <PackageReference Include="Microsoft.Identity.Client.Extensions.Msal" Version="4.86.1" />
 	</ItemGroup>
 </Project>
