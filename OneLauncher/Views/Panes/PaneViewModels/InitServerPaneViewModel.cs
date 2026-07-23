@@ -18,7 +18,7 @@ internal partial class InitServerPaneViewModel : BaseViewModel
 #if DEBUG
     public InitServerPaneViewModel() { }
 #endif
-    private readonly Action _onCloseCallback;
+    private readonly Action _onCloseCallback = () => { };
     public InitServerPaneViewModel(string version,Action onCloseCallback)
     {
         serverVersion = version;  
@@ -48,4 +48,7 @@ internal partial class InitServerPaneViewModel : BaseViewModel
             _onCloseCallback();
         }
     }
+
+    [RelayCommand]
+    private void Cancel() => _onCloseCallback();
 }

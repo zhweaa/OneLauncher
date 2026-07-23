@@ -4,70 +4,71 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:vm="using:OneLauncher.Views.Panes.PaneViewModels"
              mc:Ignorable="d"
-             d:DesignWidth="650"
-             d:DesignHeight="620"
+             d:DesignWidth="650" d:DesignHeight="620"
              x:DataType="vm:JavaInstallPaneViewModel"
              x:CompileBindings="True"
              x:Class="OneLauncher.Views.Panes.JavaInstallPane">
-    <Grid RowDefinitions="Auto,Auto,*" Margin="20">
+    <UserControl.Styles>
+        <StyleInclude Source="avares://OneLauncher/Views/Styles/Pane.axaml"/>
+    </UserControl.Styles>
+
+    <Grid RowDefinitions="Auto,Auto,*,Auto" Margin="20">
         <Grid Grid.Row="0" ColumnDefinitions="Auto,*">
-            <Button Grid.Column="0" Command="{Binding CloseCommand}">
+            <Button Classes="pane-toolbar" Command="{Binding CloseCommand}">
                 <StackPanel Orientation="Horizontal" Spacing="8">
                     <Image Source="/Assets/icos/back.png" Width="20" Height="20"/>
                     <TextBlock Text="返回" VerticalAlignment="Center"/>
                 </StackPanel>
             </Button>
-            <TextBlock Grid.Column="1"
-                       Text="安装 Java"
-                       FontSize="28"
-                       FontWeight="Bold"
-                       VerticalAlignment="Center"
-                       Margin="16,0,0,0"/>
+            <TextBlock Grid.Column="1" Classes="pane-title" Text="安装 Java" Margin="14,0,0,0"/>
         </Grid>
-
         <Separator Grid.Row="1" Margin="0,16"/>
 
-        <StackPanel Grid.Row="2" Spacing="12" MaxWidth="420" HorizontalAlignment="Center">
-            <TextBlock Text="Java 版本"/>
-            <ComboBox ItemsSource="{Binding JavaVersions}"
-                      SelectedItem="{Binding SelectedJavaVersion}"
-                      IsEnabled="{Binding !IsInstalling}"/>
+        <ScrollViewer Grid.Row="2">
+            <StackPanel MaxWidth="520" HorizontalAlignment="Stretch" Spacing="16" Margin="0,0,0,20">
+                <TextBlock Classes="pane-section-title" Text="安装选项"/>
+                <Border Classes="pane-surface">
+                    <Grid RowDefinitions="Auto,Auto,Auto,Auto" ColumnDefinitions="*,*" ColumnSpacing="12" RowSpacing="8">
+                        <TextBlock Grid.Row="0" Grid.Column="0" Classes="pane-label" Text="Java 版本"/>
+                        <TextBlock Grid.Row="0" Grid.Column="1" Classes="pane-label" Text="提供商"/>
+                        <ComboBox Grid.Row="1" Grid.Column="0" Classes="pane-field"
+                                  ItemsSource="{Binding JavaVersions}"
+                                  SelectedItem="{Binding SelectedJavaVersion}"
+                                  IsEnabled="{Binding !IsInstalling}"/>
+                        <ComboBox Grid.Row="1" Grid.Column="1" Classes="pane-field"
+                                  ItemsSource="{Binding JavaProviders}"
+                                  SelectedItem="{Binding SelectedJavaProvider}"
+                                  IsEnabled="{Binding !IsInstalling}">
+                            <ComboBox.ItemTemplate>
+                                <DataTemplate x:DataType="vm:JavaProviderItem">
+                                    <TextBlock Text="{Binding DisplayName}"/>
+                                </DataTemplate>
+                            </ComboBox.ItemTemplate>
+                        </ComboBox>
+                        <TextBlock Grid.Row="2" Grid.ColumnSpan="2" Classes="pane-help"
+                                   Text="{Binding InstalledVersionsText}" Margin="0,8,0,0"/>
+                        <TextBlock Grid.Row="3" Grid.ColumnSpan="2" Classes="pane-help"
+                                   Text="所选版本已经配置，可选择覆盖安装"
+                                   IsVisible="{Binding IsSelectedVersionInstalled}"/>
+                    </Grid>
+                </Border>
 
-            <TextBlock Text="提供商" Margin="0,8,0,0"/>
-            <ComboBox ItemsSource="{Binding JavaProviders}"
-                      SelectedItem="{Binding SelectedJavaProvider}"
-                      IsEnabled="{Binding !IsInstalling}">
-                <ComboBox.ItemTemplate>
-                    <DataTemplate x:DataType="vm:JavaProviderItem">
-                        <TextBlock Text="{Binding DisplayName}"/>
-                    </DataTemplate>
-                </ComboBox.ItemTemplate>
-            </ComboBox>
+                <TextBlock Classes="pane-section-title" Text="安装状态"/>
+                <Border Classes="pane-status">
+                    <StackPanel Spacing="10">
+                        <TextBlock Text="{Binding StatusText}" TextWrapping="Wrap"/>
+                        <ProgressBar Classes="pane-progress" Minimum="0" Maximum="28" Value="{Binding ProgressValue}"/>
+                    </StackPanel>
+                </Border>
+            </StackPanel>
+        </ScrollViewer>
 
-            <TextBlock Text="{Binding InstalledVersionsText}" Opacity="0.72" Margin="0,8,0,0"/>
-            <TextBlock Text="所选版本已经配置，可选择覆盖安装"
-                       IsVisible="{Binding IsSelectedVersionInstalled}"/>
-
-            <ProgressBar Minimum="0"
-                         Maximum="28"
-                         Value="{Binding ProgressValue}"
-                         Height="18"
-                         Margin="0,12,0,0"/>
-            <TextBlock Text="{Binding StatusText}" TextWrapping="Wrap"/>
-
-            <Button Content="安装"
-                    Command="{Binding InstallCommand}"
-                    IsVisible="{Binding !IsSelectedVersionInstalled}"
-                    HorizontalAlignment="Stretch"
-                    Margin="0,8,0,0"/>
-            <Button Content="覆盖安装"
-                    Command="{Binding OverwriteCommand}"
-                    IsVisible="{Binding IsSelectedVersionInstalled}"
-                    HorizontalAlignment="Stretch"
-                    Margin="0,8,0,0"/>
-            <Button Content="取消"
-                    Command="{Binding CancelCommand}"
-                    HorizontalAlignment="Stretch"/>
-        </StackPanel>
+        <Grid Grid.Row="3" ColumnDefinitions="*,*" ColumnSpacing="10" Margin="0,16,0,0">
+            <Button Grid.Column="0" Classes="pane-secondary" Content="取消" Command="{Binding CancelCommand}"/>
+            <Button Grid.Column="1" Classes="pane-primary" Content="安装"
+                    Command="{Binding InstallCommand}" IsVisible="{Binding !IsSelectedVersionInstalled}"/>
+            <Button Grid.Column="1" Classes="pane-primary" Content="覆盖安装"
+                    Command="{Binding OverwriteCommand}" IsVisible="{Binding IsSelectedVersionInstalled}"/>
+        </Grid>
     </Grid>
 </UserControl>

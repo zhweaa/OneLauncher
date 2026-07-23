@@ -2,39 +2,53 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-			 xmlns:vm="using:OneLauncher.Views.Panes.PaneViewModels"
-			 x:DataType="vm:InitServerPaneViewModel"
-			 x:CompileBindings="True"
+             xmlns:vm="using:OneLauncher.Views.Panes.PaneViewModels"
+             x:DataType="vm:InitServerPaneViewModel"
+             x:CompileBindings="True"
              mc:Ignorable="d" d:DesignWidth="650" d:DesignHeight="620"
              x:Class="OneLauncher.Views.Panes.InitServerPane">
-	<Grid RowDefinitions="80,*">
-		<Panel Grid.Row="0">
-			<StackPanel Orientation="Horizontal"  HorizontalAlignment="Left" VerticalAlignment="Top" Margin="24" Spacing="4">
-				<Button>
-					<StackPanel Orientation="Horizontal">
-						<Image Source="/Assets/icos/back.png" Width="20" Height="20"/>
-						<TextBlock Text="返回" />
-					</StackPanel>
-				</Button>
-				<Button Command="{Binding ToInstallServerCommand}">
-					<StackPanel Orientation="Horizontal">
-						<Image Source="/Assets/icos/downloadnow.png" Width="20" Height="20"/>
-						<TextBlock Text="继续" />
-					</StackPanel>
-				</Button>
-			</StackPanel>
-			<TextBlock FontSize="36" Margin="0,-6,0,0" Text="服务器初始化向导" HorizontalAlignment="Center" VerticalAlignment="Center"/>
-		</Panel>
-		<StackPanel Grid.Row="1" VerticalAlignment="Top" Margin="24" Spacing="36">
-			<StackPanel>
-				<TextBlock FontSize="24" Text="安装选项"/>
-				<CheckBox IsChecked="{Binding IsVI}" Margin="0,12,0,0">启用服务端版本隔离</CheckBox>
-			</StackPanel>
-			<StackPanel>
-				<TextBlock FontSize="24" Text="协议"/>
-				<CheckBox IsChecked="{Binding IsAgreeMinecraftEULA,Mode=TwoWay}" Margin="0,12,0,0">我同意Minecraft最终用户许可协议</CheckBox>
-				<Button Command="{Binding ReadMinecraftEULACommand}" Content="查看协议内容"/>
-			</StackPanel>
-		</StackPanel>
-	</Grid>
+    <UserControl.Styles>
+        <StyleInclude Source="avares://OneLauncher/Views/Styles/Pane.axaml"/>
+    </UserControl.Styles>
+
+    <Grid RowDefinitions="Auto,Auto,*,Auto" Margin="20">
+        <Grid Grid.Row="0" ColumnDefinitions="Auto,*">
+            <Button Classes="pane-toolbar" Command="{Binding CancelCommand}">
+                <StackPanel Orientation="Horizontal" Spacing="8">
+                    <Image Source="/Assets/icos/back.png" Width="20" Height="20"/>
+                    <TextBlock Text="返回" VerticalAlignment="Center"/>
+                </StackPanel>
+            </Button>
+            <TextBlock Grid.Column="1" Classes="pane-title" Text="服务器初始化" Margin="14,0,0,0"/>
+        </Grid>
+        <Separator Grid.Row="1" Margin="0,16"/>
+
+        <ScrollViewer Grid.Row="2">
+            <StackPanel MaxWidth="520" HorizontalAlignment="Stretch" Spacing="16">
+                <TextBlock Classes="pane-section-title" Text="安装选项"/>
+                <Border Classes="pane-surface">
+                    <StackPanel Spacing="8">
+                        <CheckBox IsChecked="{Binding IsVI}" Content="启用服务端版本隔离"/>
+                        <TextBlock Classes="pane-help" Text="为服务端创建独立目录，避免与其他服务端文件相互影响。"/>
+                    </StackPanel>
+                </Border>
+
+                <TextBlock Classes="pane-section-title" Text="许可协议"/>
+                <Border Classes="pane-surface">
+                    <StackPanel Spacing="10">
+                        <CheckBox IsChecked="{Binding IsAgreeMinecraftEULA, Mode=TwoWay}"
+                                  Content="我同意 Minecraft 最终用户许可协议"/>
+                        <Button Classes="pane-secondary" Command="{Binding ReadMinecraftEULACommand}"
+                                Content="查看协议内容" HorizontalAlignment="Left"/>
+                    </StackPanel>
+                </Border>
+            </StackPanel>
+        </ScrollViewer>
+
+        <Grid Grid.Row="3" ColumnDefinitions="*,*" ColumnSpacing="10" Margin="0,16,0,0">
+            <Button Grid.Column="0" Classes="pane-secondary" Content="取消" Command="{Binding CancelCommand}"/>
+            <Button Grid.Column="1" Classes="pane-primary" Content="安装并启动"
+                    Command="{Binding ToInstallServerCommand}"/>
+        </Grid>
+    </Grid>
 </UserControl>

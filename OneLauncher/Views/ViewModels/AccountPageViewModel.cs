@@ -132,7 +132,7 @@ internal partial class AccountPageViewModel : BaseViewModel
     private void SkinManger(UserModel userModel)
     {
         IsPaneShow = true;
-        AccountPane = new SkinMangerPane(this,userModel);
+        AccountPane = new SkinMangerPane(this, userModel, () => IsPaneShow = false);
     }
     
     [RelayCommand]

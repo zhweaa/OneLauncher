@@ -68,7 +68,7 @@ internal partial class HomePageViewModel : BaseViewModel
             return;
 #endif
         // 提前初始化联机模块
-        _connentServiceInitializationTasker = _mctVMFactory.CreateAsync();
+        _connentServiceInitializationTasker = _mctVMFactory.CreateAsync(() => IsPaneShow = false);
 
         _newsReader = new MinecraftNewsReader();
         if(!Design.IsDesignMode)

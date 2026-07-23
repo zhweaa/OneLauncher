@@ -16,11 +16,11 @@ internal class PowerPlayPaneViewModelFactory
     {
         _gameDataManager = gameDataManager;
     }
-    public async Task<PowerPlayPaneViewModel> CreateAsync()
+    public async Task<PowerPlayPaneViewModel> CreateAsync(Action? onCloseCallback = null)
     {
         var mctPower = await MCTPower.InitializationAsync();
         var connectService = new P2PMode(mctPower);
-        var viewModel = new PowerPlayPaneViewModel(connectService, mctPower,_gameDataManager);
+        var viewModel = new PowerPlayPaneViewModel(connectService, mctPower, _gameDataManager, onCloseCallback);
         return viewModel;
     }
 }

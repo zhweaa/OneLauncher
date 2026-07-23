@@ -1,43 +1,65 @@
-﻿<UserControl xmlns="https://github.com/avaloniaui"
+<UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
-			 xmlns:vm="using:OneLauncher.Views.Panes.PaneViewModels"
-			 x:DataType="vm:UserModelLoginPaneViewModel"
-			 x:CompileBindings="True"
+             xmlns:vm="using:OneLauncher.Views.Panes.PaneViewModels"
+             mc:Ignorable="d" d:DesignWidth="650" d:DesignHeight="620"
+             x:DataType="vm:UserModelLoginPaneViewModel"
+             x:CompileBindings="True"
              x:Class="OneLauncher.Views.Panes.UserModelLoginPane">
-	<Grid RowDefinitions="Auto,*">
-		<Grid Grid.Row="0" ColumnDefinitions="*,*,*">
-			<Button Command="{Binding BackCommand}" Margin="14" Grid.Column="0" HorizontalAlignment="Left">
-				<StackPanel Orientation="Horizontal">
-					<Image Source="/Assets/icos/back.png" Width="20" Height="20"/>
-					<TextBlock Text="返回"/>
-				</StackPanel>
-			</Button>
-			<TextBlock Margin="0,0,0,0" Grid.Column="1"  Text="收集信息..." FontSize="48"/>
-		</Grid>
-		<StackPanel Margin="12" Grid.Row="1" Spacing="12">
-			<ComboBox SelectedItem="{Binding WhiceLoginType}" PlaceholderText="选择登入类型">
-				<ComboBoxItem>离线登入</ComboBoxItem>
-				<ComboBoxItem>微软登入</ComboBoxItem>
-				<ComboBoxItem>外置登入</ComboBoxItem>
-			</ComboBox>
-			<StackPanel IsVisible="{Binding IsRYaLogin}" Orientation="Horizontal" Spacing="8">
-				<TextBox Text="{Binding RUserName}" Watermark="输入登入地址"/>
-				<TextBox Text="{Binding RPassword}" Watermark="输入登入密码"/>
-				<Button Command="{Binding RLoginCommand}" Content="登入"/>
-			</StackPanel>
-			<StackPanel IsVisible="{Binding IsYaLogin}" Orientation="Horizontal" Spacing="8">
-				<TextBox Text="{Binding UserName}" Watermark="输入用户名"/>
-				<Button Command="{Binding DoneCommand}" Content="完成"/>
-			</StackPanel>
-			<StackPanel IsVisible="{Binding IsMsaLogin}">
-				<StackPanel Orientation="Horizontal" Spacing="12">
-					<Button Content="跳转登入" Command="{Binding LoginWithMicrosoftCommand}"/>
-					<CheckBox IsChecked="{Binding UseWAMLogin}">回退到浏览器登入</CheckBox>
-				</StackPanel>
-			</StackPanel>
-		</StackPanel>
-	</Grid>
+    <UserControl.Styles>
+        <StyleInclude Source="avares://OneLauncher/Views/Styles/Pane.axaml"/>
+    </UserControl.Styles>
+
+    <Grid RowDefinitions="Auto,Auto,*" Margin="20">
+        <Grid Grid.Row="0" ColumnDefinitions="Auto,*">
+            <Button Classes="pane-toolbar" Command="{Binding BackCommand}">
+                <StackPanel Orientation="Horizontal" Spacing="8">
+                    <Image Source="/Assets/icos/back.png" Width="20" Height="20"/>
+                    <TextBlock Text="返回" VerticalAlignment="Center"/>
+                </StackPanel>
+            </Button>
+            <TextBlock Grid.Column="1" Classes="pane-title" Text="添加账户" Margin="14,0,0,0"/>
+        </Grid>
+        <Separator Grid.Row="1" Margin="0,16"/>
+
+        <ScrollViewer Grid.Row="2">
+            <StackPanel MaxWidth="520" HorizontalAlignment="Stretch" Spacing="16">
+                <TextBlock Classes="pane-section-title" Text="登录方式"/>
+                <ComboBox Classes="pane-field" SelectedItem="{Binding WhiceLoginType}" PlaceholderText="选择登录类型">
+                    <ComboBoxItem Content="离线账户"/>
+                    <ComboBoxItem Content="Microsoft 账户"/>
+                    <ComboBoxItem Content="外置登录"/>
+                </ComboBox>
+
+                <Border Classes="pane-surface" IsVisible="{Binding IsYaLogin}">
+                    <StackPanel Spacing="10">
+                        <TextBlock Classes="pane-section-title" Text="离线账户"/>
+                        <TextBlock Classes="pane-help" Text="离线账户只保存在本机，不进行在线身份验证。"/>
+                        <TextBox Classes="pane-field" Text="{Binding UserName}" Watermark="输入游戏用户名"/>
+                        <Button Classes="pane-primary" Content="添加账户" Command="{Binding DoneCommand}"/>
+                    </StackPanel>
+                </Border>
+
+                <Border Classes="pane-surface" IsVisible="{Binding IsMsaLogin}">
+                    <StackPanel Spacing="10">
+                        <TextBlock Classes="pane-section-title" Text="Microsoft 账户"/>
+                        <TextBlock Classes="pane-help" Text="使用 Microsoft 身份验证登录正版 Minecraft 账户。"/>
+                        <CheckBox IsChecked="{Binding UseWAMLogin}" Content="使用浏览器登录"/>
+                        <Button Classes="pane-primary" Content="登录 Microsoft 账户"
+                                Command="{Binding LoginWithMicrosoftCommand}"/>
+                    </StackPanel>
+                </Border>
+
+                <Border Classes="pane-surface" IsVisible="{Binding IsRYaLogin}">
+                    <StackPanel Spacing="10">
+                        <TextBlock Classes="pane-section-title" Text="外置登录"/>
+                        <TextBox Classes="pane-field" Text="{Binding RUserName}" Watermark="用户名或邮箱"/>
+                        <TextBox Classes="pane-field" Text="{Binding RPassword}" PasswordChar="*" Watermark="密码"/>
+                        <Button Classes="pane-primary" Content="登录" Command="{Binding RLoginCommand}"/>
+                    </StackPanel>
+                </Border>
+            </StackPanel>
+        </ScrollViewer>
+    </Grid>
 </UserControl>

@@ -19,15 +19,15 @@ namespace OneLauncher.Views.Panes.PaneViewModels;
 
 internal partial class SkinMangerPaneViewModel : BaseViewModel
 {
-#if DEBUG
-    public SkinMangerPaneViewModel() { }
-#endif
     private AccountPageViewModel accountPageViewModel;
     private UserModel SelUserModel;
-    public SkinMangerPaneViewModel(AccountPageViewModel accountPageViewModel,UserModel SelUserModel)
+    private readonly Action _onCloseCallback;
+    public SkinMangerPaneViewModel() => _onCloseCallback = () => { };
+    public SkinMangerPaneViewModel(AccountPageViewModel accountPageViewModel,UserModel SelUserModel, Action? onCloseCallback = null)
     {
         this.accountPageViewModel = accountPageViewModel;
         this.SelUserModel = SelUserModel;
+        _onCloseCallback = onCloseCallback ?? (() => { });
     }
     private int _selectedIndex;
     public int SelectedIndex
@@ -143,4 +143,7 @@ internal partial class SkinMangerPaneViewModel : BaseViewModel
             WeakReferenceMessenger.Default.Send(new MainWindowShowFlyoutMessage("已成功通过NameMC上传皮肤！", Avalonia.Controls.Notifications.NotificationType.Success));
         }
     }
+
+    [RelayCommand]
+    private void Back() => _onCloseCallback();
 }

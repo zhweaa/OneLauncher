@@ -66,7 +66,7 @@ internal partial class GameDataModsManagerPaneViewModel : BaseViewModel
 
     private readonly GameData _gameData;
     private readonly InstanceModService _modService;
-    private readonly Action _onCloseCallback;
+    private readonly Action _onCloseCallback = () => { };
 
     public GameDataModsManagerPaneViewModel(GameData gameData,Action onCloseCallback)
     {
@@ -101,4 +101,7 @@ internal partial class GameDataModsManagerPaneViewModel : BaseViewModel
     {
         Tools.OpenFolder(Path.Combine(_gameData.InstancePath, "mods"));
     }
+
+    [RelayCommand]
+    private void ClosePane() => _onCloseCallback();
 }

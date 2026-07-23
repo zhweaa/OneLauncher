@@ -56,6 +56,16 @@
 				<StackPanel Orientation="Horizontal" Spacing="61">
 					<CheckBox IsEnabled="{Binding IsAllowFabric}" IsChecked="{Binding IsMod}" >是否带Fabric</CheckBox>
 					<CheckBox IsVisible="{Binding IsMod}" IsChecked="{Binding IsDownloadFabricWithAPI}">同时下载Fabric API</CheckBox>
+					<Button Content="自定义版本" IsVisible="{Binding IsMod}">	
+						<Button.Flyout>
+							<Flyout>
+								
+							</Flyout>
+						</Button.Flyout>
+						<Button.Styles>
+							<StyleInclude Source="avares://OneLauncher/Views/Styles/Label.axaml" />
+						</Button.Styles>
+					</Button>
 				</StackPanel>
 				<StackPanel Orientation="Horizontal" Spacing="61">
 					<CheckBox IsEnabled="{Binding IsAllowFabric}" IsChecked="{Binding IsQuilt}" >是否带Quilt</CheckBox>

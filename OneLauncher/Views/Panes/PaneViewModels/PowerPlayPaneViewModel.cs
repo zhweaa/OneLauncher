@@ -25,13 +25,14 @@ public enum PowerPlayMode { Host, Join }
 public partial class PowerPlayPaneViewModel : BaseViewModel
 {
     private readonly GameDataManager _gameDataManager;
+    private readonly Action? _onCloseCallback;
     ~PowerPlayPaneViewModel()
     {
         mainPower.CoreLog -= OnCoreLogReceived;
         _gameDataManager.OnDataChanged -= OnListRefreshing;
         Stop();
     }
-    public PowerPlayPaneViewModel(IConnectService connectService,MCTPower mainPower,GameDataManager gameDataManager)
+    public PowerPlayPaneViewModel(IConnectService connectService,MCTPower mainPower,GameDataManager gameDataManager, Action? onCloseCallback = null)
     {
         this._gameDataManager = gameDataManager;
         PropertyChanged += (s, e) =>
@@ -51,6 +52,7 @@ public partial class PowerPlayPaneViewModel : BaseViewModel
         this.mainPower = mainPower;
         this.connectService = connectService;
         _gameDataManager.OnDataChanged += OnListRefreshing;
+        _onCloseCallback = onCloseCallback;
     }
     private readonly MCTPower mainPower;
     private readonly IConnectService connectService;
@@ -223,6 +225,9 @@ public partial class PowerPlayPaneViewModel : BaseViewModel
         LocalServerAddress = string.Empty;
         LogMessage("连接已断开。");
     }
+
+    [RelayCommand]
+    private void ClosePane() => _onCloseCallback?.Invoke();
 
     private void OnCoreLogReceived(string logMessage) => Dispatcher.UIThread.Post(() => LogMessage(logMessage));
     private void OnListRefreshing() => Dispatcher.UIThread.Post(() => AvailableGameData = _gameDataManager.AllGameData);
