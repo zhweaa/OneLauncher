@@ -27,12 +27,17 @@ public partial class LaunchCommandBuilder
 #endif  
         // AI 写的，干什么用的我也不知道
         string arch = RuntimeInformation.OSArchitecture.ToString().ToLower();
+        string nativesDirectory = Path.Combine(basePath, "versions", versionId, "natives");
+        Directory.CreateDirectory(nativesDirectory);
+        foreach (var subdirectory in new[] { "java", "jna", "lwjgl", "netty" })
+            Directory.CreateDirectory(Path.Combine(nativesDirectory, subdirectory));
+
         var placeholders = new Dictionary<string, string>
         {
             // 创建占位符映射表 
             // 参考1.21.5.json
             // 手动加上引号
-            { "natives_directory", Path.Combine(basePath,"versions",versionId,"natives") },
+            { "natives_directory", nativesDirectory },
             { "launcher_name", "OneLauncher" },
             { "launcher_version", Init.ApplicationVersoin },
             { "classpath","\""+BuildClassPath(strategy)+"\"" },

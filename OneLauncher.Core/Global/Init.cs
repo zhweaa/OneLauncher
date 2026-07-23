@@ -11,7 +11,7 @@ using System.Runtime.InteropServices;
 namespace OneLauncher.Core.Global;
 public static class Init
 {
-    public const string ApplicationVersoin = "0.5.0.0";
+    public const string ApplicationVersoin = "1.0.0.0";
     public const string ApplicationID = "53740b20-7f24-46a3-82cc-ea0376b9f5b5";
     public const string PackageName = "com.onelauncher.lnetface";
     public const string ProjectWebsite = "https://github.com/zhweaa/OneLauncher";

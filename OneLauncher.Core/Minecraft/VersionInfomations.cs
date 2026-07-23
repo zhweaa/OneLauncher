@@ -60,7 +60,7 @@ public class VersionInfomations
             bool isAllowed = true;
             if (lib.Rules != null && lib.Rules.Count > 0)
             {
-                var lastAction = "allow";
+                var lastAction = "disallow";
                 foreach (var rule in lib.Rules)
                 {
                     bool conditionMet = false;
@@ -143,7 +143,7 @@ public class VersionInfomations
     /// 获取当前版本在启动时需要加载到类路径的库文件。
     /// 此方法经过优化，直接返回一个字典以提高后续处理效率。
     /// </summary>
-    /// <returns>一个以 "groupId:artifactId" 为键，库文件完整路径为值的字典。</returns>
+    /// <returns>以 Maven 坐标为键、库文件完整路径为值的字典；分类器会作为键的一部分。</returns>
     public Dictionary<string, string> GetLibraryiesForUsing()
     {
         var libraries = new Dictionary<string, string>(info.Libraries.Count);
@@ -162,7 +162,7 @@ public class VersionInfomations
             bool isAllowed = true;
             if (lib.Rules != null && lib.Rules.Count > 0)
             {
-                var lastAction = "allow";
+                var lastAction = "disallow";
                 foreach (var rule in lib.Rules)
                 {
                     bool conditionMet = false;
@@ -184,11 +184,13 @@ public class VersionInfomations
             if (!isAllowed)
                 continue;
 
-            if (lib?.Downloads?.Artifact != null && !lib.Name.Contains(":natives-"))
+            if (lib?.Downloads?.Artifact != null)
             {
                 var parts = lib.Name.Split(':');
-                // 关键点：使用 groupId:artifactId 作为唯一的Key
-                var libKey = $"{parts[0]}:{parts[1]}";
+                // 分类器是独立的类路径项，不能与同一 artifact 的普通库相互覆盖。
+                var libKey = parts.Length >= 4
+                    ? $"{parts[0]}:{parts[1]}:{parts[3]}"
+                    : $"{parts[0]}:{parts[1]}";
 
                 var libPath = Path.Combine(basePath, "libraries", Path.Combine(lib.Downloads.Artifact.Path.Split('/')));
 
@@ -220,7 +222,7 @@ public class VersionInfomations
     {
         return new NdDowItem(
             Url: info.AssetIndex.Url,
-            Path: Path.Combine(basePath, "Assets", "Indexes", $"{info.AssetIndex.Id}.json"),
+            Path: Path.Combine(basePath, "assets", "indexes", $"{info.AssetIndex.Id}.json"),
             Size: (int)info.AssetIndex.Size,
             Sha1: info.AssetIndex.Sha1
         );

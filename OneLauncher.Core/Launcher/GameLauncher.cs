@@ -12,7 +12,7 @@ using System.Threading;
 using System.Threading.Tasks;
 
 namespace OneLauncher.Core.Launcher;
-public class GameLauncher : IGameLauncher
+public class GameLauncher : IGameLauncher, IDisposable
 {
     public event Action? GameStartedEvent;
     public event Action<int>? GameClosedEvent;
@@ -156,6 +156,11 @@ public class GameLauncher : IGameLauncher
         GameClosedEvent?.Invoke(_gameProcess.ExitCode);
         //if(_gameProcess?.ExitCode != 0)
         //    tcs.SetException(new OlanException("游戏异常退出", $"检测到游戏异常退出，代码：{_gameProcess.ExitCode}{Environment.NewLine}建议尝试以调式模式启动以寻找异常原因", OlanExceptionAction.Warning));
+    }
+
+    public void Dispose()
+    {
+        _gameProcess?.Dispose();
     }
     #endregion
 }

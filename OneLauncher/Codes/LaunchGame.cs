@@ -57,7 +57,7 @@ internal class Game
         try
         {
             WeakReferenceMessenger.Default.Send(new MainWindowShowFlyoutMessage("正在启动游戏..."));
-            IGameLauncher gameLauncher = new GameLauncher();
+            using var gameLauncher = new GameLauncher();
             gameLauncher.GameStartedEvent += () =>
                 WeakReferenceMessenger.Default.Send(new MainWindowShowFlyoutMessage("游戏已启动！"));
             gameLauncher.GameClosedEvent += (code) =>
