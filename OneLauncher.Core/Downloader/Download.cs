@@ -4,6 +4,7 @@ using OneLauncher.Core.Net.ModService.Modrinth;
 using System.Buffers;
 using System.Diagnostics;
 using System.IO.Compression;
+using System.Net;
 using System.Net.Http.Headers;
 using System.Security.Cryptography;
 
@@ -259,26 +260,57 @@ public partial class Download : IDisposable
         IProgress<(long Start, long End)>? segmentProgress = null,
         CancellationToken token = default)
     {
-        long fileSize;
-        if (knownSize.HasValue)
-            fileSize = knownSize.Value;
-        else
-        {
-            using var headRequest = new HttpRequestMessage(HttpMethod.Head, url);
-            headRequest.Headers.CacheControl = new CacheControlHeaderValue
-            {
-                NoCache = true,
-                NoStore = true,
-                MustRevalidate = true
-            };
+        Directory.CreateDirectory(Path.GetDirectoryName(savePath)!);
 
-            using var headResponse = await unityClient.SendAsync(headRequest, token);
-            headResponse.EnsureSuccessStatusCode();
-            fileSize = headResponse.Content.Headers.ContentLength
-                       ?? throw new OlanException("下载失败","无法确定文件大小。");
+        // 先确认服务端是否真的支持 Range。部分下载地址会忽略 Range 并返回
+        // HTTP 200；若仍按分段偏移写入，会生成结构损坏的压缩包。
+        using var probeRequest = new HttpRequestMessage(HttpMethod.Get, url);
+        probeRequest.Headers.Range = new RangeHeaderValue(0, 0);
+        probeRequest.Headers.CacheControl = new CacheControlHeaderValue
+        {
+            NoCache = true,
+            NoStore = true,
+            MustRevalidate = true
+        };
+
+        using var probeResponse = await unityClient.SendAsync(
+            probeRequest,
+            HttpCompletionOption.ResponseHeadersRead,
+            token);
+        probeResponse.EnsureSuccessStatusCode();
+
+        if (probeResponse.StatusCode != HttpStatusCode.PartialContent)
+        {
+            await using var sourceStream = await probeResponse.Content.ReadAsStreamAsync(token);
+            await using var targetStream = new FileStream(
+                savePath,
+                FileMode.Create,
+                FileAccess.Write,
+                FileShare.None,
+                81920,
+                FileOptions.Asynchronous);
+            await sourceStream.CopyToAsync(targetStream, token);
+
+            long downloadedSize = targetStream.Length;
+            if (downloadedSize == 0)
+                throw new OlanException("下载失败", "服务端返回了空文件。");
+            if (knownSize.HasValue && downloadedSize != knownSize.Value)
+                throw new OlanException(
+                    "下载失败",
+                    $"下载文件大小不一致，预期 {knownSize.Value} 字节，实际 {downloadedSize} 字节。");
+
+            segmentProgress?.Report((0, downloadedSize - 1));
+            return;
         }
 
-        Directory.CreateDirectory(Path.GetDirectoryName(savePath)!);
+        ContentRangeHeaderValue? probeRange = probeResponse.Content.Headers.ContentRange;
+        if (probeRange?.From != 0 || probeRange?.To != 0)
+            throw new OlanException("下载失败", "服务端返回了无效的分段范围。");
+
+        long fileSize = probeRange.Length
+                        ?? knownSize
+                        ?? throw new OlanException("下载失败", "无法确定文件大小。");
+        probeResponse.Dispose();
 
         long interval = (fileSize + maxSegments - 1) / maxSegments;
 
@@ -321,16 +353,34 @@ public partial class Download : IDisposable
                         using var response = await unityClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, ct);
                         response.EnsureSuccessStatusCode();
 
+                        ContentRangeHeaderValue? responseRange = response.Content.Headers.ContentRange;
+                        if (response.StatusCode != HttpStatusCode.PartialContent ||
+                            responseRange?.From != segment.Start ||
+                            responseRange?.To != segment.End)
+                        {
+                            throw new HttpRequestException(
+                                $"服务端未返回请求的分段 {segment.Start}-{segment.End}。");
+                        }
+
                         await using var httpStream = await response.Content.ReadAsStreamAsync(ct);
 
                         long position = segment.Start;
                         int bytesRead;
                         while ((bytesRead = await httpStream.ReadAsync(buffer, ct)) > 0)
                         {
+                            if (position + bytesRead > segment.End + 1)
+                                throw new HttpRequestException(
+                                    $"服务端返回的分段 {segment.Start}-{segment.End} 超出预期长度。");
+
                             // 使用 SafeFileHandle 和 RandomAccess 进行线程安全的并行写入
                             await RandomAccess.WriteAsync(fileHandle, buffer.Slice(0, bytesRead), position, ct);
                             position += bytesRead;
                         }
+
+                        if (position != segment.End + 1)
+                            throw new HttpRequestException(
+                                $"服务端返回的分段 {segment.Start}-{segment.End} 长度不足。");
+
                         // 成功后才报告
                         segmentProgress?.Report((segment.Start, segment.End));
                         return; // 分片下载成功，退出重试循环

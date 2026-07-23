@@ -64,6 +64,15 @@
 				  </ComboBox>
 			  </StackPanel>
 		  </StackPanel>
+		  <!-- 运行环境 -->
+		  <StackPanel Spacing="8" HorizontalAlignment="Left">
+			  <TextBlock FontSize="24" FontWeight="Bold" Text="运行环境"/>
+			  <Separator Margin="-4,0,0,0"/>
+			  <StackPanel Margin="0,6,0,0">
+				  <TextBlock Text="Java 运行环境"/>
+				  <Button Content="安装 Java" Command="{Binding OpenJavaInstallPaneCommand}" Margin="0,4,0,0"/>
+			  </StackPanel>
+		  </StackPanel>
 		  <!-- 关于 -->
 		  <StackPanel Spacing="8" HorizontalAlignment="Left">
 			  <TextBlock FontSize="24" FontWeight="Bold" Text="关于"/>

@@ -32,7 +32,7 @@ public partial class DownloadInfo
 
     // 可选参数
     // 下面三个是预留的参数
-    public SpecifiedFabricVersionConfig SpecifiedFabricVersion { get; init; }
+    public SpecifiedFabricVersionConfig? SpecifiedFabricVersion { get; init; }
     public string SpecifiedForgeVersion { get; init; }
     public string SpecifiedNeoForgeVersion { get; init; }
 

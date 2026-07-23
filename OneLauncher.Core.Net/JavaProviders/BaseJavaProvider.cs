@@ -8,6 +8,7 @@ using System.Formats.Tar;
 using System.IO.Compression;
 using System.Runtime.InteropServices;
 using System.Text;
+using System.Threading;
 
 namespace OneLauncher.Core.Net.JavaProviders;
 internal abstract class BaseJavaProvider
@@ -58,26 +59,47 @@ internal abstract class BaseJavaProvider
         if (downloadUrl == null)
             throw new OlanException("无法获取Java下载链接", "从Java提供商API获取Java下载链接时出错，可能是API不可用或参数错误。");
         string tempFilePath = Path.Combine(installTo, $"{javaVersion}.tmp");
-        await Init.Download.DownloadFileBig(downloadUrl, tempFilePath, null, 28,
-            segmentProgress: op,
-            token: CancelToken ?? CancellationToken.None);
-        if(downloadUrl.EndsWith(".zip"))
-            Download.ExtractFile(tempFilePath, installTo);
-        // 特殊处理tar.gz格式
-        else
+        CancellationToken cancellationToken = CancelToken ?? CancellationToken.None;
+        const int maxArchiveAttempts = 3;
+        for (int attempt = 1; ; attempt++)
         {
-            var tempTarPath = Path.Combine(installTo, $"{javaVersion}.tar");
+            try
+            {
+                await Init.Download.DownloadFileBig(downloadUrl, tempFilePath, null, 28,
+                    segmentProgress: op,
+                    token: cancellationToken);
 
-            using (FileStream sourceFileStream = new FileStream(tempFilePath, FileMode.Open, FileAccess.Read, FileShare.Read))
-            using (GZipStream gzipStream = new GZipStream(sourceFileStream, CompressionMode.Decompress))
-            using (FileStream tempTarFileStream = new FileStream(tempTarPath, FileMode.Create, FileAccess.Write, FileShare.None))
-            await gzipStream.CopyToAsync(tempTarFileStream);  
+                if (downloadUrl.EndsWith(".zip", StringComparison.OrdinalIgnoreCase))
+                {
+                    // 在解压前打开一次归档，尽早发现下载内容损坏并重试。
+                    using (ZipFile.OpenRead(tempFilePath)) { }
+                    Download.ExtractFile(tempFilePath, installTo);
+                }
+                // 特殊处理tar.gz格式
+                else
+                {
+                    var tempTarPath = Path.Combine(installTo, $"{javaVersion}.tar");
 
-            using (FileStream tarFileStream = new FileStream(tempTarPath, FileMode.Open, FileAccess.Read, FileShare.Read))
-                await TarFile.ExtractToDirectoryAsync(tarFileStream, installTo, overwriteFiles: true);
-            // 删除额外的临时文件
-            File.Delete(tempTarPath);
+                    using (FileStream sourceFileStream = new FileStream(tempFilePath, FileMode.Open, FileAccess.Read, FileShare.Read))
+                    using (GZipStream gzipStream = new GZipStream(sourceFileStream, CompressionMode.Decompress))
+                    using (FileStream tempTarFileStream = new FileStream(tempTarPath, FileMode.Create, FileAccess.Write, FileShare.None))
+                        await gzipStream.CopyToAsync(tempTarFileStream, cancellationToken);
+
+                    using (FileStream tarFileStream = new FileStream(tempTarPath, FileMode.Open, FileAccess.Read, FileShare.Read))
+                        await TarFile.ExtractToDirectoryAsync(tarFileStream, installTo, overwriteFiles: true);
+                    // 删除额外的临时文件
+                    File.Delete(tempTarPath);
+                }
+
+                File.Delete(tempFilePath);
+                return;
+            }
+            catch (InvalidDataException) when (attempt < maxArchiveAttempts)
+            {
+                File.Delete(tempFilePath);
+                File.Delete(Path.Combine(installTo, $"{javaVersion}.tar"));
+                await Task.Delay(TimeSpan.FromMilliseconds(250 * attempt), cancellationToken);
+            }
         }
-        File.Delete(tempFilePath);
     }
 }

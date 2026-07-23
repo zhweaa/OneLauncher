@@ -1,4 +1,5 @@
-﻿using OneLauncher.Core.Global;
+﻿using OneLauncher.Core.Downloader.DownloadMinecraftProviders.ModSources.SpecifiedVersionConfig;
+using OneLauncher.Core.Global;
 using OneLauncher.Core.Global.ModelDataMangers;
 using OneLauncher.Core.Helper.Models;
 using OneLauncher.Core.Minecraft;
@@ -24,6 +25,9 @@ public partial class DownloadInfo
         bool isDownloadFabricWithAPI = true,
         bool isDownloadWithJavaRuntime = true,
         bool isDownloadQuiltWhitQSL = true,
+        // 模组加载器版本配置，若不传递则按上述规则获取
+        // （代码预留）
+        SpecifiedFabricVersionConfig? fabricConfig = null,
         // 下面是一些可传递可不传递的参数，不传递会自动获取
         VersionBasicInfo? versionBasic = null,
         GameData? gameDataD = null,
@@ -90,6 +94,9 @@ public partial class DownloadInfo
             IsUseRecommendedToInstallForge = isUseRecommendedToInstallForge,
             ISDownloadQuiltWhitQSL = isDownloadQuiltWhitQSL,
             AndJava = isDownloadWithJavaRuntime,
+
+            // 预留的模组加载器版本配置
+            SpecifiedFabricVersion = fabricConfig,
 
             GameRootPath = gameRootPath,
 

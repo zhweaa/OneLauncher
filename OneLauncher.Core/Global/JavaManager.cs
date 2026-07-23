@@ -2,6 +2,7 @@
 using OneLauncher.Core.Helper;
 using OneLauncher.Core.Net.JavaProviders;
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -19,6 +20,13 @@ public enum JavaProvider
 public class JavaManager
 {
     private readonly DBManager _dbManager = Init.ConfigManager;
+    private readonly ConcurrentDictionary<int, SemaphoreSlim> _installLocks = new();
+
+    public bool IsJavaInstalled(int version) =>
+        _dbManager.Data.AvailableJavas.ContainsKey(version);
+
+    public IReadOnlyCollection<int> GetInstalledVersions() =>
+        _dbManager.Data.AvailableJavas.Keys.Order().ToArray();
 
     /// <summary>
     /// 解析指定Java版本的可执行文件路径。
@@ -47,52 +55,67 @@ public class JavaManager
         IProgress<string>? progress = null,
         CancellationToken token = default)
     {
-        if (_dbManager.Data.AvailableJavas.ContainsKey(version) && !overwrite)
-            return;
+        SemaphoreSlim installLock = _installLocks.GetOrAdd(version, _ => new SemaphoreSlim(1, 1));
+        await installLock.WaitAsync(token);
+        try
+        {
+            if (_dbManager.Data.AvailableJavas.ContainsKey(version) && !overwrite)
+                return;
             // 以前我是这么写的
             //throw new OlanException("Java版本已存在", $"Java版本 {version} 已经存在于可用列表中。请使用 `overwrite` 参数来覆盖现有版本。",OlanExceptionAction.Warning);
 
-        IJavaProvider javaProvider = provider switch
-        {
-            JavaProvider.Adoptium => new AdoptiumAPI(version),
-            JavaProvider.AzulZulu => new AzulZuluAPI(version),
-            JavaProvider.MicrosoftOpenJDK => new MicrosoftBuildofOpenJDKGetter(version),
-            JavaProvider.OracleGraalVM => new GraalVMGetter(version),
-            JavaProvider.OracleJDK => new OracleJDK(version),
-            _ => throw new OlanException("内部错误","不支持的Java提供商。")
-        };
-
-        javaProvider.CancelToken = token;
-
-        string installDir = Path.Combine(Init.InstalledPath, "runtimes", version.ToString());
-
-        // 如果覆写删除之前目录，避免出现奇奇怪怪的问题
-        if (Directory.Exists(installDir) && overwrite) Directory.Delete(installDir, true);
-        Directory.CreateDirectory(installDir);
-
-        try
-        {
-            int done = 0 ;
-            await javaProvider.GetAutoAsync(new Progress<(long start,long end)>(p =>
+            IJavaProvider javaProvider = provider switch
             {
-                // 内部是28分段下载
-                Interlocked.Increment(ref done);
-                progress?.Report(
-                    $"[{done}/28] 分段 起始位：{p.start} 结束位：{p.end}");
-            }));
+                JavaProvider.Adoptium => new AdoptiumAPI(version),
+                JavaProvider.AzulZulu => new AzulZuluAPI(version),
+                JavaProvider.MicrosoftOpenJDK => new MicrosoftBuildofOpenJDKGetter(version),
+                JavaProvider.OracleGraalVM => new GraalVMGetter(version),
+                JavaProvider.OracleJDK => new OracleJDK(version),
+                _ => throw new OlanException("内部错误","不支持的Java提供商。")
+            };
 
-            string javaPath = javaProvider.GetJavaPath();
-            string relativePath = Path.GetRelativePath(Init.InstalledPath, javaPath);
-            // 保存时，我们依然使用占位符格式
-            string placeholderPath = $"${{INSTALLED_PATH}}/{relativePath.Replace(Path.DirectorySeparatorChar, '/')}";
+            javaProvider.CancelToken = token;
 
-            _dbManager.Data.AvailableJavas.Add(version, placeholderPath);
-            await _dbManager.Save();
+            string installDir = Path.Combine(Init.InstalledPath, "runtimes", version.ToString());
+            bool hadExistingConfiguration = _dbManager.Data.AvailableJavas.ContainsKey(version);
+
+            // 如果覆写删除之前目录，避免出现奇奇怪怪的问题
+            if (Directory.Exists(installDir) && overwrite) Directory.Delete(installDir, true);
+            Directory.CreateDirectory(installDir);
+
+            try
+            {
+                int done = 0 ;
+                await javaProvider.GetAutoAsync(new Progress<(long start,long end)>(p =>
+                {
+                    // 内部是28分段下载
+                    Interlocked.Increment(ref done);
+                    progress?.Report($"正在下载 Java：{done}/28 个分段");
+                }));
+
+                string javaPath = javaProvider.GetJavaPath();
+                string relativePath = Path.GetRelativePath(Init.InstalledPath, javaPath);
+                // 保存时，我们依然使用占位符格式
+                string placeholderPath = $"${{INSTALLED_PATH}}/{relativePath.Replace(Path.DirectorySeparatorChar, '/')}";
+
+                // Java 大版本是配置键，因此每个版本始终只有一条记录。
+                _dbManager.Data.AvailableJavas[version] = placeholderPath;
+                await _dbManager.Save();
+            }
+            catch (Exception)
+            {
+                if (Directory.Exists(installDir)) Directory.Delete(installDir, true);
+                if (overwrite && hadExistingConfiguration)
+                {
+                    _dbManager.Data.AvailableJavas.Remove(version);
+                    await _dbManager.Save();
+                }
+                throw;
+            }
         }
-        catch (Exception)
+        finally
         {
-            if (Directory.Exists(installDir)) Directory.Delete(installDir, true);
-            throw;
+            installLock.Release();
         }
     }
 }

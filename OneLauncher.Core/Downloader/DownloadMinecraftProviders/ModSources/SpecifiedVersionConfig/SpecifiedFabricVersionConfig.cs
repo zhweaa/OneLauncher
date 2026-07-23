@@ -14,7 +14,13 @@ namespace OneLauncher.Core.Downloader.DownloadMinecraftProviders.ModSources.Spec
  */
 public class SpecifiedFabricVersionConfig
 {
-    private JsonArray node;
+    private JsonArray? node;
+    private string? loaderVersion;
+    /// <summary>
+    /// UI界面使用这个来获取可用版本列表
+    /// （必须调用）
+    /// </summary>
+    /// <param name="version">游戏版本</param>
     public async Task<List<string>> GetVersions(string version)
     {
         using Stream rep = await Init.Download.unityClient
@@ -27,10 +33,22 @@ public class SpecifiedFabricVersionConfig
         }
         return versions;
     }
-    public async Task<JsonNode> GetDownloadFiles(string loaderVersion)
+    /// <summary>
+    /// UI界面使用这个来设置指定的Fabric版本
+    /// （必须调用）
+    /// </summary>
+    /// <param name="version">指定的模组加载器版本</param>
+    public void SetLoaderVersion(string version)
     {
-        if (node == null)
-            throw new OlanException("内部错误", "请先调用GetVersions方法");
+        loaderVersion = version;
+    }
+    /// <summary>
+    /// 后端使用这个来获取指定版本的Json范围
+    /// </summary>
+    public async Task<JsonNode> GetDownloadFiles()
+    {
+        if (node == null || loaderVersion == null)
+            throw new OlanException("内部错误", "内部数值未初始化");
         for (int i = 0; i < node.Count; i++)
         {
             string p = node[i]!["loader"]!["version"]!.GetValue<string>();
