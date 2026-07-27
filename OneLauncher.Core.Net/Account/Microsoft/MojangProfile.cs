@@ -169,7 +169,11 @@ public class MojangProfile : IDisposable
         }
         catch (HttpRequestException ex)
         {
-            throw new HttpRequestException($"下载皮肤图片失败，URL: {sessionUrl}，错误: {ex.Message}", ex);
+            throw new OlanException(
+                "网络异常", 
+                $"无法从服务器下载皮肤图片{Environment.NewLine}点击 忽略 按钮忽略这个错误并使用史蒂夫皮肤图片",
+                OlanExceptionAction.Error,
+                ex);
         }
     }
     public void Dispose() => httpClient.Dispose();

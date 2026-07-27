@@ -56,7 +56,7 @@
 				<StackPanel Orientation="Horizontal" Spacing="61">
 					<CheckBox IsEnabled="{Binding IsAllowFabric}" IsChecked="{Binding IsMod}" >是否带Fabric</CheckBox>
 					<CheckBox IsVisible="{Binding IsMod}" IsChecked="{Binding IsDownloadFabricWithAPI}">同时下载Fabric API</CheckBox>
-					<Button Content="自定义版本" IsVisible="{Binding IsMod}">	
+					<Button Content="自定义版本" IsVisible="False">	
 						<Button.Flyout>
 							<Flyout>
 								

@@ -6,26 +6,8 @@
 		<ApplicationManifest>app.manifest</ApplicationManifest>
 		<Platforms>x64</Platforms>
 		<AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
-
-		<PublishSingleFile>true</PublishSingleFile>
 		<EnableMicrosoftExtensionsDependencyInjectionSourceGenerator>true</EnableMicrosoftExtensionsDependencyInjectionSourceGenerator>
 	</PropertyGroup>
-	<!--
-	<PropertyGroup>
-		<TrimMode>link</TrimMode>
-		<PublishAot Condition="'$(Configuration)' == 'Release'">true</PublishAot>
-		<PublishAot Condition="'$(Configuration)' == 'Debug'">false</PublishAot>
-	</PropertyGroup>
-	
-	<ItemGroup Label="ImportLib">
-		<DirectPInvoke Include="libHarfBuzzSharp" />
-		<NativeLibrary Include="libs\libHarfBuzzSharp.lib" />
-		<DirectPInvoke Include="libSkiaSharp" />
-		<NativeLibrary Include="libs\libSkiaSharp.lib" />
-		<DirectPInvoke Include="av_libglesv2" />
-		<NativeLibrary Include="libs\av_libglesv2.lib" />
-	</ItemGroup>
-	-->
 	<ItemGroup>
 		<TrimmerRootDescriptor Include="TrimmerRoots.xml" />
 		<TrimmerRootAssembly Include="Avalonia.Themes.Fluent" />
@@ -42,4 +24,12 @@
 	<PropertyGroup>
 		<ApplicationIcon>window-logo.ico</ApplicationIcon>
 	</PropertyGroup>
+	<Target Name="RemoveSymbolsFromPublish"
+			AfterTargets="Publish"
+			Condition="'$(Configuration)' == 'Release'">
+		<ItemGroup>
+			<PublishedSymbols Include="$(PublishDir)**\*.pdb" />
+		</ItemGroup>
+		<Delete Files="@(PublishedSymbols)" />
+	</Target>
 </Project>

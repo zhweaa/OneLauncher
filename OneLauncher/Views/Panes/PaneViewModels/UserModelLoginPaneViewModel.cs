@@ -43,14 +43,14 @@ internal partial class UserModelLoginPaneViewModel : BaseViewModel
         set
         {
             _whiceLoginType = value;
-            if (value.Content == "离线登入")
+            if (value.Content == "离线账户")
             {
                 Debug.WriteLine("离线登入");
                 IsYaLogin = true;
                 IsMsaLogin = false;
                 IsRYaLogin = false;
             }
-            if (value.Content == "微软登入")
+            if (value.Content == "微软账户")
             {
                 Debug.WriteLine("微软登入");
                 IsYaLogin = false;

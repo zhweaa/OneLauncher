@@ -6,6 +6,7 @@ using System;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
+using System.Reflection.Metadata;
 using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading;
@@ -70,8 +71,10 @@ public class GameLauncher : IGameLauncher, IDisposable
         // 配置并启动游戏进程
         try
         {
+            
             using (var launchCommand = await commandBuilder.BuildCommand())
             {
+                string finalCommand = await launchCommand.GetArguments();
                 var processInfo = new ProcessStartInfo
                 {
                     FileName = commandBuilder.GetJavaPath(),
@@ -82,8 +85,9 @@ public class GameLauncher : IGameLauncher, IDisposable
                     CreateNoWindow = true,
                     StandardOutputEncoding = Encoding.UTF8,
                     StandardErrorEncoding = Encoding.UTF8,
-                    Arguments = await launchCommand.GetArguments()
+                    Arguments = finalCommand
                 };
+                _ = File.WriteAllTextAsync(Path.Combine(Init.BasePath, "LastLaunchArgs.bat"), finalCommand);
                 _gameProcess = new Process();
                 _gameProcess.StartInfo = processInfo;
                 _gameProcess.EnableRaisingEvents = true;

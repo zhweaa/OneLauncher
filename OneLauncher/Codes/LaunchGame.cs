@@ -25,11 +25,14 @@ internal class Game
         public string InstanceName;
         public string InstanceId;
         public string MinecraftVersion;
-        public string[] ModList;
+        public List<string> ModList;
         public ModEnum ModType;
         public string SystemEnvironmentInformations;
         public string ProcessOutputs;
-        public LaunchException(GameData data) 
+        public string FormerLaunchArgs;
+#pragma warning disable CS8618 
+        public LaunchException(GameData data)
+#pragma warning restore CS8618 
         { 
             InstanceName = data.Name;
             InstanceId = data.InstanceId;
@@ -38,18 +41,18 @@ internal class Game
             SystemEnvironmentInformations = 
                 $"OSVersion:{Environment.OSVersion} UserName:{Environment.UserName} CPU:{Environment.CpuUsage.TotalTime}";
             ProcessOutputs = File.ReadAllText(Path.Combine(Init.GameRootPath,"logs","latest.log"));
+            FormerLaunchArgs = File.ReadAllText(Path.Combine(Init.BasePath, "LastLaunchArgs.bat"));
             var path = Path.Combine(data.InstancePath, "mods");
             if (Directory.Exists(path))
             {
                 var files = Directory.GetFiles(path);
                 if (files.Length > 0)
                 {
-                    ModList = files;
+                    ModList = files.ToList();
                 }
             }
             else
-                ModList = Array.Empty<string>();
-            
+                ModList = new List<string>();
         }
     }
     public static async Task EasyGameLauncher(GameData gameData,ServerInfo? serverInfo,bool useDebugMode)
@@ -69,7 +72,7 @@ internal class Game
                         //_=OlanExceptionWorker.ForOlanException(
                         throw new OlanException(
                              "游戏异常退出",
-                             $"检测到游戏异常退出，代码：{code}{Environment.NewLine}建议尝试以调式模式启动或询问Gemini以寻找异常原因",
+                             $"检测到游戏异常退出，代码：{code}{Environment.NewLine}建议尝试以调式模式启动或询问Agent以寻找异常原因{Environment.NewLine}点击重试以激活Agent调试",
                              OlanExceptionAction.Warning,
                              new LaunchException(gameData),
                              () => _ = EasyGameLauncher(gameData, serverInfo, true));

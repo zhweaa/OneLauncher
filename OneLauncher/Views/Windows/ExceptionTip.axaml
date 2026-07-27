@@ -19,7 +19,7 @@
 			</ScrollViewer>
 		</StackPanel>
 		<StackPanel Grid.Row="2" Orientation="Horizontal" Spacing="6" HorizontalAlignment="Right" VerticalAlignment="Bottom">
-			<Button Click="TryAgainFunction" Content="重试"/>
+			<Button Click="TryAgainFunction" Content="重试/操作"/>
 			<Button Click="IgnoreFunction" Content="忽略"/>
 		</StackPanel>
 	</Grid>

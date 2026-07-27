@@ -28,8 +28,8 @@
                 <TextBlock Classes="pane-section-title" Text="登录方式"/>
                 <ComboBox Classes="pane-field" SelectedItem="{Binding WhiceLoginType}" PlaceholderText="选择登录类型">
                     <ComboBoxItem Content="离线账户"/>
-                    <ComboBoxItem Content="Microsoft 账户"/>
-                    <ComboBoxItem Content="外置登录"/>
+                    <ComboBoxItem Content="微软账户"/>
+                    <ComboBoxItem Content="外置登入"/>
                 </ComboBox>
 
                 <Border Classes="pane-surface" IsVisible="{Binding IsYaLogin}">
@@ -43,7 +43,7 @@
 
                 <Border Classes="pane-surface" IsVisible="{Binding IsMsaLogin}">
                     <StackPanel Spacing="10">
-                        <TextBlock Classes="pane-section-title" Text="Microsoft 账户"/>
+                        <TextBlock Classes="pane-section-title" Text="微软账户"/>
                         <TextBlock Classes="pane-help" Text="使用 Microsoft 身份验证登录正版 Minecraft 账户。"/>
                         <CheckBox IsChecked="{Binding UseWAMLogin}" Content="使用浏览器登录"/>
                         <Button Classes="pane-primary" Content="登录 Microsoft 账户"
@@ -53,7 +53,7 @@
 
                 <Border Classes="pane-surface" IsVisible="{Binding IsRYaLogin}">
                     <StackPanel Spacing="10">
-                        <TextBlock Classes="pane-section-title" Text="外置登录"/>
+                        <TextBlock Classes="pane-section-title" Text="外置登入"/>
                         <TextBox Classes="pane-field" Text="{Binding RUserName}" Watermark="用户名或邮箱"/>
                         <TextBox Classes="pane-field" Text="{Binding RPassword}" PasswordChar="*" Watermark="密码"/>
                         <Button Classes="pane-primary" Content="登录" Command="{Binding RLoginCommand}"/>
