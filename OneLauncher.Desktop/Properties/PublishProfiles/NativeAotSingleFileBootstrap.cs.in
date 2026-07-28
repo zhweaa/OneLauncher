@@ -1,0 +1,71 @@
+using System;
+using System.IO;
+using System.Reflection;
+using System.Runtime.InteropServices;
+
+namespace OneLauncher.Desktop;
+
+internal static class NativeAotSingleFileBootstrap
+{
+    private const string ResourcePrefix = "OneLauncher.Native.win-x64";
+    private const string BundleVersion = "angle-2.1.25547.20250602_skia-2.88.9_harfbuzz-8.3.1.1_msal-0.20.6";
+
+    private static readonly string[] NativeLibraries =
+    [
+        "av_libglesv2.dll",
+        "libHarfBuzzSharp.dll",
+        "libSkiaSharp.dll",
+        "msalruntime.dll"
+    ];
+
+    [STAThread]
+    public static void Main(string[] args)
+    {
+        string nativeDirectory = ExtractNativeLibraries();
+
+        foreach (string fileName in NativeLibraries)
+            NativeLibrary.Load(Path.Combine(nativeDirectory, fileName));
+
+        Program.Main(args);
+    }
+
+    private static string ExtractNativeLibraries()
+    {
+        string localAppData = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
+        if (string.IsNullOrWhiteSpace(localAppData))
+            localAppData = Path.GetTempPath();
+
+        string nativeDirectory = Path.Combine(localAppData, "OneLauncher", "native", "win-x64", BundleVersion);
+        Directory.CreateDirectory(nativeDirectory);
+
+        Assembly assembly = typeof(NativeAotSingleFileBootstrap).Assembly;
+        foreach (string fileName in NativeLibraries)
+        {
+            string resourceName = $"{ResourcePrefix}.{fileName}";
+            using Stream resource = assembly.GetManifestResourceStream(resourceName)
+                ?? throw new InvalidOperationException($"Missing embedded native library: {resourceName}");
+
+            string destination = Path.Combine(nativeDirectory, fileName);
+            if (File.Exists(destination) && new FileInfo(destination).Length == resource.Length)
+                continue;
+
+            string temporary = $"{destination}.{Environment.ProcessId}.tmp";
+            try
+            {
+                using (FileStream output = new(temporary, FileMode.Create, FileAccess.Write, FileShare.None))
+                {
+                    resource.CopyTo(output);
+                    output.Flush(flushToDisk: true);
+                }
+
+                File.Move(temporary, destination, overwrite: true);
+            }
+            finally
+            {
+                File.Delete(temporary);
+            }
+        }
+
+        return nativeDirectory;
+    }
+}

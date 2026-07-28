@@ -16,7 +16,7 @@ namespace OneLauncher.Core.Net.ConnectToolPower;
 public class MCTPower : IDisposable
 {
     private const string CoreExecutableName = "main.exe";
-    private const string CoreUrl = "https://gitee.com/linfon18/minecraft-connect-tool-api/raw/master/mainnew.exe";
+    private const string CoreUrl = "https://api.mct.mczlf.loft.games/mainnew.exe";//"https://gitee.com/linfon18/minecraft-connect-tool-api/raw/master/mainnew.exe";
     private const string CoreMd5 = "08160296509deac13e7d12c8754de9ef";
 
     private readonly string coreDirectory;

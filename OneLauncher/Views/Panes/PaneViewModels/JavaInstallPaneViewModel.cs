@@ -40,7 +40,7 @@ internal partial class JavaInstallPaneViewModel : BaseViewModel
     [NotifyCanExecuteChangedFor(nameof(InstallCommand))]
     [NotifyCanExecuteChangedFor(nameof(OverwriteCommand))]
     private JavaProviderItem? _selectedJavaProvider;
-    [ObservableProperty] private ObservableCollection<int> _javaVersions = new([8, 11, 16, 17, 21, 24]);
+    [ObservableProperty] private ObservableCollection<int> _javaVersions = new([8, 11, 16, 17, 21, 24, 25]);
     [ObservableProperty] private int _selectedJavaVersion = 21;
     [ObservableProperty]
     [NotifyCanExecuteChangedFor(nameof(InstallCommand))]

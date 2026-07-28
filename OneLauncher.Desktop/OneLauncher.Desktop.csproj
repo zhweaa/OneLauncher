@@ -24,12 +24,4 @@
 	<PropertyGroup>
 		<ApplicationIcon>window-logo.ico</ApplicationIcon>
 	</PropertyGroup>
-	<Target Name="RemoveSymbolsFromPublish"
-			AfterTargets="Publish"
-			Condition="'$(Configuration)' == 'Release'">
-		<ItemGroup>
-			<PublishedSymbols Include="$(PublishDir)**\*.pdb" />
-		</ItemGroup>
-		<Delete Files="@(PublishedSymbols)" />
-	</Target>
 </Project>
