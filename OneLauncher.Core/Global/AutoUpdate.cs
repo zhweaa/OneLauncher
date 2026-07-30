@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Text;
 
 namespace OneLauncher.Core.Global;
-internal class AutoUpdate
+public class AutoUpdate
 {
     const string CheckUpdateUrl = "https://raw.githubusercontent.com/zhweaa/OneLauncher/master/OneLauncher.Core/Global/Version.cs";
     /// <returns>需要更新返回true，否则返回false</returns>
@@ -18,7 +18,7 @@ internal class AutoUpdate
             {
                 if (response[i] == '\"')
                 {
-                    start = i;
+                    start = i+1;
                     break;
                 }
             }

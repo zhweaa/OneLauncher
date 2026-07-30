@@ -78,6 +78,15 @@ internal partial class HomePageViewModel : BaseViewModel
             WeakReferenceMessenger.Default.Send(
                 new MainWindowShowFlyoutMessage("当前安装路径包含非ASCII字符，可能导致游戏出现未知问题",NotificationType.Warning));
 
+        _ = Task.Run(async () =>
+        {
+            if (await AutoUpdate.CheckUpdate())
+            {
+                WeakReferenceMessenger.Default.Send(
+                    new MainWindowShowFlyoutMessage("检测到新版本，建议前往GitHub下载最新版本", NotificationType.Information));
+            }
+        });
+
         GameIcon = GameDataItem.GetGameDataIcon(SelectedGameData);
     }
     partial void OnSelectedGameDataChanged(GameData? value)

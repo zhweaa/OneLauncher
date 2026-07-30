@@ -20,6 +20,7 @@ using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
 using System.Text.RegularExpressions;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace OneLauncher.Views.ViewModels;
@@ -77,6 +78,7 @@ internal partial class AccountPageViewModel : BaseViewModel
     }
     public AccountPageViewModel(AccountManager manager,MsalAuthenticator msalAuthenticator, UserModelLoginPaneViewModelFactory userModelLoginPaneFactory)
     {
+        Thread.Sleep(1000);
         this._userModelLoginPaneFactory = userModelLoginPaneFactory;
         this._accountManager = manager;
         this._msalAuthenticator = msalAuthenticator;
