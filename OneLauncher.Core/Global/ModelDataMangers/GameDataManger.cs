@@ -201,9 +201,22 @@ public class GameDataManager : BasicDataManager<GameDataRoot>
         Data.DefaultInstanceMap[Data.Instances[targetId].VersionId] = targetId;
         return Save();
     }
-    public GameData? GetDefaultInstance(string versionId)
+    /// <param name="versionId">如果填写，则获取该版本的默认实例；若不填，则获得最高的那个版本的默认实例。</param>
+    /// <returns></returns>
+    public GameData? GetDefaultInstance(string? versionId = null)
     {
-        var defaultInstanceId = Data.DefaultInstanceMap.GetValueOrDefault(versionId);
+        string? defaultInstanceId;
+        if (versionId == null && Data.Instances.Count > 0)
+        {
+            // 如果没有指定版本ID，获取最高的版本的默认实例
+            var maxVersion = Data.DefaultInstanceMap.Keys.Select(x => new Version(x)).OrderByDescending(v => v).FirstOrDefault()!.ToString();
+            defaultInstanceId = Data.DefaultInstanceMap.GetValueOrDefault(maxVersion);
+        }
+        else
+        {
+            defaultInstanceId = Data.DefaultInstanceMap.GetValueOrDefault(versionId);
+        }
+
         if (defaultInstanceId == null)
             return null;
         return

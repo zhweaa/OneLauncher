@@ -20,6 +20,37 @@
 		</SplitView.Pane>
   <ScrollViewer>
 	  <StackPanel Margin="64" Spacing="36">
+		  <!-- UI 选项 -->
+		  <StackPanel Spacing="8" HorizontalAlignment="Left">
+			  <TextBlock FontSize="24" FontWeight="Bold" Text="UI选项"/>
+			  <Separator Margin="-4,0,0,0"/>
+			  <StackPanel Margin="0,6,0,0">
+				  <TextBlock Text="左侧导航项间距："/>
+				  <NumericUpDown Value="{Binding LeftButtonListSpacing}"
+							 Minimum="0"
+							 Maximum="30"
+							 Width="150"/>
+			  </StackPanel>
+			  <StackPanel Margin="0,16,0,0">
+				  <TextBlock Text="左侧导航页面"/>
+				  <ToggleSwitch IsChecked="{Binding IsServerPageVisible}" Margin="0,8,0,0">
+					  <ToggleSwitch.OnContent>
+						  <TextBlock Text="显示服务器收藏"/>
+					  </ToggleSwitch.OnContent>
+					  <ToggleSwitch.OffContent>
+						  <TextBlock Text="隐藏服务器收藏"/>
+					  </ToggleSwitch.OffContent>
+				  </ToggleSwitch>
+				  <ToggleSwitch IsChecked="{Binding IsVersionPageVisible}" Margin="0,8,0,0">
+					  <ToggleSwitch.OnContent>
+						  <TextBlock Text="显示版本管理"/>
+					  </ToggleSwitch.OnContent>
+					  <ToggleSwitch.OffContent>
+						  <TextBlock Text="隐藏版本管理"/>
+					  </ToggleSwitch.OffContent>
+				  </ToggleSwitch>
+			  </StackPanel>
+		  </StackPanel>
 		  <!-- 游戏启动选项 -->
 		  <StackPanel Spacing="8" HorizontalAlignment="Left">
 			  <TextBlock FontSize="24" FontWeight="Bold" Text="游戏启动选项"/>

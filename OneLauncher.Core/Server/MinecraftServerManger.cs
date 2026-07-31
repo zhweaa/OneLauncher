@@ -11,8 +11,9 @@ using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
 using OneLauncher.Core.Launcher;
+using OneLauncher.Core.Minecraft;
 
-namespace OneLauncher.Core.Minecraft.Server;
+namespace OneLauncher.Core.Server;
 
 public class MinecraftServerManger
 {

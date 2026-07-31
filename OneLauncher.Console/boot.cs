@@ -2,6 +2,7 @@
 using OneLauncher.Core.Helper;
 using OneLauncher.Core.Helper.Models;
 using OneLauncher.Core.Launcher;
+using OneLauncher.Core.Server;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -24,15 +25,18 @@ public class Boot
                     await new GameLauncher().Play(args[1]);
                     break;
                 case "--joinServer":
-                    var server = Init.ConfigManger.Data.FavoriteServers.GetValueOrDefault(args[1]);
+                    if (args.Length < 2) break;
+
+                    string serverIdentifier = args[1];
+                    ServerEntry? server = Guid.TryParse(serverIdentifier, out Guid serverId)
+                        ? Init.ConfigManger.Data.ServerList.FirstOrDefault(x => x.Id == serverId)
+                        : Init.ConfigManger.Data.ServerList.FirstOrDefault(x =>
+                            string.Equals(x.Name, serverIdentifier, StringComparison.OrdinalIgnoreCase));
                     if (server == null) break;
-                    var game = Init.GameDataManger.Data.Instances.GetValueOrDefault(server.DefaultInstanceId);
+
+                    var game = Init.GameDataManger.GetInstanceFromId(server.InstanceId);
                     if (game == null) break;
-                    await new GameLauncher().Play(game, serverInfo: new ServerInfo()
-                    {
-                        Ip = server.ServerIP,
-                        Port = server.ServerPort
-                    });
+                    await new GameLauncher().Play(game, server.ServerInfo);
                     break;
                 case "--releaseMemory":
                     await ReleaseMemory.OptimizeAsync();

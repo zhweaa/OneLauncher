@@ -33,7 +33,7 @@ public class AutoUpdate
             }
             if(end == -1) throw new Exception();
             var latestVersion = new Version(response[start..end]);
-            if (latestVersion < new Version(Init.ApplicationVersoin))
+            if (latestVersion <= new Version(Init.ApplicationVersoin))
                 return false;
             else
                 return true;

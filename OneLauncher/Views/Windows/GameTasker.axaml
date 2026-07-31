@@ -7,7 +7,7 @@
 		x:CompileBindings="True"
         mc:Ignorable="d" d:DesignWidth="250" d:DesignHeight="320"
         x:Class="OneLauncher.Views.Windows.GameTasker"
-		Icon="/Assets/window-logo.ico"
+		Icon="avares://OneLauncher/Assets/window-logo.ico"
         Title="游戏监视器" Width="250" Height="320">
 	<Grid RowDefinitions="32,*" Margin="12">
 		<TextBlock Grid.Row="0" Text="你可以安全的关闭此窗口"/>

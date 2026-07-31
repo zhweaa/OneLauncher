@@ -23,6 +23,7 @@ internal partial class SettingsPageViewModel : BaseViewModel
     // 将 manager 重命名为 _dbManger 以遵循常见的私有字段命名约定
     private readonly DBManager _dbManger;
     private readonly JavaManager _javaManager;
+    private readonly GameDataManager _gameDataManager;
     public string Version => Init.ApplicationVersoin;
     #region 启动参数优化选项
     [ObservableProperty]
@@ -73,6 +74,59 @@ internal partial class SettingsPageViewModel : BaseViewModel
             Verb = "runas" // 请求管理员权限
 #endif
         });
+    }
+    #endregion
+
+    #region UI选项
+    [ObservableProperty]
+    public int _leftButtonListSpacing;
+    partial void OnLeftButtonListSpacingChanged(int value)
+    {
+#if DEBUG
+        if (Design.IsDesignMode)
+            return;
+#endif
+        _dbManger.Data.OlanSettings.LeftButtonListSpacing = Math.Clamp(value, 0, 30);
+        _dbManger.Save();
+    }
+
+    [ObservableProperty]
+    public bool _isServerPageVisible;
+    partial void OnIsServerPageVisibleChanged(bool value)
+    {
+#if DEBUG
+        if (Design.IsDesignMode)
+            return;
+#endif
+        if(value == true && _dbManger.Data.ServerList.Count == 0)
+        {
+            string goodData = _gameDataManager.GetDefaultInstance()!.InstanceId;
+            _dbManger.Data.ServerList.Add(new (
+                Guid.NewGuid(), 
+                goodData,
+                new ()
+                {
+                    Ip = "mc.hypixel.net",
+                    Port  = "25565",
+                },
+                "Hypixel",
+                "为避免空旷为您添加了一个默认的受欢迎服务器"
+                ));
+        }
+        _dbManger.Data.OlanSettings.IsServerPageVisible = value;
+        _dbManger.Save();
+    }
+
+    [ObservableProperty]
+    public bool _isVersionPageVisible;
+    partial void OnIsVersionPageVisibleChanged(bool value)
+    {
+#if DEBUG
+        if (Design.IsDesignMode)
+            return;
+#endif
+        _dbManger.Data.OlanSettings.IsVersionPageVisible = value;
+        _dbManger.Save();
     }
     #endregion
 
@@ -156,13 +210,17 @@ internal partial class SettingsPageViewModel : BaseViewModel
     }
 
     // 构造函数接收正确的 DBManger 类型
-    public SettingsPageViewModel(DBManager configManager, JavaManager javaManager)
+    public SettingsPageViewModel(DBManager configManager, JavaManager javaManager,GameDataManager gameDataManager)
     {
         this._dbManger = configManager;
         this._javaManager = javaManager;
+        this._gameDataManager = gameDataManager;
 #if DEBUG
         if (Design.IsDesignMode)
         {
+            LeftButtonListSpacing = 8;
+            IsServerPageVisible = false;
+            IsVersionPageVisible = true;
             MaxDownloadThreadsValue = 24;
             MaxSha1ThreadsValue = 24;
             IsSha1Enabled = true;
@@ -174,6 +232,9 @@ internal partial class SettingsPageViewModel : BaseViewModel
         try
         {
             // 使用注入的实例来初始化属性
+            LeftButtonListSpacing = _dbManger.Data.OlanSettings.LeftButtonListSpacing;
+            IsServerPageVisible = _dbManger.Data.OlanSettings.IsServerPageVisible;
+            IsVersionPageVisible = _dbManger.Data.OlanSettings.IsVersionPageVisible;
             switch (_dbManger.Data.OlanSettings.MinecraftJvmArguments.mode)
             {
                 case OptimizationMode.Conservative:

@@ -5,7 +5,7 @@
         xmlns:easing="using:Avalonia.Animation.Easings"
         mc:Ignorable="d" d:DesignWidth="860" d:DesignHeight="560"
         x:Class="OneLauncher.Views.MainWindow"
-        Icon="/Assets/window-logo.ico"
+        Icon="avares://OneLauncher/Assets/window-logo.ico"
         Title="OneLauncher"
         TransparencyLevelHint="AcrylicBlur"
         ExtendClientAreaToDecorationsHint="True"
@@ -13,6 +13,9 @@
         Width="880"
         Height="560"
         x:Name="MainWindowLabel">
+	<Window.Resources>
+		<Thickness x:Key="LeftButtonListItemMargin">8</Thickness>
+	</Window.Resources>
 	<SplitView x:Name="SidebarSplitView"
                IsPaneOpen="False"
                DisplayMode="CompactInline"
@@ -23,7 +26,8 @@
 			<Grid Background="Transparent"
                   PointerEntered="Sb_in"
                   PointerExited="Sb_out">
-				<ScrollViewer>
+				<ScrollViewer VerticalScrollBarVisibility="Hidden"
+							  HorizontalScrollBarVisibility="Disabled">
 					<StackPanel x:Name="SidebarStackPanel"
                                 Spacing="20"
                                 Margin="-6,24,0,0"
@@ -58,6 +62,16 @@
 										 VerticalAlignment="Center"
 										 FontSize="16"
 										 IsVisible="{Binding IsPaneOpen, ElementName=SidebarSplitView}"/>
+								</StackPanel>
+							</ListBoxItem>
+							<ListBoxItem x:Name="ServerListBoxItem" Tag="Server">
+								<StackPanel Orientation="Horizontal" Spacing="8">
+									<Image Source="/Assets/icos/server.png" Width="32" Height="32"/>
+									<TextBlock x:Name="ServerText"
+											 Text="服务器收藏"
+											 VerticalAlignment="Center"
+											 FontSize="16"
+											 IsVisible="{Binding IsPaneOpen, ElementName=SidebarSplitView}"/>
 								</StackPanel>
 							</ListBoxItem>
 							<ListBoxItem x:Name="DownloadListBoxItem" Tag="Download">
@@ -118,7 +132,7 @@
 									<Setter Property="CornerRadius" Value="24"/>
 								</Style>
 								<Style Selector="ListBoxItem /template/ ContentPresenter">
-									<Setter Property="Margin" Value="8"/>
+									<Setter Property="Margin" Value="{DynamicResource LeftButtonListItemMargin}"/>
 									<Setter Property="Background" Value="Transparent"/>
 									<Setter Property="CornerRadius" Value="16"/>
 								</Style>

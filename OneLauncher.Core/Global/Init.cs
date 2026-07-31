@@ -82,11 +82,6 @@ public static partial class Init
             services.AddSingleton<JavaManager>(javaManager);
             JavaManager = javaManager;
 
-            /*
-             调试代码
-             */
-            //ConfigManager.Data.FavoriteServers.Add("zw",new ServerConfig("mc.zhweaa.dpdns.org","25568", "084c3333"));
-
             return services; 
         }
         #region

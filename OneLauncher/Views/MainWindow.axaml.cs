@@ -1,4 +1,5 @@
 ﻿using Avalonia.Controls;
+using Avalonia;
 using Avalonia.Controls.Chrome;
 using Avalonia.Controls.Notifications;
 using Avalonia.Interactivity;
@@ -48,8 +49,10 @@ public partial class MainWindow : Window
     public account accountPage;
     public ModsBrowser modsBrowserPage;
     public gamedata gamedataPage;
+    public server serverPage;
     public static MainWindow mainwindow { get; set; }
     bool IsError;
+    bool _isUiSettingsSubscribed;
     IServiceCollection servises;
     public readonly IServiceProvider provider;
     public MainWindow()
@@ -64,6 +67,7 @@ public partial class MainWindow : Window
             servises.AddSingleton<AccountPageViewModel>();
             servises.AddSingleton<DownloadPageViewModel>();
             servises.AddSingleton<GameDataPageViewModel>();
+            servises.AddSingleton<ServerPageViewModel>();
             servises.AddSingleton<HomePageViewModel>();
             servises.AddSingleton<ModsBrowserViewModel>();
             servises.AddSingleton<SettingsPageViewModel>();
@@ -71,6 +75,8 @@ public partial class MainWindow : Window
 
             // Pane ViewModel本身是单例的，但工厂模式可以保证每次获取都是新的实例
             servises.AddSingleton<NewGameDataPaneViewModelFactory>();
+            servises.AddSingleton<AddServerPaneViewModelFactory>();
+            servises.AddSingleton<EditServerPaneViewModelFactory>();
             servises.AddSingleton<DownloadPaneViewModelFactory>();
             servises.AddSingleton<EditGameDataPaneViewModelFactory>();
             servises.AddSingleton<PowerPlayPaneViewModelFactory>();
@@ -79,6 +85,9 @@ public partial class MainWindow : Window
 
             provider = servises.BuildServiceProvider();
             PageContent.Content = new Home();
+            ApplyUiSettings();
+            Init.ConfigManger.OnDataChanged += OnConfigDataChanged;
+            _isUiSettingsSubscribed = true;
             // 注册消息
             WeakReferenceMessenger.Default.Register<MainWindowShowFlyoutMessage>(this, (re, message) => ShowFlyout(message.Title,message.Context,message.Type));
         }
@@ -110,6 +119,8 @@ public partial class MainWindow : Window
                 { DataContext = provider.GetRequiredService<SettingsPageViewModel>() };
                 gamedataPage = new gamedata()
                 { DataContext = provider.GetRequiredService<GameDataPageViewModel>() };
+                serverPage = new server()
+                { DataContext = provider.GetRequiredService<ServerPageViewModel>() };
             }
             catch (OlanException ex)
             {
@@ -120,9 +131,23 @@ public partial class MainWindow : Window
     protected override void OnClosing(WindowClosingEventArgs e)
     {
         base.OnClosing(e);
+        if (_isUiSettingsSubscribed)
+            Init.ConfigManger.OnDataChanged -= OnConfigDataChanged;
         foreach(var dis in Init.OnApplicationClosingReleaseSourcesList)
             dis.Dispose();
     }
+
+    private void OnConfigDataChanged() => Dispatcher.UIThread.Post(ApplyUiSettings);
+
+    private void ApplyUiSettings()
+    {
+        var appSettings = Init.ConfigManger.Data.OlanSettings;
+        Resources["LeftButtonListItemMargin"] = new Thickness(
+            Math.Clamp(appSettings.LeftButtonListSpacing, 0, 30));
+        ServerListBoxItem.IsVisible = appSettings.IsServerPageVisible;
+        VersionListBoxItem.IsVisible = appSettings.IsVersionPageVisible;
+    }
+
     /// <summary>
     /// 在右下角显示提示信息
     /// </summary>
@@ -160,6 +185,9 @@ public partial class MainWindow : Window
             case "GameData":
                 PageContent.Content = gamedataPage;
                 break;
+            case "Server":
+                PageContent.Content = serverPage;
+                break;
             case "Settings":
                 PageContent.Content = settingsPage;
                 break;
@@ -174,7 +202,7 @@ public partial class MainWindow : Window
         AccountText.IsVisible = IsOpen;
         DownloadText.IsVisible = IsOpen;
         SettingsText.IsVisible = IsOpen;
-        //ServerText.IsVisible = IsOpen;
+        ServerText.IsVisible = IsOpen;
         ModsBrowserText.IsVisible = IsOpen;
         SidebarSplitView.IsPaneOpen = IsOpen;
     }
