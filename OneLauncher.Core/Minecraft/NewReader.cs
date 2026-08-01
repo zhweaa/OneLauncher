@@ -27,7 +27,7 @@ public class MinecraftNewsReader : INewReader
         "https://www.minecraft.net/en-us/about-minecraft"
         );
 
-    private readonly HttpClient _httpClient = Init.Download.unityClient;
+    private readonly HttpClient _httpClient = Init.Download.UnityClient;
     private int _currentIndex = -1; // -1表示从未加载过
     private int _totalNewsCount = -1; // 缓存新闻总数，避免重复解析来获取长度
 

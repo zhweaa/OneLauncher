@@ -16,7 +16,7 @@ using OneLauncher.Core.Helper;
 using OneLauncher.Core.Helper.ImportPCL2Version;
 using OneLauncher.Core.Helper.Models;
 using OneLauncher.Core.Launcher;
-using OneLauncher.Core.Server;
+using OneLauncher.Core.Net.Server;
 using OneLauncher.Views.Panes;
 using OneLauncher.Views.Panes.PaneViewModels;
 using OneLauncher.Views.Panes.PaneViewModels.Factories;

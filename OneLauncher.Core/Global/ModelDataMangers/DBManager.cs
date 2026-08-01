@@ -1,6 +1,6 @@
 ﻿using OneLauncher.Core.Downloader.DownloadMinecraftProviders;
 using OneLauncher.Core.Helper.Models;
-using OneLauncher.Core.Server;
+using OneLauncher.Core.Net.Server;
 using System.Diagnostics;
 using System.Text.Json;
 using System.Text.Json.Serialization;

@@ -23,7 +23,7 @@ public class SpecifiedFabricVersionConfig
     /// <param name="version">游戏版本</param>
     public async Task<List<string>> GetVersions(string version)
     {
-        using Stream rep = await Init.Download.unityClient
+        using Stream rep = await Init.Download.UnityClient
             .GetStreamAsync($"https://meta.fabricmc.net/v2/versions/loader/{version}");
         node = (await JsonNode.ParseAsync(rep))?.Root?.AsArray() ?? throw new OlanException("内部错误", "无法解析Fabric文本");
         List<string> versions = new List<string>();

@@ -16,6 +16,8 @@
     <Compile Include="$(MSBuildThisFileDirectory)JavaProviders\GraalVMGetter.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)JavaProviders\MicrosoftBuildofOpenJDKGetter.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)JavaProviders\OracleJDK.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Server\MinecraftServerManger.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Server\ServerEntry.cs" />
     <Compile Include="..\OneLauncher.Core.Net\JavaProviders\AzulZuluAPI.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)JavaProviders\BaseJavaProvider.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)JavaProviders\IJavaProvider.cs" />

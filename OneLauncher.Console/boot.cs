@@ -2,7 +2,7 @@
 using OneLauncher.Core.Helper;
 using OneLauncher.Core.Helper.Models;
 using OneLauncher.Core.Launcher;
-using OneLauncher.Core.Server;
+using OneLauncher.Core.Net.Server;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;

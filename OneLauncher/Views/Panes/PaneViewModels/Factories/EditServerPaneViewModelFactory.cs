@@ -1,5 +1,5 @@
 using OneLauncher.Core.Global.ModelDataMangers;
-using OneLauncher.Core.Server;
+using OneLauncher.Core.Net.Server;
 using System;
 
 namespace OneLauncher.Views.Panes.PaneViewModels.Factories;

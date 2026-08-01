@@ -4,7 +4,7 @@ using CommunityToolkit.Mvvm.Input;
 using CommunityToolkit.Mvvm.Messaging;
 using OneLauncher.Codes;
 using OneLauncher.Core.Global;
-using OneLauncher.Core.Server;
+using OneLauncher.Core.Net.Server;
 using OneLauncher.Views.ViewModels;
 using System;
 using System.Diagnostics;

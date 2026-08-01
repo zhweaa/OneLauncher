@@ -107,7 +107,7 @@ internal partial class SettingsPageViewModel : BaseViewModel
                 new ()
                 {
                     Ip = "mc.hypixel.net",
-                    Port  = "25565",
+                    Port = 25565,
                 },
                 "Hypixel",
                 "为避免空旷为您添加了一个默认的受欢迎服务器"

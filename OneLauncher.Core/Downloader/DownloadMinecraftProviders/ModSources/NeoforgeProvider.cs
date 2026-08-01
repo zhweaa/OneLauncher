@@ -36,7 +36,7 @@ internal class NeoforgeProvider : IModLoaderConcreteProviders
         else
         {
             // 自动获取最新版本
-            installerUrl = await new ForgeVersionListGetter(_context.DownloadTool.unityClient)
+            installerUrl = await new ForgeVersionListGetter(_context.DownloadTool.UnityClient)
                 .GetInstallerUrlAsync(
                     false,
                     _context.ID,

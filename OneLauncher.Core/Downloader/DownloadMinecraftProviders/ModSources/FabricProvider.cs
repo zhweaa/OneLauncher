@@ -39,7 +39,7 @@ internal class FabricProvider : IModLoaderConcreteProviders
         // 如果没有指定Fabric版本，从API返回的第一个数据取最新的版本
         else
         {
-            using Stream rep = await Init.Download.unityClient
+            using Stream rep = await Init.Download.UnityClient
                 .GetStreamAsync($"https://meta.fabricmc.net/v2/versions/loader/{_context.ID}");
             using JsonDocument document = JsonDocument.Parse(rep);
             JsonElement firstElement = document.RootElement[0];

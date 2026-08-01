@@ -41,7 +41,8 @@
                                     ClipToBounds="True">
                                 <Image Width="64"
                                        Height="64"
-                                       Source="/Assets/Imgs/basic.png" />
+                                       Source="{Binding Icon}"
+                                       Stretch="UniformToFill" />
                             </Border>
 
                             <StackPanel Grid.Column="1"

@@ -13,7 +13,7 @@ using System.Threading.Tasks;
 using OneLauncher.Core.Launcher;
 using OneLauncher.Core.Minecraft;
 
-namespace OneLauncher.Core.Server;
+namespace OneLauncher.Core.Net.Server;
 
 public class MinecraftServerManger
 {

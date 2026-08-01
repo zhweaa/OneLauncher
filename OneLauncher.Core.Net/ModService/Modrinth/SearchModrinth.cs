@@ -6,7 +6,7 @@ namespace OneLauncher.Core.Net.ModService.Modrinth;
 public class SearchModrinth
 {
     public ModrinthSearch? info;
-    private readonly HttpClient httpClient = Init.Download.unityClient; // 如果不需求高安全性身份验证就用这个
+    private readonly HttpClient httpClient = Init.Download.UnityClient; // 如果不需求高安全性身份验证就用这个
     public SearchModrinth()
     {
     }

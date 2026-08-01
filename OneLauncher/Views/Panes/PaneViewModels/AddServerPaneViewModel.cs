@@ -4,7 +4,7 @@ using CommunityToolkit.Mvvm.Input;
 using CommunityToolkit.Mvvm.Messaging;
 using OneLauncher.Core.Global.ModelDataMangers;
 using OneLauncher.Core.Helper.Models;
-using OneLauncher.Core.Server;
+using OneLauncher.Core.Net.Server;
 using OneLauncher.Views.ViewModels;
 using System;
 using System.Collections.Generic;
@@ -83,14 +83,14 @@ internal partial class AddServerPaneViewModel : BaseViewModel
             new ServerInfo
             {
                 Ip = ServerAddress.Trim(),
-                Port = port.ToString()
+                Port = port
             },
             ServerName.Trim(),
             description);
 
         _dbManager.Data.ServerList.Add(serverEntry);
         await _dbManager.Save();
-
+        await serverEntry.GetAASServerInfo();
         WeakReferenceMessenger.Default.Send(
             new MainWindowShowFlyoutMessage(
                 $"已添加服务器收藏：{serverEntry.Name}",

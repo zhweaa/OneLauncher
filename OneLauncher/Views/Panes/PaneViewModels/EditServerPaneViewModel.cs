@@ -1,9 +1,15 @@
+using Avalonia.Controls;
 using Avalonia.Controls.Notifications;
+using Avalonia.Media.Imaging;
+using Avalonia.Platform.Storage;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using CommunityToolkit.Mvvm.Messaging;
+using OneLauncher.Codes;
+using OneLauncher.Core.Global;
 using OneLauncher.Core.Global.ModelDataMangers;
-using OneLauncher.Core.Server;
+using OneLauncher.Core.Helper.Models;
+using OneLauncher.Core.Net.Server;
 using OneLauncher.Views.ViewModels;
 using System;
 using System.IO;
@@ -20,9 +26,12 @@ internal partial class EditServerPaneViewModel : BaseViewModel
 
     [ObservableProperty] private string serverName;
     [ObservableProperty] private string? serverDescription;
+    [ObservableProperty] private string serverPort;
+    [ObservableProperty] private string serverIP;
+    [ObservableProperty] private Bitmap currentIcon;
 
     public string OriginalName => _editingServer.Name;
-    public string Address => $"{_editingServer.ServerInfo.Ip}:{_editingServer.ServerInfo.Port}";
+    public string Address => _editingServer.ReadableAddress;
     public string InstanceId => _editingServer.InstanceId;
     public string Id => _editingServer.Id.ToString();
 
@@ -36,16 +45,74 @@ internal partial class EditServerPaneViewModel : BaseViewModel
         _onCloseCallback = onCloseCallback;
         ServerName = editingServer.Name;
         ServerDescription = editingServer.Description;
+        ServerIP = editingServer.ServerInfo.Ip;
+        ServerPort = editingServer.ServerInfo.Port.ToString();
+        CurrentIcon = ServerIconLoader.Load(editingServer);
     }
 
     [RelayCommand]
-    private void ChangeIcon()
+    private async Task ChangeIcon()
     {
+        TopLevel? topLevel = TopLevel.GetTopLevel(MainWindow.mainwindow);
+        if (topLevel?.StorageProvider is not { CanOpen: true } storageProvider)
+            return;
+
+        var files = await storageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
+        {
+            Title = "选择服务器图标",
+            AllowMultiple = false,
+            FileTypeFilter = [FilePickerFileTypes.ImageAll]
+        });
+
+        var selectedFile = files.FirstOrDefault();
+        if (selectedFile == null)
+            return;
+
+        Directory.CreateDirectory(Path.GetDirectoryName(_editingServer.IconFileUrl)!);
+        string temporaryPath = $"{_editingServer.IconFileUrl}.{Guid.NewGuid():N}.tmp";
+
+        try
+        {
+            await using Stream sourceStream = await selectedFile.OpenReadAsync();
+            using Bitmap selectedBitmap = new(sourceStream);
+            await using (FileStream temporaryFile = File.Create(temporaryPath))
+                selectedBitmap.Save(temporaryFile);
+            File.Move(temporaryPath, _editingServer.IconFileUrl, true);
+
+            CurrentIcon = ServerIconLoader.Load(_editingServer);
+            await _dbManager.Save();
+            ShowMessage($"已更改服务器“{_editingServer.Name}”的图标。", NotificationType.Success);
+        }
+        catch (Exception ex)
+        {
+            ShowMessage($"更改服务器图标失败：{ex.Message}", NotificationType.Error);
+        }
+        finally
+        {
+            if (File.Exists(temporaryPath))
+                File.Delete(temporaryPath);
+        }
     }
 
     [RelayCommand]
-    private void GetServerInfo()
+    private async Task GetServerInfo()
     {
+        try
+        {
+            await _editingServer.GetAASServerInfo();
+            ServerDescription = _editingServer.Description;
+            CurrentIcon = ServerIconLoader.Load(_editingServer);
+            await _dbManager.Save();
+            ShowMessage("已更新服务器信息。", NotificationType.Success);
+        }
+        catch (OlanException ex)
+        {
+            await OlanExceptionWorker.ForOlanException(ex, () => _ = GetServerInfo());
+        }
+        catch (Exception ex)
+        {
+            await OlanExceptionWorker.ForUnknowException(ex, () => _ = GetServerInfo());
+        }
     }
 
     [RelayCommand]
@@ -96,10 +163,22 @@ internal partial class EditServerPaneViewModel : BaseViewModel
             return;
         }
 
-        _editingServer.Name = ServerName.Trim();
-        _editingServer.Description = string.IsNullOrWhiteSpace(ServerDescription)
-            ? null
-            : ServerDescription.Trim();
+        _editingServer.Name = ServerName;
+        _editingServer.Description = ServerDescription;
+        if(ushort.TryParse(ServerPort, out ushort port))
+        {
+            if(port < 0 || port > 65535)
+            {
+                ShowMessage("端口格式不正确！", NotificationType.Warning);
+                return;
+            }
+            _editingServer.ServerInfo = new ServerInfo(ServerIP, port);
+        }
+        else
+        {
+            ShowMessage("端口格式不正确！", NotificationType.Warning);
+            return;
+        }
 
         await _dbManager.Save();
         ShowMessage($"服务器收藏“{_editingServer.Name}”已保存。", NotificationType.Success);
@@ -112,6 +191,16 @@ internal partial class EditServerPaneViewModel : BaseViewModel
         _dbManager.Data.ServerList.RemoveAll(server => server.Id == _editingServer.Id);
         if (_dbManager.Data.OlanSettings.DefaultServerID == _editingServer.Id)
             _dbManager.Data.OlanSettings.DefaultServerID = null;
+
+        try
+        {
+            if (File.Exists(_editingServer.IconFileUrl))
+                File.Delete(_editingServer.IconFileUrl);
+        }
+        catch (Exception ex)
+        {
+            ShowMessage($"删除服务器图标失败：{ex.Message}", NotificationType.Warning);
+        }
 
         await _dbManager.Save();
         ShowMessage($"已删除服务器收藏“{_editingServer.Name}”。", NotificationType.Success);

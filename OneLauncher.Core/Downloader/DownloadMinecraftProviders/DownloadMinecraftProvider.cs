@@ -26,7 +26,7 @@ public enum DownProgress
 public partial class DownloadMinecraft
 {
     private readonly JavaManager _javaManager = Init.JavaManager;
-    private readonly RaceDownloader _raceDownloader = new RaceDownloader(Init.Download.unityClient);
+    private readonly RaceDownloader _raceDownloader = new RaceDownloader(Init.Download.UnityClient);
     private Task DownloadClientTasker(NdDowItem main)
     {
         NdDowItem[] downloadSources = _urlProviders.Select(p => p.GetClientMainFile(main)).ToArray();

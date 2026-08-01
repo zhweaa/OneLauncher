@@ -1,4 +1,5 @@
 ﻿using Microsoft.Identity.Client;
+using OneLauncher.Core.Global;
 using System;
 using System.Diagnostics;
 using System.IO;
@@ -17,8 +18,19 @@ public enum SortingType
 }
 public struct ServerInfo
 {
-    public string Ip { get; set; }
-    public string Port { get; set; }
+    public ServerInfo(string ip, ushort port)
+    {
+        string host = ip?.Trim() ?? string.Empty;
+        if (host.Length == 0 || port < 0 || port > 65535)
+        {
+            throw new OlanException("无法获取服务器信息", "服务器地址或端口无效");
+        }
+
+        Ip = host;
+        Port = port;
+    }
+    public string Ip { get; init; }
+    public ushort Port { get; init; }
 }
 public struct ModType
 {

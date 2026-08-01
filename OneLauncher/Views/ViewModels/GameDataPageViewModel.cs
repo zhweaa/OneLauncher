@@ -46,11 +46,16 @@ internal partial class GameDataItem : BaseViewModel
     {
         ServerInfo? quicklyPlayServerInfo = null;
         if(QuicklyServerInfoIP != null)
+        {
+            ushort quicklyPlayPort = ushort.TryParse(QuicklyServerInfoPort, out ushort parsedPort)
+                ? parsedPort
+                : (ushort)25565;
             quicklyPlayServerInfo = new ServerInfo
             {
                 Ip = QuicklyServerInfoIP,
-                Port = QuicklyServerInfoPort ?? "25565"
+                Port = quicklyPlayPort
             };
+        }
         _=Game.EasyGameLauncher(
             gameData,
             useDebugMode: IsUseDebugModLaunch,

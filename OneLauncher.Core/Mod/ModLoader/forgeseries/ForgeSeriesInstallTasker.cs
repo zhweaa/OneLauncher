@@ -53,7 +53,7 @@ namespace OneLauncher.Core.Mod.ModLoader.forgeseries
             try
             {
                 using var memoryStream = new MemoryStream();
-                using var response = await _downloadTask.unityClient.GetAsync(installerUrl);
+                using var response = await _downloadTask.UnityClient.GetAsync(installerUrl);
                 response.EnsureSuccessStatusCode();
                 await response.Content.CopyToAsync(memoryStream);
                 memoryStream.Position = 0;

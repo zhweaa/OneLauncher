@@ -22,7 +22,7 @@ public class GetModrinth
     }
     public async Task Init()
     {
-        var client = Global.Init.Download.unityClient; 
+        var client = Global.Init.Download.UnityClient; 
         var Url = $"https://api.modrinth.com/v2/project/{ModID}/version?game_versions=[\"{version}\"]&loaders=[\"{modType.ToString()}\"]";
         Debug.WriteLine($"[OneLauncher.Core.Net.ModService.Modrinth.GetModrinth.Init] 正在请求{Url}");
         HttpResponseMessage response = await client.GetAsync(Url);

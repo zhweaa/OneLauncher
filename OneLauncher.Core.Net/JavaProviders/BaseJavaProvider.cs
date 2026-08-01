@@ -17,7 +17,7 @@ internal abstract class BaseJavaProvider
     protected readonly string systemArchName;
     protected readonly string installTo;
     protected readonly string javaVersion;
-    protected readonly HttpClient httpClient = Init.Download.unityClient; // 如果不需求高安全性身份验证就用这个
+    protected readonly HttpClient httpClient = Init.Download.UnityClient; // 如果不需求高安全性身份验证就用这个
     public abstract string ProviderName { get; }
     public override string ToString() => ProviderName;
     public CancellationToken? CancelToken { get; set; }

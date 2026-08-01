@@ -1,4 +1,6 @@
 using Avalonia.Controls;
+using Avalonia.Media.Imaging;
+using Avalonia.Platform;
 using Avalonia.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -7,25 +9,49 @@ using OneLauncher.Core.Global;
 using OneLauncher.Core.Global.ModelDataMangers;
 using OneLauncher.Core.Helper;
 using OneLauncher.Core.Helper.Models;
-using OneLauncher.Core.Server;
+using OneLauncher.Core.Net.Server;
 using OneLauncher.Views.Panes;
 using OneLauncher.Views.Panes.PaneViewModels.Factories;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 
 namespace OneLauncher.Views.ViewModels;
 
+internal static class ServerIconLoader
+{
+    public static Bitmap Load(ServerEntry serverEntry)
+    {
+        if (File.Exists(serverEntry.IconFileUrl))
+        {
+            try
+            {
+                return new Bitmap(serverEntry.IconFileUrl);
+            }
+            catch
+            {
+                // 损坏的本地图标不应阻止服务器列表显示。
+            }
+        }
+
+        return new Bitmap(AssetLoader.Open(
+            new Uri("avares://OneLauncher/Assets/Imgs/basic.png")));
+    }
+}
+
 internal sealed class ServerItem : BaseViewModel
 {
     public ServerEntry data { get; }
+    public Bitmap Icon { get; }
     public bool IsDefault { get; }
     public bool HasDescription => !string.IsNullOrWhiteSpace(data.Description);
 
     public ServerItem(ServerEntry serverEntry, Guid? defaultServerId)
     {
         data = serverEntry;
+        Icon = ServerIconLoader.Load(serverEntry);
         IsDefault = serverEntry.Id == defaultServerId;
     }
 }

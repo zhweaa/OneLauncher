@@ -49,16 +49,16 @@ public partial class Download : IDisposable
     }
     public Download(HttpClient? tc = null)
     {
-        unityClient = tc ?? new HttpClient(new HttpClientHandler
+        UnityClient = tc ?? new HttpClient(new HttpClientHandler
         {
             MaxConnectionsPerServer = 32 
         })
         {
             Timeout = TimeSpan.FromSeconds(60) 
         };
-        unityClient.DefaultRequestHeaders.UserAgent.ParseAdd("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36");
+        UnityClient.DefaultRequestHeaders.UserAgent.ParseAdd("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36");
     }
-    public readonly HttpClient unityClient;
+    public readonly HttpClient UnityClient;
 
     /// <summary>
     /// 开始异步下载Mod（可选是否下载依赖项）
@@ -147,7 +147,7 @@ public partial class Download : IDisposable
                     using (var request = new HttpRequestMessage(HttpMethod.Get, item.url))
                     {
                         request.Headers.CacheControl = new CacheControlHeaderValue { NoCache = true, NoStore = true, MustRevalidate = true };
-                        using (var response = await unityClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, ct))
+                        using (var response = await UnityClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, ct))
                         {
                             response.EnsureSuccessStatusCode();
                             using (var httpStream = await response.Content.ReadAsStreamAsync(ct))
@@ -190,7 +190,7 @@ public partial class Download : IDisposable
                             using (var request = new HttpRequestMessage(HttpMethod.Get, item.url))
                             {
                                 request.Headers.CacheControl = new CacheControlHeaderValue { NoCache = true, NoStore = true, MustRevalidate = true };
-                                using (var response = await unityClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, ct))
+                                using (var response = await UnityClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, ct))
                                 {
                                     response.EnsureSuccessStatusCode();
                                     using (var httpStream = await response.Content.ReadAsStreamAsync(ct))
@@ -273,7 +273,7 @@ public partial class Download : IDisposable
             MustRevalidate = true
         };
 
-        using var probeResponse = await unityClient.SendAsync(
+        using var probeResponse = await UnityClient.SendAsync(
             probeRequest,
             HttpCompletionOption.ResponseHeadersRead,
             token);
@@ -350,7 +350,7 @@ public partial class Download : IDisposable
                         using var request = new HttpRequestMessage(HttpMethod.Get, url);
                         request.Headers.Range = new RangeHeaderValue(segment.Start, segment.End);
 
-                        using var response = await unityClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, ct);
+                        using var response = await UnityClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, ct);
                         response.EnsureSuccessStatusCode();
 
                         ContentRangeHeaderValue? responseRange = response.Content.Headers.ContentRange;
@@ -447,7 +447,7 @@ public partial class Download : IDisposable
         if (string.IsNullOrEmpty(url))
             return;
         CancellationToken cancellationToken = token ?? CancellationToken.None;
-        using (var response = await unityClient.GetAsync(url, HttpCompletionOption.ResponseHeadersRead,cancellationToken))
+        using (var response = await UnityClient.GetAsync(url, HttpCompletionOption.ResponseHeadersRead,cancellationToken))
         {
             response.EnsureSuccessStatusCode();
             using (var httpStream = await response.Content.ReadAsStreamAsync(cancellationToken))
@@ -463,7 +463,7 @@ public partial class Download : IDisposable
     }
     public async Task DownloadFileAndSha1(string url, string savepath,string sha1, CancellationToken token)
     {
-        using (var response = await unityClient.GetAsync(url, HttpCompletionOption.ResponseHeadersRead, token))
+        using (var response = await UnityClient.GetAsync(url, HttpCompletionOption.ResponseHeadersRead, token))
         {
             response.EnsureSuccessStatusCode();
             using (var httpStream = await response.Content.ReadAsStreamAsync(token))
@@ -536,5 +536,5 @@ public partial class Download : IDisposable
         }
         await Task.WhenAll(sha1Tasks);
     }
-    public void Dispose() => unityClient.Dispose();
+    public void Dispose() => UnityClient.Dispose();
 }

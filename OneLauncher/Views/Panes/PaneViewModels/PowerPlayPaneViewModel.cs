@@ -193,7 +193,7 @@ public partial class PowerPlayPaneViewModel : BaseViewModel
                     version.EasyGameLauncher(instanceToLaunch, serverInfo: new ServerInfo
                     {
                         Ip = "127.0.0.1",
-                        Port = localPort.ToString()
+                        Port = checked((ushort)localPort)
                     });
                 };
 

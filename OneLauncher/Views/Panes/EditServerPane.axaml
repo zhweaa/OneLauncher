@@ -25,7 +25,7 @@
                             CornerRadius="6"
                             ClipToBounds="True"
                             Background="{DynamicResource CardBackgroundBrush}">
-                        <Image Source="/Assets/Imgs/basic.png" Stretch="UniformToFill" />
+                        <Image Source="{Binding CurrentIcon}" Stretch="UniformToFill" />
                     </Border>
                     <StackPanel Grid.Column="1"
                                 VerticalAlignment="Center"
@@ -51,6 +51,20 @@
                                  AcceptsReturn="True"
                                  TextWrapping="Wrap"
                                  MinHeight="80" />
+                    </StackPanel>
+                </Border>
+
+                <TextBlock Classes="pane-section-title" Text="服务器连接配置" />
+                <Border Classes="pane-surface">
+                    <StackPanel Spacing="8">
+                        <TextBlock Classes="pane-label" Text="地址（IP）" />
+                        <TextBox Classes="pane-field" 
+                                 Text="{Binding ServerIP}" 
+                                 Watermark="输入服务器IP地址（不含端口）"/>
+                        <TextBlock Classes="pane-label" Text="服务器端口号" Margin="0,8,0,0" />
+                        <TextBox Classes="pane-field"
+                                 Text="{Binding ServerPort}"
+                                 Watermark="输入服务器地址中的端口（如25565）"/>
                     </StackPanel>
                 </Border>
 

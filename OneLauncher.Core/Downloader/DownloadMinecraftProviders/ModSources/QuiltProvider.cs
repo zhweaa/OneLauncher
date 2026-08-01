@@ -27,7 +27,7 @@ internal class QuiltProvider : IModLoaderConcreteProviders
         );
 
         // 从 Quilt Meta 获取加载器信息
-        using Stream rep = await Init.Download.unityClient
+        using Stream rep = await Init.Download.UnityClient
             .GetStreamAsync($"https://meta.quiltmc.org/v3/versions/loader/{_context.ID}");
         using JsonDocument document = JsonDocument.Parse(rep);
         JsonElement firstElement = document.RootElement[0];
