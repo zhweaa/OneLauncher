@@ -1,17 +1,18 @@
 <Styles xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
-	<Style Selector="Button">
-		<Setter Property="Background" Value="Transparent"/>
-		<Setter Property="Foreground" Value="Blue"/>
-		<Setter Property="HorizontalContentAlignment" Value="Center" />
-		<Setter Property="VerticalContentAlignment" Value="Center" />
-	</Style>
-	<Style Selector="Button:pointerover /template/ ContentPresenter">
-		<Setter Property="Background" Value="Transparent"/>
-		<Setter Property="Foreground" Value="Purple"/>
-	</Style>
-	<Style Selector="Button:pressed /template/ ContentPresenter">
-		<Setter Property="Background" Value="Transparent"/>
-		<Setter Property="Foreground" Value="Purple"/>
-	</Style>
+    <Style Selector="Button.link-button">
+        <Setter Property="Background" Value="Transparent"/>
+        <Setter Property="Foreground" Value="{DynamicResource AccentBrush}"/>
+        <Setter Property="BorderThickness" Value="0"/>
+        <Setter Property="Padding" Value="8,5"/>
+        <Setter Property="HorizontalContentAlignment" Value="Left"/>
+        <Setter Property="Cursor" Value="Hand"/>
+    </Style>
+    <Style Selector="Button.link-button:pointerover /template/ ContentPresenter">
+        <Setter Property="Background" Value="{DynamicResource AccentHoverBrush}"/>
+        <Setter Property="Foreground" Value="{DynamicResource AccentBrush}"/>
+    </Style>
+    <Style Selector="Button.link-button:pressed /template/ ContentPresenter">
+        <Setter Property="Background" Value="{DynamicResource AccentPressedBrush}"/>
+    </Style>
 </Styles>

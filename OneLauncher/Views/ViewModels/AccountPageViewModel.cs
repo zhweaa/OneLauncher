@@ -78,7 +78,6 @@ internal partial class AccountPageViewModel : BaseViewModel
     }
     public AccountPageViewModel(AccountManager manager,MsalAuthenticator msalAuthenticator, UserModelLoginPaneViewModelFactory userModelLoginPaneFactory)
     {
-        Thread.Sleep(1000);
         this._userModelLoginPaneFactory = userModelLoginPaneFactory;
         this._accountManager = manager;
         this._msalAuthenticator = msalAuthenticator;

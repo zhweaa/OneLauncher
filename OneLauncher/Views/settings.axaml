@@ -4,32 +4,25 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              mc:Ignorable="d" d:DesignWidth="818" d:DesignHeight="1000"
 			 xmlns:vm="using:OneLauncher.Views.ViewModels"
+			 xmlns:controls="using:OneLauncher.Views.Controls"
 			 xmlns:downmc="using:OneLauncher.Core.Downloader.DownloadMinecraftProviders"
 			 x:DataType="vm:SettingsPageViewModel"
 			 x:CompileBindings="True"
              x:Class="OneLauncher.Views.settings">
-	<SplitView IsPaneOpen="{Binding IsPaneShow,Mode=TwoWay}"
-               DisplayMode="Overlay"
-               OpenPaneLength="650"
-               PanePlacement="Right">
-		<SplitView.Pane>
-			<TransitioningContentControl
-				Background="{DynamicResource PaneBackgound}"
-					Content="{Binding PaneContent}">
-			</TransitioningContentControl>
-		</SplitView.Pane>
+	<controls:PageShell IsPaneOpen="{Binding IsPaneShow,Mode=TwoWay}"
+						PaneContent="{Binding PaneContent}">
   <ScrollViewer>
-	  <StackPanel Margin="64" Spacing="36">
+	  <StackPanel Margin="40,28" Spacing="28">
+		  <TextBlock Classes="page-title" Text="设置"/>
 		  <!-- UI 选项 -->
-		  <StackPanel Spacing="8" HorizontalAlignment="Left">
-			  <TextBlock FontSize="24" FontWeight="Bold" Text="UI选项"/>
-			  <Separator Margin="-4,0,0,0"/>
+		  <StackPanel Classes="settings-section">
+			  <TextBlock Classes="section-title" Text="界面"/>
+			  <Separator Classes="section-divider"/>
 			  <StackPanel Margin="0,6,0,0">
 				  <TextBlock Text="左侧导航项间距："/>
-				  <NumericUpDown Value="{Binding LeftButtonListSpacing}"
-							 Minimum="0"
-							 Maximum="30"
-							 Width="150"/>
+				  <NumericUpDown Classes="settings-number" Value="{Binding LeftButtonListSpacing}"
+								 Minimum="0"
+								 Maximum="30"/>
 			  </StackPanel>
 			  <StackPanel Margin="0,16,0,0">
 				  <TextBlock Text="左侧导航页面"/>
@@ -52,9 +45,9 @@
 			  </StackPanel>
 		  </StackPanel>
 		  <!-- 游戏启动选项 -->
-		  <StackPanel Spacing="8" HorizontalAlignment="Left">
-			  <TextBlock FontSize="24" FontWeight="Bold" Text="游戏启动选项"/>
-			  <Separator Margin="-4,0,0,0"/>
+		  <StackPanel Classes="settings-section">
+			  <TextBlock Classes="section-title" Text="游戏启动"/>
+			  <Separator Classes="section-divider"/>
 			  <StackPanel Margin="0,6,0,0">
 				  <TextBlock Text="Jvm参数优化选项"/>
 				  
@@ -66,16 +59,16 @@
 			  </StackPanel>
 		  </StackPanel>
 		  <!-- 下载选项 -->
-		  <StackPanel Spacing="8" HorizontalAlignment="Left">
-			  <TextBlock FontSize="24" FontWeight="Bold" Text="下载选项"/>
-			  <Separator Margin="-4,0,0,0"/>
+		  <StackPanel Classes="settings-section">
+			  <TextBlock Classes="section-title" Text="下载"/>
+			  <Separator Classes="section-divider"/>
 			  <StackPanel Margin="0,6,0,0">
 				  <TextBlock Text="最大下载线程："/>
-				  <NumericUpDown Value="{Binding MaxDownloadThreadsValue}" Minimum="1" Maximum="128" Width="150"/>
+				  <NumericUpDown Classes="settings-number" Value="{Binding MaxDownloadThreadsValue}" Minimum="1" Maximum="128"/>
 			  </StackPanel>
 			  <StackPanel Margin="0,16,0,0">
 				  <TextBlock Text="最大Sha1校验线程："/>
-				  <NumericUpDown Value="{Binding MaxSha1ThreadsValue}" Minimum="1" Maximum="128" Width="150"/>
+				  <NumericUpDown Classes="settings-number" Value="{Binding MaxSha1ThreadsValue}" Minimum="1" Maximum="128"/>
 				  <TextBlock Text="是否校验Sha1" Margin="0,8,0,0"/>
 				  <ToggleSwitch IsChecked="{Binding IsSha1Enabled}">
 					  <ToggleSwitch.OnContent>
@@ -96,28 +89,25 @@
 			  </StackPanel>
 		  </StackPanel>
 		  <!-- 运行环境 -->
-		  <StackPanel Spacing="8" HorizontalAlignment="Left">
-			  <TextBlock FontSize="24" FontWeight="Bold" Text="运行环境"/>
-			  <Separator Margin="-4,0,0,0"/>
+		  <StackPanel Classes="settings-section">
+			  <TextBlock Classes="section-title" Text="运行环境"/>
+			  <Separator Classes="section-divider"/>
 			  <StackPanel Margin="0,6,0,0">
 				  <TextBlock Text="Java 运行环境"/>
 				  <Button Content="安装 Java" Command="{Binding OpenJavaInstallPaneCommand}" Margin="0,4,0,0"/>
 			  </StackPanel>
 		  </StackPanel>
 		  <!-- 关于 -->
-		  <StackPanel Spacing="8" HorizontalAlignment="Left">
-			  <TextBlock FontSize="24" FontWeight="Bold" Text="关于"/>
-			  <Separator Margin="-4,0,0,0"/>
+		  <StackPanel Classes="settings-section">
+			  <TextBlock Classes="section-title" Text="关于"/>
+			  <Separator Classes="section-divider"/>
 			  <StackPanel Margin="0,6,0,0">
 				  <StackPanel Orientation="Horizontal">
 					  <TextBlock Text="开发人员：Lnetface（Zhi Wei）" />
 					  <TextBlock Text="打开项目网站：" Margin="8,0,0,0"/>
-					  <Button Margin="-4,-5.5,0,0" Command="{Binding OpenGithubCommand}">
-						  <TextBlock Text="GitHub"/>
-						  <Button.Styles>
-							  <StyleInclude Source="avares://OneLauncher/Views/Styles/Label.axaml" />
-						  </Button.Styles>
-					  </Button>
+				  <Button Classes="link-button" Command="{Binding OpenGithubCommand}">
+					  <TextBlock Text="GitHub"/>
+				  </Button>
 				  </StackPanel>
 				  <TextBlock Tapped="TextBlock_Tapped">
 					  <Run Text="版本号："/>
@@ -127,5 +117,5 @@
 		  </StackPanel>
 	  </StackPanel>
   </ScrollViewer>
-		</SplitView>
+		</controls:PageShell>
 </UserControl>

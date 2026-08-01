@@ -1,0 +1,141 @@
+<Styles xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <Style Selector="Button.toolbar-action">
+        <Setter Property="MinHeight" Value="40"/>
+        <Setter Property="Padding" Value="12,7"/>
+        <Setter Property="CornerRadius" Value="8"/>
+        <Setter Property="Background" Value="{DynamicResource ListItemBackgroundBrush}"/>
+        <Setter Property="Foreground" Value="{DynamicResource PrimaryForegroundBrush}"/>
+        <Setter Property="BorderBrush" Value="{DynamicResource BorderSubtleBrush}"/>
+        <Setter Property="BorderThickness" Value="1"/>
+        <Setter Property="FontWeight" Value="Medium"/>
+        <Setter Property="VerticalContentAlignment" Value="Center"/>
+        <Setter Property="HorizontalContentAlignment" Value="Center"/>
+    </Style>
+    <Style Selector="Button.toolbar-action /template/ ContentPresenter">
+        <Setter Property="BoxShadow" Value="0 3 10 1 #32000000"/>
+        <Setter Property="Transitions">
+            <Transitions>
+                <BrushTransition Property="Background" Duration="0:0:0.14"/>
+                <BrushTransition Property="BorderBrush" Duration="0:0:0.14"/>
+                <BoxShadowsTransition Property="BoxShadow" Duration="0:0:0.14"/>
+            </Transitions>
+        </Setter>
+    </Style>
+    <Style Selector="Button.toolbar-action:pointerover /template/ ContentPresenter">
+        <Setter Property="Background" Value="{DynamicResource CardHoverBrush}"/>
+        <Setter Property="BorderBrush" Value="{DynamicResource BorderSubtleBrush}"/>
+        <Setter Property="BoxShadow" Value="0 6 16 1 #42000000"/>
+    </Style>
+    <Style Selector="Button.toolbar-action:pressed /template/ ContentPresenter">
+        <Setter Property="Background" Value="{DynamicResource ControlPressedBrush}"/>
+        <Setter Property="BoxShadow" Value="0 1 5 0 #26000000"/>
+    </Style>
+    <Style Selector="Button.toolbar-action StackPanel">
+        <Setter Property="Orientation" Value="Horizontal"/>
+        <Setter Property="Spacing" Value="7"/>
+        <Setter Property="HorizontalAlignment" Value="Center"/>
+        <Setter Property="VerticalAlignment" Value="Center"/>
+    </Style>
+    <Style Selector="Button.toolbar-action StackPanel > Image">
+        <Setter Property="VerticalAlignment" Value="Center"/>
+    </Style>
+    <Style Selector="Button.toolbar-action StackPanel > TextBlock">
+        <Setter Property="VerticalAlignment" Value="Center"/>
+        <Setter Property="FontWeight" Value="Medium"/>
+    </Style>
+
+    <Style Selector="Button.item-action">
+        <Setter Property="MinHeight" Value="32"/>
+        <Setter Property="Padding" Value="10,5"/>
+        <Setter Property="CornerRadius" Value="{StaticResource ControlCornerRadius}"/>
+        <Setter Property="VerticalContentAlignment" Value="Center"/>
+    </Style>
+    <Style Selector="Button.item-action StackPanel > Image">
+        <Setter Property="VerticalAlignment" Value="Center"/>
+    </Style>
+    <Style Selector="Button.item-action StackPanel > TextBlock">
+        <Setter Property="VerticalAlignment" Value="Center"/>
+    </Style>
+    <Style Selector="Button.danger-action">
+        <Setter Property="Background" Value="{DynamicResource DangerSubtleBrush}"/>
+        <Setter Property="Foreground" Value="{DynamicResource DangerBrush}"/>
+        <Setter Property="BorderBrush" Value="{DynamicResource DangerBrush}"/>
+        <Setter Property="BorderThickness" Value="1"/>
+        <Setter Property="CornerRadius" Value="{StaticResource ControlCornerRadius}"/>
+    </Style>
+    <Style Selector="Button.danger-action:pointerover /template/ ContentPresenter">
+        <Setter Property="Background" Value="{DynamicResource DangerBrush}"/>
+        <Setter Property="Foreground" Value="{DynamicResource OnAccentBrush}"/>
+    </Style>
+
+    <Style Selector="Border.status-badge">
+        <Setter Property="Background" Value="{DynamicResource AccentHoverBrush}"/>
+        <Setter Property="BorderBrush" Value="{DynamicResource AccentBrush}"/>
+        <Setter Property="BorderThickness" Value="1"/>
+        <Setter Property="CornerRadius" Value="4"/>
+        <Setter Property="Padding" Value="8,4"/>
+        <Setter Property="VerticalAlignment" Value="Center"/>
+    </Style>
+    <Style Selector="Border.status-badge.warning">
+        <Setter Property="Background" Value="{DynamicResource WarningSubtleBrush}"/>
+        <Setter Property="BorderBrush" Value="{DynamicResource WarningBrush}"/>
+    </Style>
+    <Style Selector="Border.status-badge.danger">
+        <Setter Property="Background" Value="{DynamicResource DangerSubtleBrush}"/>
+        <Setter Property="BorderBrush" Value="{DynamicResource DangerBrush}"/>
+    </Style>
+    <Style Selector="Border.status-badge.success">
+        <Setter Property="Background" Value="{DynamicResource SuccessSubtleBrush}"/>
+        <Setter Property="BorderBrush" Value="{DynamicResource SuccessBrush}"/>
+    </Style>
+    <Style Selector="Border.status-badge > TextBlock">
+        <Setter Property="FontSize" Value="12"/>
+        <Setter Property="FontWeight" Value="SemiBold"/>
+        <Setter Property="Foreground" Value="{DynamicResource AccentBrush}"/>
+    </Style>
+    <Style Selector="Border.status-badge.warning > TextBlock">
+        <Setter Property="Foreground" Value="{DynamicResource WarningBrush}"/>
+    </Style>
+    <Style Selector="Border.status-badge.danger > TextBlock">
+        <Setter Property="Foreground" Value="{DynamicResource DangerBrush}"/>
+    </Style>
+    <Style Selector="Border.status-badge.success > TextBlock">
+        <Setter Property="Foreground" Value="{DynamicResource SuccessBrush}"/>
+    </Style>
+
+    <Style Selector="TextBox.search-field">
+        <Setter Property="MinHeight" Value="38"/>
+        <Setter Property="CornerRadius" Value="{StaticResource ControlCornerRadius}"/>
+    </Style>
+    <Style Selector="AutoCompleteBox.search-field">
+        <Setter Property="MinHeight" Value="38"/>
+        <Setter Property="CornerRadius" Value="{StaticResource ControlCornerRadius}"/>
+    </Style>
+    <Style Selector="NumericUpDown.settings-number">
+        <Setter Property="Width" Value="150"/>
+        <Setter Property="HorizontalAlignment" Value="Left"/>
+        <Setter Property="Margin" Value="0,6,0,0"/>
+    </Style>
+    <Style Selector="Separator.section-divider">
+        <Setter Property="Background" Value="{DynamicResource BorderSubtleBrush}"/>
+        <Setter Property="Margin" Value="0,8,0,0"/>
+    </Style>
+    <Style Selector="StackPanel.settings-section">
+        <Setter Property="Spacing" Value="8"/>
+        <Setter Property="HorizontalAlignment" Value="Stretch"/>
+        <Setter Property="MaxWidth" Value="760"/>
+    </Style>
+    <Style Selector="FlyoutPresenter">
+        <Setter Property="Background" Value="{DynamicResource FlyoutBackgroundBrush}"/>
+        <Setter Property="BorderBrush" Value="{DynamicResource GlassBorderBrush}"/>
+        <Setter Property="BorderThickness" Value="1"/>
+        <Setter Property="CornerRadius" Value="12"/>
+    </Style>
+    <Style Selector="MenuFlyoutPresenter">
+        <Setter Property="Background" Value="{DynamicResource FlyoutBackgroundBrush}"/>
+        <Setter Property="BorderBrush" Value="{DynamicResource GlassBorderBrush}"/>
+        <Setter Property="BorderThickness" Value="1"/>
+        <Setter Property="CornerRadius" Value="12"/>
+    </Style>
+</Styles>

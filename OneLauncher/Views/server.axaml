@@ -7,24 +7,18 @@
              d:DesignHeight="620"
              x:Class="OneLauncher.Views.server"
              xmlns:vm="using:OneLauncher.Views.ViewModels"
+             xmlns:controls="using:OneLauncher.Views.Controls"
              x:CompileBindings="True"
              x:DataType="vm:ServerPageViewModel">
-    <SplitView IsPaneOpen="{Binding IsPaneShow, Mode=TwoWay}"
-               DisplayMode="Overlay"
-               OpenPaneLength="650"
-               PanePlacement="Right">
-        <SplitView.Pane>
-            <TransitioningContentControl Background="{DynamicResource PaneBackgound}"
-                                         Content="{Binding PaneContent}" />
-        </SplitView.Pane>
+    <controls:PageShell IsPaneOpen="{Binding IsPaneShow, Mode=TwoWay}"
+                        PaneContent="{Binding PaneContent}">
         <Grid RowDefinitions="52,*" Margin="24">
         <StackPanel Grid.Row="0"
                     Margin="16,0,0,0"
                     Orientation="Horizontal"
                     Spacing="28">
-            <TextBlock Text="服务器收藏"
-                       FontSize="36" />
-            <Button Command="{Binding AddServerCommand}">
+            <TextBlock Classes="page-title" Text="服务器收藏" />
+            <Button Classes="toolbar-action" Command="{Binding AddServerCommand}">
                 <StackPanel Orientation="Horizontal" Spacing="4">
                     <Image Source="/Assets/icos/add.png"
                            Width="20"
@@ -34,13 +28,12 @@
             </Button>
         </StackPanel>
 
-        <ListBox Grid.Row="1"
+        <ListBox Grid.Row="1" Classes="card-list"
                  ItemsSource="{Binding ServerList}"
-                 Background="Transparent"
                  SelectionMode="Multiple">
             <ListBox.ItemTemplate>
                 <DataTemplate x:DataType="vm:ServerItem">
-                    <Border CornerRadius="5">
+                    <Border Padding="10">
                         <Grid ColumnDefinitions="Auto,*,Auto"
                               VerticalAlignment="Center">
                             <Border Grid.Column="0"
@@ -54,29 +47,24 @@
                             <StackPanel Grid.Column="1"
                                         Margin="15,0"
                                         VerticalAlignment="Center">
-                                <TextBlock FontSize="18"
-                                           FontWeight="SemiBold"
-                                           Foreground="{DynamicResource PrimaryForegroundBrush}"
+                                <TextBlock Classes="item-title"
                                            Text="{Binding data.Name}" />
                                 <TextBlock IsVisible="{Binding HasDescription}"
                                            Margin="0,3,0,0"
-                                           FontSize="12"
-                                           Foreground="Gray"
+                                           Classes="item-meta"
                                            Text="{Binding data.Description}"
                                            TextTrimming="CharacterEllipsis"
                                            MaxLines="1" />
                                 <StackPanel Orientation="Horizontal"
                                             Spacing="10"
                                             Margin="0,5,0,0">
-                                    <TextBlock FontSize="12"
-                                               Foreground="Gray">
+                                    <TextBlock Classes="item-meta">
                                         <Run Text="地址:" />
                                         <Run Text="{Binding data.ServerInfo.Ip}" />
                                         <Run Text=":" />
                                         <Run Text="{Binding data.ServerInfo.Port}" />
                                     </TextBlock>
-                                    <TextBlock FontSize="12"
-                                               Foreground="Gray">
+                                    <TextBlock Classes="item-meta">
                                         <Run Text="实例:" />
                                         <Run Text="{Binding data.InstanceId}" />
                                     </TextBlock>
@@ -88,17 +76,10 @@
                                         Spacing="8"
                                         Margin="6"
                                         VerticalAlignment="Bottom">
-                                <Border IsVisible="{Binding IsDefault}"
-                                        Background="#267C3AED"
-                                        CornerRadius="4"
-                                        Padding="8,4"
-                                        VerticalAlignment="Center">
-                                    <TextBlock Text="默认"
-                                               FontWeight="Bold"
-                                               Foreground="#7C3AED"
-                                               FontSize="12" />
+                                <Border Classes="status-badge" IsVisible="{Binding IsDefault}">
+                                    <TextBlock Text="默认" />
                                 </Border>
-                                <Button IsVisible="{Binding !IsDefault}"
+                                <Button Classes="item-action" IsVisible="{Binding !IsDefault}"
                                         Command="{Binding $parent[UserControl].DataContext.SetAsDefaultServerCommand}"
                                         CommandParameter="{Binding data}">
                                     <StackPanel Orientation="Horizontal" Spacing="6">
@@ -108,7 +89,7 @@
                                         <TextBlock Text="设为默认" />
                                     </StackPanel>
                                 </Button>
-                                <Button Command="{Binding $parent[UserControl].DataContext.EditServerCommand}"
+                                <Button Classes="item-action" Command="{Binding $parent[UserControl].DataContext.EditServerCommand}"
                                         CommandParameter="{Binding data}">
                                     <StackPanel Orientation="Horizontal" Spacing="6">
                                         <Image Source="/Assets/icos/edit.png"
@@ -132,10 +113,7 @@
                     </Border>
                 </DataTemplate>
             </ListBox.ItemTemplate>
-            <ListBox.Styles>
-                <StyleInclude Source="avares://OneLauncher/Views/Styles/TransparentListBox.axaml" />
-            </ListBox.Styles>
         </ListBox>
         </Grid>
-    </SplitView>
+    </controls:PageShell>
 </UserControl>

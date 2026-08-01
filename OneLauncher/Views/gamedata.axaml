@@ -5,82 +5,66 @@
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
              x:Class="OneLauncher.Views.gamedata"
 			 xmlns:vm="using:OneLauncher.Views.ViewModels"
+			 xmlns:controls="using:OneLauncher.Views.Controls"
+			 xmlns:primitives="using:Avalonia.Controls.Primitives"
 			 xmlns:lo="clr-namespace:OneLauncher.Core.Helper.Models;assembly=OneLauncher.Core"
 			 xmlns:gamedatamanager="using:OneLauncher.Core.Global.ModelDataMangers"
 			 x:CompileBindings="True"
 			 x:DataType="vm:GameDataPageViewModel">
-	<SplitView IsPaneOpen="{Binding IsPaneShow,Mode=TwoWay}"
-				 DisplayMode="Overlay"
-				 OpenPaneLength="650"
-				 PanePlacement="Right">
-		<SplitView.Pane>
-			<TransitioningContentControl Background="{DynamicResource PaneBackgound}" Content="{Binding PaneContent}"/>
-		</SplitView.Pane>
-		<Grid RowDefinitions="52,Auto,*" Margin="24">
-			<StackPanel Margin="16,0,0,0" Orientation="Horizontal" Grid.Row="0" Spacing="28" >
-				<TextBlock Grid.Row="0" Text="游戏数据管理器" FontSize="36"/>
-				<Button>
-					<StackPanel Orientation="Horizontal">
+	<controls:PageShell IsPaneOpen="{Binding IsPaneShow,Mode=TwoWay}"
+						PaneContent="{Binding PaneContent}">
+		<Grid RowDefinitions="52,*" Margin="24">
+			<StackPanel Grid.Row="0" Margin="8,0,0,0" Orientation="Horizontal" Spacing="10">
+				<TextBlock Classes="page-title" Text="游戏数据"/>
+				<Button Classes="toolbar-action" Command="{Binding NewGameDataCommand}">
+					<StackPanel Orientation="Horizontal" Spacing="6">
 						<Image Source="/Assets/icos/add.png" Width="20" Height="20"/>
-						<TextBlock Text="新建"/>
+						<TextBlock Text="新建实例"/>
 					</StackPanel>
-					<Button.Flyout>
-						<MenuFlyout>
-								<MenuItem Header="新建实例" Command="{Binding NewGameDataCommand}"/>
-								<Button Margin="-11" Content="新建标签" Background="Transparent">
-									<Button.Flyout>
-										<Flyout>
-											<StackPanel Orientation="Horizontal" Spacing="4">
-												<TextBox Text="{Binding NewTagName}" Watermark="输入标签名"/>
-												<Button Content="确定" Command="{Binding CreateNewTagCommand}"/>
-											</StackPanel>
-										</Flyout>
-									</Button.Flyout>
-									<Button.Styles>
-										<Style Selector="Button">
-											<Setter Property="Background" Value="Transparent"/>
-											<Setter Property="BorderThickness" Value="0"/>
-											<Setter Property="HorizontalContentAlignment" Value="Left"/>
-											<Setter Property="Padding" Value="12,8"/>
-										</Style>
-
-										<Style Selector="Button:pointerover /template/ ContentPresenter">
-											<Setter Property="Background" Value="#1A000000"/>
-										</Style>
-
-										<Style Selector="Button:pressed /template/ ContentPresenter">
-											<Setter Property="Background" Value="#1F000000"/>
-										</Style>
-									</Button.Styles>
-								</Button>
-						</MenuFlyout>
-					</Button.Flyout>
 				</Button>
-				<ComboBox Margin="-14,10,0,0" 
+				<ComboBox x:Name="TagFilterComboBox"
+						  MinWidth="168" VerticalAlignment="Center"
 						  PlaceholderText="标签过滤选项"
 						  ItemsSource="{Binding AvailableTags}"
-						  SelectedItem="{Binding SelectedTag}">
+						  SelectedItem="{Binding SelectedTag}"
+						  SelectionChanged="TagFilterComboBox_OnSelectionChanged">
+					<primitives:FlyoutBase.AttachedFlyout>
+						<Flyout Placement="BottomEdgeAlignedLeft">
+							<StackPanel Width="260" Spacing="10">
+								<TextBlock Classes="section-title" FontSize="18" Text="新建标签"/>
+								<TextBox Watermark="输入标签名称"
+										 Text="{Binding NewTagName}">
+									<TextBox.KeyBindings>
+										<KeyBinding Gesture="Enter" Command="{Binding CreateNewTagCommand}"/>
+									</TextBox.KeyBindings>
+								</TextBox>
+								<Grid ColumnDefinitions="*,*" ColumnSpacing="8">
+									<Button Grid.Column="0" Content="取消" Click="CloseCreateTagFlyout_OnClick"/>
+									<Button Grid.Column="1" Classes="Accent" Content="创建"
+											Command="{Binding CreateNewTagCommand}"/>
+								</Grid>
+							</StackPanel>
+						</Flyout>
+					</primitives:FlyoutBase.AttachedFlyout>
 					<ComboBox.ItemTemplate>
 						<DataTemplate x:DataType="vm:GameDataTagItem">
-							<Grid ColumnDefinitions="*,*">
-								<TextBlock Grid.Column="0" Text="{Binding Data.Name}" />
-								<Button Grid.Column="1" Command="{Binding DeleteTagCommand}" Height="24">
+							<Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
+								<TextBlock Grid.Column="0" Text="{Binding DisplayName}" VerticalAlignment="Center"/>
+								<Button Grid.Column="1" Classes="link-button" IsVisible="{Binding CanDelete}"
+										Command="{Binding DeleteTagCommand}" Height="28">
 									<TextBlock Text="移除标签"/>
-									<Button.Styles>
-										<StyleInclude Source="avares://OneLauncher/Views/Styles/Label.axaml" />
-									</Button.Styles>
 								</Button>
 							</Grid>
 						</DataTemplate>
 					</ComboBox.ItemTemplate>
 				</ComboBox>
-				<Button Command="{Binding ResetFilterCommand}" Margin="-22,0,0,0">
+				<Button Classes="toolbar-action" Command="{Binding ResetFilterCommand}">
 					<StackPanel Orientation="Horizontal">
 						<TextBlock Text="重置"/>
 					</StackPanel>
 				</Button>
-				<Button Margin="-14,0,0,0">
-					<StackPanel Orientation="Horizontal">
+				<Button Classes="toolbar-action">
+					<StackPanel Orientation="Horizontal" Spacing="6">
 						<Image Source="/Assets/icos/settings1.png" Width="20" Height="20"/>
 						<TextBlock Text="排序"/>
 					</StackPanel>
@@ -104,28 +88,28 @@
 					</Button.Flyout>
 				</Button>
 			</StackPanel>
-			<ListBox Grid.Row="2" ItemsSource="{Binding GameDataList}" Background="Transparent" SelectionMode="Multiple">
+			<ListBox Grid.Row="1" Classes="card-list" ItemsSource="{Binding GameDataList}" SelectionMode="Multiple">
 				<ListBox.ItemTemplate>
 					<DataTemplate x:DataType="vm:GameDataItem">
-						<Border CornerRadius="5">
+						<Border Padding="10">
 							<Grid ColumnDefinitions="Auto,*,Auto" VerticalAlignment="Center">
 								<Border Grid.Column="0" CornerRadius="6" ClipToBounds="True">
 									<Image Width="64" Height="64" Source="{Binding Icon}"/>
 								</Border>
 								<StackPanel Grid.Column="1" Margin="15,0" VerticalAlignment="Center">
-									<TextBlock FontSize="18" FontWeight="SemiBold" Text="{Binding data.Name}"/>
+									<TextBlock Classes="item-title" Text="{Binding data.Name}"/>
 
 									<StackPanel Orientation="Horizontal" Spacing="10" Margin="0,5,0,0">
-										<TextBlock FontSize="12" Foreground="Gray">
+										<TextBlock Classes="item-meta">
 											<Run Text="版本:"/>
 											<Run Text="{Binding data.VersionId}"/>
 										</TextBlock>
-										<TextBlock FontSize="12" Foreground="Gray">
+										<TextBlock Classes="item-meta">
 											<Run Text="加载器:"/>
 											<!-- 使用这个转换器记住没有需要的话一定要声明OneWay，不然会有神奇的运行时问题 -->
 											<Run Text="{Binding data.ModLoader , Converter={StaticResource ModEnumConverter},Mode=OneWay}"/>
 										</TextBlock>
-										<TextBlock FontSize="12" Foreground="Gray">
+										<TextBlock Classes="item-meta">
 											<Run Text="标识符:"/>
 											<Run Text="{Binding data.InstanceId}"/>
 										</TextBlock>
@@ -134,12 +118,11 @@
 
 								<StackPanel Grid.Column="2" Spacing="8" Orientation="Horizontal" VerticalAlignment="Bottom" Margin="6">
 
-									<Border IsVisible="{Binding IsDefault}"
-											Background="#FFFBE5" CornerRadius="4" Padding="8,4" VerticalAlignment="Center">
-										<TextBlock Text="默认" FontWeight="Bold" Foreground="#D4AC0D" FontSize="12"/>
+									<Border Classes="status-badge warning" IsVisible="{Binding IsDefault}">
+										<TextBlock Text="默认"/>
 									</Border>
 
-									<Button IsVisible="{Binding !IsDefault}"
+									<Button Classes="item-action" IsVisible="{Binding !IsDefault}"
 											Command="{Binding $parent[UserControl].DataContext.SetAsDefaultInstanceCommand}"
 											CommandParameter="{Binding}">
 										<StackPanel Orientation="Horizontal" Spacing="6">
@@ -147,13 +130,13 @@
 											<TextBlock Text="设为默认"/>
 										</StackPanel>
 									</Button>
-									<Button IsVisible="{Binding IsMod}" Command="{Binding $parent[UserControl].DataContext.ModsManagerCommand}" CommandParameter="{Binding data}">
+									<Button Classes="item-action" IsVisible="{Binding IsMod}" Command="{Binding $parent[UserControl].DataContext.ModsManagerCommand}" CommandParameter="{Binding data}">
 										<StackPanel Orientation="Horizontal" Spacing="6">
 											<Image Source="/Assets/icos/browser.png" Width="16" Height="16"/>
 											<TextBlock Text="模组管理"/>
 										</StackPanel>
 									</Button>
-									<Button Command="{Binding $parent[UserControl].DataContext.ShowEditPaneCommand}" CommandParameter="{Binding data}">
+									<Button Classes="item-action" Command="{Binding $parent[UserControl].DataContext.ShowEditPaneCommand}" CommandParameter="{Binding data}">
 										<StackPanel Orientation="Horizontal" Spacing="6">
 											<Image Source="/Assets/icos/edit.png" Width="16" Height="16"/>
 											<TextBlock Text="编辑"/>
@@ -182,10 +165,7 @@
 						</Border>
 					</DataTemplate>
 				</ListBox.ItemTemplate>
-				<ListBox.Styles>
-					<StyleInclude Source="avares://OneLauncher/Views/Styles/TransparentListBox.axaml" />
-				</ListBox.Styles>
 			</ListBox>
 		</Grid>
-	</SplitView>
+	</controls:PageShell>
 </UserControl>

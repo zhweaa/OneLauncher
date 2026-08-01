@@ -3,6 +3,7 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:vm="using:OneLauncher.Views.ViewModels"
+             xmlns:controls="using:OneLauncher.Views.Controls"
              xmlns:lo="using:OneLauncher.Core.Helper.Models" mc:Ignorable="d" d:DesignWidth="818" d:DesignHeight="530"
              x:Class="OneLauncher.Home"
              x:DataType="vm:HomePageViewModel"
@@ -30,20 +31,15 @@
 			<Setter Property="CornerRadius" Value="100"/>
 		</Style>
 	</UserControl.Styles>
-	<SplitView IsPaneOpen="{Binding IsPaneShow,Mode=TwoWay}"
-				 DisplayMode="Overlay"
-				 OpenPaneLength="650"
-				 PanePlacement="Right">
-		<SplitView.Pane>
-			<TransitioningContentControl Background="{DynamicResource PaneBackgound}" Content="{Binding PaneContent}"/>
-		</SplitView.Pane>
+	<controls:PageShell IsPaneOpen="{Binding IsPaneShow,Mode=TwoWay}"
+						PaneContent="{Binding PaneContent}">
 		
-		<Grid ColumnDefinitions="*, 300">
+		<Grid ColumnDefinitions="*,300">
 			<Grid Grid.Column="0">
 				<Panel>
 					<ScrollViewer>
 						<StackPanel>
-							<ListBox>
+							<ListBox Classes="card-list">
 								<ListBoxItem>
 									<Border Width="385" Height="240" CornerRadius="12" ClipToBounds="True" Background="{DynamicResource CardBackgroundBrush}">
 										<Panel>
@@ -183,15 +179,12 @@
 									</Border>
 								</ListBoxItem>
 
-								<ListBox.Styles>
-									<StyleInclude Source="avares://OneLauncher/Views/Styles/TransparentListBox.axaml" />
-								</ListBox.Styles>
 							</ListBox>
 						</StackPanel>
 					</ScrollViewer>
 				</Panel>
 			</Grid>
-			<Panel Grid.Column="1" Background="{DynamicResource PaneBackgound}">
+			<Panel Grid.Column="1" Background="{DynamicResource PaneBackgroundBrush}">
 				<StackPanel VerticalAlignment="Center" HorizontalAlignment="Center" Spacing="6">
 					<Image Source="{Binding GameIcon}" Height="128" Width="128"/>
 
@@ -215,5 +208,5 @@
 				</StackPanel>
 			</Panel>
 		</Grid>
-	</SplitView>
+	</controls:PageShell>
 </UserControl>

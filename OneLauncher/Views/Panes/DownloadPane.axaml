@@ -2,95 +2,105 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="using:OneLauncher.Views.Panes.PaneViewModels"
+             xmlns:controls="using:OneLauncher.Views.Controls"
              mc:Ignorable="d" d:DesignWidth="650" d:DesignHeight="620"
-			 xmlns:vm="using:OneLauncher.Views.Panes.PaneViewModels"
-			 x:DataType="vm:DownloadPaneViewModel"
-			 x:CompileBindings="True"
+             x:DataType="vm:DownloadPaneViewModel"
+             x:CompileBindings="True"
              x:Class="OneLauncher.Views.Panes.DownloadPane">
-	<Grid RowDefinitions="Auto,1,*" VerticalAlignment="Top" Margin="12">
-		<!-- 标题栏 -->
-		<StackPanel Grid.Row="0" Orientation="Horizontal" Spacing="8">
-			<Button Command="{Binding ClosePaneCommand}">
-				<StackPanel Orientation="Horizontal" Spacing="8">
-					<Image Source="/Assets/icos/back.png" Width="20" Height="20"/>
-					<TextBlock Text="返回" VerticalAlignment="Center"/>
-				</StackPanel>
-			</Button>
-			<Button Command="{Binding PopUpCommand}">
-				<StackPanel Orientation="Horizontal" Spacing="8">
-					<Image Source="/Assets/icos/internet.png" Width="20" Height="20"/>
-					<TextBlock Text="弹出" VerticalAlignment="Center"/>
-				</StackPanel>
-			</Button>
-		</StackPanel>
-		<TextBlock FontSize="52" HorizontalAlignment="Center" Grid.Row="0" Text="{Binding VersionName}"/>
-		<StackPanel Orientation="Horizontal" Grid.Row="0" Margin="0,6,0,0" HorizontalAlignment="Right" Spacing="8">
-			<Button 
-				x:Name="ToDownloadButton"
-				Command="{Binding ToDownloadCommand}"
-				IsEnabled="{Binding IsAllowDownloading}">
-				<StackPanel Orientation="Horizontal" Spacing="8">
-					<Image Source="/Assets/icos/downloadnow.png" Width="20" Height="20"/>
-					<TextBlock 
-							   Text="下载版本"
-							   VerticalAlignment="Center"/>
-				</StackPanel>
-			</Button>
-			<Button
-				Command="{Binding ToCancellationDownloadTaskCommand}"
-				IsEnabled="{Binding !#ToDownloadButton.IsEnabled}">
-				<StackPanel Orientation="Horizontal" Spacing="8">
-					<Image Source="/Assets/icos/error.png" Width="29" Height="20"/>
-					<TextBlock 
-							   Text="取消任务"
-							   VerticalAlignment="Center"/>
-				</StackPanel>
-			</Button>
-		</StackPanel>
-		<!-- 下载按钮和进度条 -->
-		<Separator Grid.Row="1" Margin="0,24,0,52" Background="#252423"/>
-		<Grid Grid.Row="2" Margin="0,-24,0,0" >
-			<!-- 给模组添加预留控件 -->
-			<StackPanel>
-				<!-- 模组安装选项 -->
-				<StackPanel Orientation="Horizontal" Spacing="61">
-					<CheckBox IsEnabled="{Binding IsAllowFabric}" IsChecked="{Binding IsMod}" >是否带Fabric</CheckBox>
-					<CheckBox IsVisible="{Binding IsMod}" IsChecked="{Binding IsDownloadFabricWithAPI}">同时下载Fabric API</CheckBox>
-					<Button Content="自定义版本" IsVisible="False">	
-						<Button.Flyout>
-							<Flyout>
-								
-							</Flyout>
-						</Button.Flyout>
-						<Button.Styles>
-							<StyleInclude Source="avares://OneLauncher/Views/Styles/Label.axaml" />
-						</Button.Styles>
-					</Button>
-				</StackPanel>
-				<StackPanel Orientation="Horizontal" Spacing="61">
-					<CheckBox IsEnabled="{Binding IsAllowFabric}" IsChecked="{Binding IsQuilt}" >是否带Quilt</CheckBox>
-					<CheckBox IsVisible="{Binding IsQuilt}" IsChecked="{Binding IsDownloadQuiltWithQSL}">同时下载QSL</CheckBox>
-				</StackPanel>
-				<StackPanel Orientation="Horizontal" Spacing="36">
-					<CheckBox IsEnabled="{Binding IsAllowNeoforge}" IsChecked="{Binding IsNeoForge}" >是否带NeoForge</CheckBox>
-					<CheckBox IsVisible="{Binding IsNeoForge}" IsChecked="{Binding IsAllowToUseBetaNeoforge}">允许下载Beta版</CheckBox>
-				</StackPanel>
-				<StackPanel Orientation="Horizontal" Spacing="36">
-					<CheckBox IsEnabled="{Binding IsAllowForge}" IsChecked="{Binding IsForge}" >是否带Forge（预览版）</CheckBox>
-					<CheckBox IsVisible="{Binding IsForge}" IsChecked="{Binding IsUseRecommendedToInstallForge}">使用推荐版</CheckBox>
-				</StackPanel>
-				<!-- 额外设置 -->
-				<CheckBox IsChecked="{Binding IsJava}">是否安装合适Java</CheckBox>
-				<StackPanel Margin="0,12,0,0" Orientation="Horizontal" Spacing="8">
-					<TextBlock Text="{Binding Dp}"/>
-					<TextBlock Text="{Binding Fs}"/>
-				</StackPanel>
-				<TextBlock Text="{Binding FileName}"/>
-				<ProgressBar  
-					Margin="0 10" Height="20"
-					Minimum="0" Maximum="100" Value="{Binding CurrentProgress}"
-					ShowProgressText="True"/>
-			</StackPanel>
-		</Grid>
-	</Grid>
+    <Grid RowDefinitions="Auto,Auto,*,Auto" Margin="20">
+        <controls:PaneHeader Grid.Row="0" Title="{Binding VersionName}" BackCommand="{Binding ClosePaneCommand}">
+            <controls:PaneHeader.TrailingContent>
+                <Button Classes="pane-toolbar" Command="{Binding PopUpCommand}">
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <Image Source="/Assets/icos/internet.png" Width="20" Height="20"/>
+                        <TextBlock Text="弹出" VerticalAlignment="Center"/>
+                    </StackPanel>
+                </Button>
+            </controls:PaneHeader.TrailingContent>
+        </controls:PaneHeader>
+        <Separator Grid.Row="1" Classes="pane-divider"/>
+
+        <ScrollViewer Grid.Row="2">
+            <StackPanel MaxWidth="540" HorizontalAlignment="Stretch" Spacing="16" Margin="0,0,0,20">
+                <TextBlock Classes="pane-section-title" Text="安装选项"/>
+                <Border Classes="pane-surface">
+                    <Grid ColumnDefinitions="Auto,*"
+                          RowDefinitions="Auto,Auto,Auto,Auto,Auto"
+                          ColumnSpacing="24"
+                          RowSpacing="12">
+                        <CheckBox Grid.Row="0" Grid.Column="0"
+                                  IsEnabled="{Binding IsAllowFabric}"
+                                  IsChecked="{Binding IsMod}"
+                                  Content="Fabric"/>
+                        <CheckBox Grid.Row="0" Grid.Column="1"
+                                  IsVisible="{Binding IsMod}"
+                                  IsChecked="{Binding IsDownloadFabricWithAPI}"
+                                  Content="同时安装 Fabric API"/>
+
+                        <CheckBox Grid.Row="1" Grid.Column="0"
+                                  IsEnabled="{Binding IsAllowFabric}"
+                                  IsChecked="{Binding IsQuilt}"
+                                  Content="Quilt"/>
+                        <CheckBox Grid.Row="1" Grid.Column="1"
+                                  IsVisible="{Binding IsQuilt}"
+                                  IsChecked="{Binding IsDownloadQuiltWithQSL}"
+                                  Content="同时安装 QSL"/>
+
+                        <CheckBox Grid.Row="2" Grid.Column="0"
+                                  IsEnabled="{Binding IsAllowNeoforge}"
+                                  IsChecked="{Binding IsNeoForge}"
+                                  Content="NeoForge"/>
+                        <CheckBox Grid.Row="2" Grid.Column="1"
+                                  IsVisible="{Binding IsNeoForge}"
+                                  IsChecked="{Binding IsAllowToUseBetaNeoforge}"
+                                  Content="允许 Beta 版本"/>
+
+                        <CheckBox Grid.Row="3" Grid.Column="0"
+                                  IsEnabled="{Binding IsAllowForge}"
+                                  IsChecked="{Binding IsForge}"
+                                  Content="Forge（预览）"/>
+                        <CheckBox Grid.Row="3" Grid.Column="1"
+                                  IsVisible="{Binding IsForge}"
+                                  IsChecked="{Binding IsUseRecommendedToInstallForge}"
+                                  Content="优先使用推荐版"/>
+
+                        <CheckBox Grid.Row="4" Grid.ColumnSpan="2"
+                                  IsChecked="{Binding IsJava}"
+                                  Content="自动安装匹配的 Java 运行环境"/>
+                    </Grid>
+                </Border>
+
+                <TextBlock Classes="pane-section-title" Text="下载状态"/>
+                <Border Classes="pane-status">
+                    <StackPanel Spacing="10">
+                        <Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
+                            <TextBlock Text="{Binding Dp}" TextWrapping="Wrap"/>
+                            <TextBlock Grid.Column="1" Classes="pane-help" Text="{Binding Fs}"/>
+                        </Grid>
+                        <TextBlock Classes="pane-help" Text="{Binding FileName}" TextTrimming="CharacterEllipsis"/>
+                        <ProgressBar Classes="pane-progress"
+                                     Minimum="0"
+                                     Maximum="100"
+                                     Value="{Binding CurrentProgress}"
+                                     ShowProgressText="True"/>
+                    </StackPanel>
+                </Border>
+            </StackPanel>
+        </ScrollViewer>
+
+        <Grid Grid.Row="3" ColumnDefinitions="*,*" ColumnSpacing="10" Margin="0,16,0,0">
+            <Button Grid.Column="0"
+                    Classes="pane-danger"
+                    Content="取消任务"
+                    Command="{Binding ToCancellationDownloadTaskCommand}"
+                    IsEnabled="{Binding !#ToDownloadButton.IsEnabled}"/>
+            <Button Grid.Column="1"
+                    x:Name="ToDownloadButton"
+                    Classes="pane-primary"
+                    Content="下载版本"
+                    Command="{Binding ToDownloadCommand}"
+                    IsEnabled="{Binding IsAllowDownloading}"/>
+        </Grid>
+    </Grid>
 </UserControl>

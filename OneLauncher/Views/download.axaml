@@ -5,34 +5,26 @@
              mc:Ignorable="d" d:DesignWidth="818" d:DesignHeight="530"
              x:Class="OneLauncher.Views.download"
 			 xmlns:vm="using:OneLauncher.Views.ViewModels"
+			 xmlns:controls="using:OneLauncher.Views.Controls"
 			 xmlns:models="using:OneLauncher.Core.Helper.Models"
 			 x:CompileBindings="True"
 			 x:DataType="vm:DownloadPageViewModel"
 			 >
-	<SplitView IsPaneOpen="{Binding IsPaneShow,Mode=TwoWay}"
-               DisplayMode="Overlay"
-               OpenPaneLength="650"
-               PanePlacement="Right"
-			   >
-		<SplitView.Pane>
-			<TransitioningContentControl
-				Background="{DynamicResource PaneBackgound}"
-					Content="{Binding DownloadPaneContent}">
-			</TransitioningContentControl>
-		</SplitView.Pane>
+	<controls:PageShell IsPaneOpen="{Binding IsPaneShow,Mode=TwoWay}"
+						PaneContent="{Binding DownloadPaneContent}">
 		<!-- 版本列表 -->
 		<Panel IsEnabled="{Binding IsLoaded}">
 			<ScrollViewer>
-				<StackPanel 
-							Margin="48"
-							HorizontalAlignment="Left"
+				<StackPanel Margin="32"
+							MaxWidth="560"
+							HorizontalAlignment="Stretch"
 							VerticalAlignment="Center"
-							Spacing="4">
-					<TextBlock FontSize="42" Text="选择下载版本"/>
+							Spacing="12">
+					<TextBlock Classes="page-title" Text="下载游戏版本"/>
+					<TextBlock Classes="page-subtitle" Text="搜索并选择要安装的 Minecraft 版本"/>
 					<AutoCompleteBox
+						Classes="search-field"
 						Watermark="搜索版本..."
-						Width="300"
-						CornerRadius="6"
 						ItemsSource="{Binding ReleaseItems}"
 						SelectedItem="{Binding SelectedItem}">
 						<AutoCompleteBox.ItemTemplate>
@@ -41,18 +33,20 @@
 							</DataTemplate>
 						</AutoCompleteBox.ItemTemplate>
 					</AutoCompleteBox>
-					<ListBox ItemsSource="{Binding ReleaseItems}" MaxHeight="350" >
+					<ListBox Classes="card-list" ItemsSource="{Binding ReleaseItems}" MaxHeight="350">
 						<ListBox.ItemTemplate>
 							<DataTemplate x:DataType="models:VersionBasicInfo">
-								<Grid ColumnDefinitions="*,Auto" >
-									<TextBlock Text="{Binding ID}" Grid.Column="0"/>
-									<Button Grid.Column="1" Margin="8,0,8,0" HorizontalAlignment="Right" Content="下载" Command="{Binding $parent[ListBox].DataContext.ToDownloadCommand}" CommandParameter="{Binding}"/>
-								</Grid>
+								<Border Padding="12,8">
+									<Grid ColumnDefinitions="*,Auto">
+										<TextBlock Classes="item-title" FontSize="15" Text="{Binding ID}" Grid.Column="0" VerticalAlignment="Center"/>
+										<Button Classes="item-action" Grid.Column="1" Content="下载" Command="{Binding $parent[ListBox].DataContext.ToDownloadCommand}" CommandParameter="{Binding}"/>
+									</Grid>
+								</Border>
 							</DataTemplate>
 						</ListBox.ItemTemplate>
 					</ListBox>
 				</StackPanel>
 			</ScrollViewer>
 		</Panel>
-	</SplitView>
+	</controls:PageShell>
 </UserControl>

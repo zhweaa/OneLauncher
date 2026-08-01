@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 17
-VisualStudioVersion = 17.13.35919.96
+# Visual Studio Version 18
+VisualStudioVersion = 18.8.12023.21
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OneLauncher", "OneLauncher\OneLauncher.csproj", "{95843878-DD31-0DFA-AFAD-AA8B92F31A61}"
 EndProject
@@ -14,6 +14,12 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ConsoleTest", "ConsoleTest\ConsoleTest.csproj", "{A0E36629-65EA-45D2-BD87-A932BB7C3AFC}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OneLauncher.Console", "OneLauncher.Console\OneLauncher.Console.csproj", "{E001372A-C897-44BE-AF66-BAD9362CCFE4}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "docs", "docs", "{EE15132C-A9C8-4305-8EFA-72F6170382A5}"
+	ProjectSection(SolutionItems) = preProject
+		docs\UI_FI.md = docs\UI_FI.md
+		Welcome.md = Welcome.md
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

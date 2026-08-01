@@ -5,51 +5,47 @@
              mc:Ignorable="d" d:DesignWidth="818" d:DesignHeight="530"
              x:Class="OneLauncher.Views.account"
 			 xmlns:vm="using:OneLauncher.Views.ViewModels"
+			 xmlns:controls="using:OneLauncher.Views.Controls"
 			 x:CompileBindings="True"
 			 x:DataType="vm:AccountPageViewModel"
 			 >
-	<SplitView IsPaneOpen="{Binding IsPaneShow,Mode=TwoWay}"
-               DisplayMode="Overlay"
-               OpenPaneLength="650"
-               PanePlacement="Right">
-		<SplitView.Pane>
-			<TransitioningContentControl Background="{DynamicResource PaneBackgound}" Content="{Binding AccountPane}"/>
-		</SplitView.Pane>
+	<controls:PageShell IsPaneOpen="{Binding IsPaneShow,Mode=TwoWay}"
+						PaneContent="{Binding AccountPane}">
 		<Grid RowDefinitions="52,Auto,*" Margin="24">
 		<StackPanel Margin="16,0,0,0" Orientation="Horizontal" Grid.Row="0" Spacing="28" >
-			<TextBlock Grid.Row="0" Text="管理用户登入验证模型" FontSize="36"/>
-			<Button Command="{Binding NewUserModelCommand}">
-				<StackPanel Orientation="Horizontal">
+			<TextBlock Classes="page-title" Text="账户管理"/>
+			<Button Classes="toolbar-action" Command="{Binding NewUserModelCommand}">
+				<StackPanel Orientation="Horizontal" Spacing="6">
 					<Image Source="/Assets/icos/add.png" Width="20" Height="20"/>
 					<TextBlock Text="新建"/>
 				</StackPanel>
 			</Button>
-			<Button Command="{Binding RefreshCommand}">
-				<StackPanel Orientation="Horizontal">
+			<Button Classes="toolbar-action" Command="{Binding RefreshCommand}">
+				<StackPanel Orientation="Horizontal" Spacing="6">
 					<Image Source="/Assets/icos/refresh.png" Width="20" Height="20"/>
 					<TextBlock Text="刷新"/>
 				</StackPanel>
 			</Button>
 		</StackPanel>
-		<TextBlock Margin="16,0,0,0" Text="*由于第三方API限制正版皮肤显示可能有延迟" FontStyle="Italic" Grid.Row="1"/>
-		<ListBox x:Name="navVL" Grid.Row="2" ItemsSource="{Binding UserModelList}" Background="Transparent" SelectionMode="Multiple">
+		<TextBlock Classes="page-subtitle" Margin="16,0,0,8" Text="第三方 API 可能导致正版皮肤显示延迟" Grid.Row="1"/>
+		<ListBox x:Name="navVL" Classes="card-list" Grid.Row="2" ItemsSource="{Binding UserModelList}" SelectionMode="Multiple">
 			<ListBox.ItemTemplate>
 				<DataTemplate x:DataType="vm:UserItem">
-					<Border CornerRadius="5" Padding="5">
+					<Border Padding="10">
 						<Grid ColumnDefinitions="Auto,*,Auto" VerticalAlignment="Center">
 							<Border Grid.Column="0" CornerRadius="6" ClipToBounds="True">
 								<Image Width="64" Height="64" Source="{Binding HeadImg}"/>
 							</Border>
 
 							<StackPanel Grid.Column="1" Margin="15,0" VerticalAlignment="Center">
-								<TextBlock FontSize="24" Margin="0,-6,0,0" FontWeight="SemiBold" Text="{Binding um.Name}"/>
+								<TextBlock Classes="item-title" Text="{Binding um.Name}"/>
 
 								<StackPanel Orientation="Horizontal" Spacing="10" Margin="0,5,0,0">
-									<TextBlock FontSize="12" Foreground="Gray">
+									<TextBlock Classes="item-meta">
 										<Run Text="类型:"/>
 										<Run Text="{Binding um}"/>
 									</TextBlock>
-									<TextBlock FontSize="12" Foreground="Gray">
+									<TextBlock Classes="item-meta">
 										<Run Text="UUID:"/>
 										<Run Text="{Binding um.uuid}"/>
 									</TextBlock>
@@ -58,11 +54,10 @@
 
 							<StackPanel Grid.Column="2" Spacing="8" Orientation="Horizontal" VerticalAlignment="Bottom" Margin="6">
 
-								<Border IsVisible="{Binding IsDefault}"
-										Background="#EBF5FB" CornerRadius="4" Padding="8,4" VerticalAlignment="Center">
-									<TextBlock Text="默认" FontWeight="Bold" Foreground="#3498DB" FontSize="12"/>
+								<Border Classes="status-badge" IsVisible="{Binding IsDefault}">
+									<TextBlock Text="默认"/>
 								</Border>
-								<Button IsVisible="{Binding IsNotDefault}"
+								<Button Classes="item-action" IsVisible="{Binding IsNotDefault}"
 										Command="{Binding $parent[ListBox].DataContext.SetDefaultCommand}"
 										CommandParameter="{Binding}">
 									<StackPanel Orientation="Horizontal" Spacing="6">
@@ -71,7 +66,7 @@
 									</StackPanel>
 								</Button>
 								
-								<Button IsVisible="{Binding IsMsaUser}"
+								<Button Classes="item-action" IsVisible="{Binding IsMsaUser}"
 										Command="{Binding $parent[ListBox].DataContext.SkinMangerCommand}"
 										CommandParameter="{Binding um}">
 									<StackPanel Orientation="Horizontal" Spacing="6">
@@ -80,7 +75,7 @@
 									</StackPanel>
 								</Button>							
 
-								<Button Classes="Danger"
+								<Button Classes="item-action danger-action"
 										Command="{Binding $parent[ListBox].DataContext.DeleteUserCommand}"
 										CommandParameter="{Binding um}">
 									<StackPanel Orientation="Horizontal" Spacing="6">
@@ -93,10 +88,7 @@
 					</Border>
 				</DataTemplate>
 			</ListBox.ItemTemplate>
-			<ListBox.Styles>
-				<StyleInclude Source="avares://OneLauncher/Views/Styles/TransparentListBox.axaml" />
-			</ListBox.Styles>
 		</ListBox>
 	</Grid>
-	</SplitView>
+	</controls:PageShell>
 </UserControl>

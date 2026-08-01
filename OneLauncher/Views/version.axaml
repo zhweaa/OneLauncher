@@ -5,22 +5,18 @@
              mc:Ignorable="d" d:DesignWidth="1070" d:DesignHeight="620"
              x:Class="OneLauncher.Views.version"
 			 xmlns:vm="clr-namespace:OneLauncher.Views.ViewModels;assembly=OneLauncher"
+			 xmlns:controls="using:OneLauncher.Views.Controls"
 			 xmlns:lo="clr-namespace:OneLauncher.Core.Helper.Models;assembly=OneLauncher.Core"
 			 x:CompileBindings="True"
 			 x:DataType="vm:VersionPageViewModel"
 			 >
-	<SplitView IsPaneOpen="{Binding IsPaneShow,Mode=TwoWay}"
-               DisplayMode="Overlay"
-               OpenPaneLength="650"
-               PanePlacement="Right">
-		<SplitView.Pane>
-			<TransitioningContentControl Background="{DynamicResource PaneBackgound}" Content="{Binding RefDownPane}"/>
-		</SplitView.Pane>
+	<controls:PageShell IsPaneOpen="{Binding IsPaneShow,Mode=TwoWay}"
+						PaneContent="{Binding RefDownPane}">
 		<Grid RowDefinitions="52,*" Margin="24">
 		<StackPanel Margin="9,0,0,0" Orientation="Horizontal" Grid.Row="0" Spacing="28" >
-			<TextBlock Grid.Row="0" Text="管理你的游戏版本" FontSize="36"/>
-			<Button>
-				<StackPanel Orientation="Horizontal">
+			<TextBlock Classes="page-title" Text="版本管理"/>
+			<Button Classes="toolbar-action">
+				<StackPanel Orientation="Horizontal" Spacing="6">
 					<Image Source="/Assets/icos/settings1.png" Width="20" Height="20"/>
 					<TextBlock Text="排序"/>
 				</StackPanel>
@@ -45,32 +41,28 @@
 			</Button>
 
 		</StackPanel>
-		<ListBox x:Name="navVL" Grid.Row="1" ItemsSource="{Binding VersionList,Mode=TwoWay}" Background="Transparent" SelectionMode="Multiple">
+		<ListBox x:Name="navVL" Classes="card-list" Grid.Row="1" ItemsSource="{Binding VersionList,Mode=TwoWay}" SelectionMode="Multiple">
 			<ListBox.ItemTemplate>
 				<DataTemplate x:DataType="vm:VersionItem">
-					<Border CornerRadius="5">
+					<Border Padding="10">
 						<Grid RowDefinitions="*,*" Margin="12,0,0,0" ColumnDefinitions="*,Auto" >
 							<StackPanel Grid.Row="0" Grid.Column="0" Orientation="Horizontal" Spacing="4">
-								<TextBlock FontSize="24" Text="{Binding versionExp.VersionID}" FontWeight="Bold"/>
+								<TextBlock Classes="item-title" Text="{Binding versionExp.VersionID}"/>
 							</StackPanel>
-							<TextBlock Margin="0,8,0,0" Grid.Row="1" Grid.Column="0"  Text="{Binding versionExp.AddTime}"/>
+							<TextBlock Classes="item-meta" Margin="0,8,0,0" Grid.Row="1" Grid.Column="0" Text="{Binding versionExp.AddTime}"/>
 							<StackPanel Spacing="4" Margin="0,0,8,2" Grid.Row="1" Grid.Column="1" HorizontalAlignment="Right" Orientation="Horizontal" >
 								<StackPanel Orientation="Horizontal" Spacing="4">
-									<Border IsVisible="{Binding versionExp.modType.IsFabric}"
-											Background="#FEE2E2" CornerRadius="4" Padding="8,4" VerticalAlignment="Center">
-										<TextBlock Text="Fabric" FontWeight="Bold" Foreground="#EF4444" FontSize="12"/>
+									<Border Classes="status-badge" IsVisible="{Binding versionExp.modType.IsFabric}">
+										<TextBlock Text="Fabric"/>
 									</Border>
-									<Border IsVisible="{Binding versionExp.modType.IsNeoForge}"
-											Background="#FEE2E2" CornerRadius="4" Padding="8,4" VerticalAlignment="Center">
-										<TextBlock Text="Neoforge" FontWeight="Bold" Foreground="#EF4444" FontSize="12"/>
+									<Border Classes="status-badge" IsVisible="{Binding versionExp.modType.IsNeoForge}">
+										<TextBlock Text="NeoForge"/>
 									</Border>
-									<Border IsVisible="{Binding versionExp.modType.IsForge}"
-											Background="#FEE2E2" CornerRadius="4" Padding="8,4" VerticalAlignment="Center">
-										<TextBlock Text="Forge" FontWeight="Bold" Foreground="#EF4444" FontSize="12"/>
+									<Border Classes="status-badge" IsVisible="{Binding versionExp.modType.IsForge}">
+										<TextBlock Text="Forge"/>
 									</Border>
-									<Border IsVisible="{Binding versionExp.modType.IsQuilt}"
-											Background="#FEE2E2" CornerRadius="4" Padding="8,4" VerticalAlignment="Center">
-										<TextBlock Text="Quilt" FontWeight="Bold" Foreground="#EF4444" FontSize="12"/>
+									<Border Classes="status-badge" IsVisible="{Binding versionExp.modType.IsQuilt}">
+										<TextBlock Text="Quilt"/>
 									</Border>
 								</StackPanel>
 								<Button Command="{Binding LaunchGameCommand}" CommandParameter="{Binding versionExp}">
@@ -132,10 +124,7 @@
 					</Border>
 				</DataTemplate>
 			</ListBox.ItemTemplate>
-			<ListBox.Styles>
-				<StyleInclude Source="avares://OneLauncher/Views/Styles/TransparentListBox.axaml" />
-			</ListBox.Styles>
 		</ListBox>
 	</Grid>
-	</SplitView>
+	</controls:PageShell>
 </UserControl>

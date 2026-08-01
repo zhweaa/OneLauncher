@@ -9,9 +9,11 @@
         Title="OneLauncher"
         TransparencyLevelHint="AcrylicBlur"
         ExtendClientAreaToDecorationsHint="True"
-		Background="{DynamicResource MainWindowBackground}"
+		Background="{DynamicResource MainWindowBackgroundBrush}"
         Width="880"
         Height="560"
+        MinWidth="760"
+        MinHeight="500"
         x:Name="MainWindowLabel">
 	<Window.Resources>
 		<Thickness x:Key="LeftButtonListItemMargin">8</Thickness>
@@ -40,8 +42,8 @@
 									<TextBlock x:Name="HomeText"
                                                Text="开始菜单"
                                                VerticalAlignment="Center"
-                                               FontSize="16"
-                                               IsVisible="{Binding IsPaneOpen, ElementName=SidebarSplitView}"/>
+													   FontSize="16"
+													   IsVisible="{Binding IsPaneOpen, ElementName=SidebarSplitView}"/>
 								</StackPanel>
 							</ListBoxItem>
 							<ListBoxItem x:Name="VersionListBoxItem" Tag="Version">
@@ -58,20 +60,20 @@
 								<StackPanel Orientation="Horizontal" Spacing="8">
 									<Image Source="/Assets/icos/game.png" Width="32" Height="32"/>
 									<TextBlock x:Name="GameDataText"
-										 Text="游戏数据"
-										 VerticalAlignment="Center"
-										 FontSize="16"
-										 IsVisible="{Binding IsPaneOpen, ElementName=SidebarSplitView}"/>
+									 Text="游戏数据"
+									 VerticalAlignment="Center"
+									 FontSize="16"
+									 IsVisible="{Binding IsPaneOpen, ElementName=SidebarSplitView}"/>
 								</StackPanel>
 							</ListBoxItem>
 							<ListBoxItem x:Name="ServerListBoxItem" Tag="Server">
 								<StackPanel Orientation="Horizontal" Spacing="8">
 									<Image Source="/Assets/icos/server.png" Width="32" Height="32"/>
 									<TextBlock x:Name="ServerText"
-											 Text="服务器收藏"
-											 VerticalAlignment="Center"
-											 FontSize="16"
-											 IsVisible="{Binding IsPaneOpen, ElementName=SidebarSplitView}"/>
+										 Text="服务器收藏"
+										 VerticalAlignment="Center"
+										 FontSize="16"
+										 IsVisible="{Binding IsPaneOpen, ElementName=SidebarSplitView}"/>
 								</StackPanel>
 							</ListBoxItem>
 							<ListBoxItem x:Name="DownloadListBoxItem" Tag="Download">
@@ -153,7 +155,7 @@
 			</Border>
 			<Panel Grid.Row="1" Margin="0,0,0,0">
 				<TransitioningContentControl
-                    x:Name="PageContent" Background="{DynamicResource PageBackground}">
+                    x:Name="PageContent" Background="{DynamicResource PageBackgroundBrush}">
 					<TransitioningContentControl.PageTransition>
 						<PageSlide Orientation="Vertical" Duration="0:00:00.15">
 							<PageSlide.SlideInEasing>

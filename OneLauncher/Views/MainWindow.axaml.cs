@@ -195,17 +195,7 @@ public partial class MainWindow : Window
         
     }
     // 切换侧边栏展开/折叠
-    private void MangePaneOpenAndClose(bool IsOpen)
-    {
-        HomeText.IsVisible = IsOpen;
-        VersionText.IsVisible = IsOpen;
-        AccountText.IsVisible = IsOpen;
-        DownloadText.IsVisible = IsOpen;
-        SettingsText.IsVisible = IsOpen;
-        ServerText.IsVisible = IsOpen;
-        ModsBrowserText.IsVisible = IsOpen;
-        SidebarSplitView.IsPaneOpen = IsOpen;
-    }
+    private void MangePaneOpenAndClose(bool isOpen) => SidebarSplitView.IsPaneOpen = isOpen;
     // 鼠标进入事件
     private void Sb_in(object? sender, Avalonia.Input.PointerEventArgs e) => MangePaneOpenAndClose(true);
     // 鼠标离开事件

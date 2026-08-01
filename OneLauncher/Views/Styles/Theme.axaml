@@ -1,0 +1,71 @@
+<ResourceDictionary xmlns="https://github.com/avaloniaui"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <Thickness x:Key="PagePadding">24</Thickness>
+    <Thickness x:Key="PanePadding">20</Thickness>
+    <CornerRadius x:Key="ControlCornerRadius">6</CornerRadius>
+    <CornerRadius x:Key="CardCornerRadius">8</CornerRadius>
+
+    <ResourceDictionary.ThemeDictionaries>
+        <ResourceDictionary x:Key="Light">
+            <SolidColorBrush x:Key="MainWindowBackgroundBrush" Color="#99FFFFFF"/>
+            <SolidColorBrush x:Key="PageBackgroundBrush" Color="#FFFFFFFF"/>
+            <SolidColorBrush x:Key="PaneBackgroundBrush" Color="#F2F6F7FA"/>
+            <SolidColorBrush x:Key="GlassBorderBrush" Color="#A6FFFFFF"/>
+            <SolidColorBrush x:Key="FlyoutBackgroundBrush" Color="#E8FFFFFF"/>
+            <SolidColorBrush x:Key="ModalScrimBrush" Color="#42000000"/>
+            <SolidColorBrush x:Key="ListItemBackgroundBrush" Color="#FFF7F7F9"/>
+            <SolidColorBrush x:Key="CardBackgroundBrush" Color="#FFF5F5F7"/>
+            <SolidColorBrush x:Key="CardHoverBrush" Color="#FFFFFFFF"/>
+            <SolidColorBrush x:Key="InputBackgroundBrush" Color="#FFFFFFFF"/>
+            <SolidColorBrush x:Key="ControlHoverBrush" Color="#0F000000"/>
+            <SolidColorBrush x:Key="ControlPressedBrush" Color="#18000000"/>
+            <SolidColorBrush x:Key="BorderSubtleBrush" Color="#1F000000"/>
+            <SolidColorBrush x:Key="PrimaryForegroundBrush" Color="#FF202124"/>
+            <SolidColorBrush x:Key="SecondaryForegroundBrush" Color="#FF65676D"/>
+            <SolidColorBrush x:Key="MutedForegroundBrush" Color="#FF7C7F86"/>
+            <SolidColorBrush x:Key="AccentBrush" Color="#FF007AFF"/>
+            <SolidColorBrush x:Key="AccentHoverBrush" Color="#14007AFF"/>
+            <SolidColorBrush x:Key="AccentPressedBrush" Color="#26007AFF"/>
+            <SolidColorBrush x:Key="OnAccentBrush" Color="#FFFFFFFF"/>
+            <SolidColorBrush x:Key="SelectionBackgroundBrush" Color="#18007AFF"/>
+            <SolidColorBrush x:Key="DangerBrush" Color="#FFC42B1C"/>
+            <SolidColorBrush x:Key="DangerHoverBrush" Color="#FFA42618"/>
+            <SolidColorBrush x:Key="DangerSubtleBrush" Color="#18C42B1C"/>
+            <SolidColorBrush x:Key="WarningBrush" Color="#FF8A5A00"/>
+            <SolidColorBrush x:Key="WarningSubtleBrush" Color="#1FD18B00"/>
+            <SolidColorBrush x:Key="SuccessBrush" Color="#FF107C10"/>
+            <SolidColorBrush x:Key="SuccessSubtleBrush" Color="#19107C10"/>
+        </ResourceDictionary>
+
+        <ResourceDictionary x:Key="Dark">
+            <SolidColorBrush x:Key="MainWindowBackgroundBrush" Color="#99181820"/>
+            <SolidColorBrush x:Key="PageBackgroundBrush" Color="#FF1D1E21"/>
+            <SolidColorBrush x:Key="PaneBackgroundBrush" Color="#F017181B"/>
+            <SolidColorBrush x:Key="GlassBorderBrush" Color="#38FFFFFF"/>
+            <SolidColorBrush x:Key="FlyoutBackgroundBrush" Color="#E827282D"/>
+            <SolidColorBrush x:Key="ModalScrimBrush" Color="#70000000"/>
+            <SolidColorBrush x:Key="ListItemBackgroundBrush" Color="#FF2C2D32"/>
+            <SolidColorBrush x:Key="CardBackgroundBrush" Color="#FF292A2F"/>
+            <SolidColorBrush x:Key="CardHoverBrush" Color="#FF38393F"/>
+            <SolidColorBrush x:Key="InputBackgroundBrush" Color="#FF242529"/>
+            <SolidColorBrush x:Key="ControlHoverBrush" Color="#14FFFFFF"/>
+            <SolidColorBrush x:Key="ControlPressedBrush" Color="#20FFFFFF"/>
+            <SolidColorBrush x:Key="BorderSubtleBrush" Color="#2BFFFFFF"/>
+            <SolidColorBrush x:Key="PrimaryForegroundBrush" Color="#FFF6F7F9"/>
+            <SolidColorBrush x:Key="SecondaryForegroundBrush" Color="#FFB0B2B8"/>
+            <SolidColorBrush x:Key="MutedForegroundBrush" Color="#FF93969D"/>
+            <SolidColorBrush x:Key="AccentBrush" Color="#FF0A84FF"/>
+            <SolidColorBrush x:Key="AccentHoverBrush" Color="#240A84FF"/>
+            <SolidColorBrush x:Key="AccentPressedBrush" Color="#380A84FF"/>
+            <SolidColorBrush x:Key="OnAccentBrush" Color="#FF08111A"/>
+            <SolidColorBrush x:Key="SelectionBackgroundBrush" Color="#300A84FF"/>
+            <SolidColorBrush x:Key="DangerBrush" Color="#FFFF5F52"/>
+            <SolidColorBrush x:Key="DangerHoverBrush" Color="#FFFF7B70"/>
+            <SolidColorBrush x:Key="DangerSubtleBrush" Color="#2BFF5F52"/>
+            <SolidColorBrush x:Key="WarningBrush" Color="#FFFFC857"/>
+            <SolidColorBrush x:Key="WarningSubtleBrush" Color="#2BFFC857"/>
+            <SolidColorBrush x:Key="SuccessBrush" Color="#FF54C76B"/>
+            <SolidColorBrush x:Key="SuccessSubtleBrush" Color="#2854C76B"/>
+        </ResourceDictionary>
+    </ResourceDictionary.ThemeDictionaries>
+</ResourceDictionary>

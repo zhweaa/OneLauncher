@@ -8,43 +8,17 @@
              RequestedThemeVariant="Default">
 	<Application.Resources>
 		<ResourceDictionary>
+			<ResourceDictionary.MergedDictionaries>
+				<ResourceInclude Source="avares://OneLauncher/Views/Styles/Theme.axaml"/>
+			</ResourceDictionary.MergedDictionaries>
 			<vm:ModEnumToStringConverter x:Key="ModEnumConverter"/>
 			<vm:DownloadSourceStrategyToStringConverter x:Key="DownloadSourceStrategyConverter"/>
-			<ResourceDictionary.ThemeDictionaries>
-				<ResourceDictionary x:Key="Light">
-					<SolidColorBrush x:Key="MainWindowBackground" Color="#99FFFFFF"/>
-					<SolidColorBrush x:Key="PageBackground" Color="#FFFFFF"/>
-					<SolidColorBrush x:Key="ListBoxItemBackgound" Color="#F4F4F5" />
-					<SolidColorBrush x:Key="PaneBackgound" Color="#EAEAEA" />
-
-					<SolidColorBrush x:Key="CardBackgroundBrush" Color="#F0F0F0" />
-					<SolidColorBrush x:Key="PrimaryForegroundBrush" Color="#1C1C1E" />
-					<SolidColorBrush x:Key="SecondaryForegroundBrush" Color="#6E6E73" />
-					<SolidColorBrush x:Key="AccentBrush" Color="#007AFF" />
-					<SolidColorBrush x:Key="AccentHoverBrush" Color="#007AFF" Opacity="0.1" />
-				</ResourceDictionary>
-
-				<ResourceDictionary x:Key="Dark">
-					<SolidColorBrush x:Key="MainWindowBackground" Color="#99181820"/>
-					<SolidColorBrush x:Key="PageBackground" Color="#212121"/>
-					<SolidColorBrush x:Key="ListBoxItemBackgound" Color="#24252A" />
-					<SolidColorBrush x:Key="PaneBackgound" Color="#171717" />
-
-					<SolidColorBrush x:Key="CardBackgroundBrush" Color="#2C2C2E" />
-					<SolidColorBrush x:Key="PrimaryForegroundBrush" Color="#FFFFFF" />
-					<SolidColorBrush x:Key="SecondaryForegroundBrush" Color="#8D8D92" />
-					<SolidColorBrush x:Key="AccentBrush" Color="#0A84FF" />
-					<SolidColorBrush x:Key="AccentHoverBrush" Color="#0A84FF" Opacity="0.2" />
-				</ResourceDictionary>
-			</ResourceDictionary.ThemeDictionaries>
 		</ResourceDictionary>
 	</Application.Resources>
 
 	<Application.Styles>
 		<FluentTheme />
-		<Style Selector="TextBlock">
-			
-		</Style>
+		<StyleInclude Source="avares://OneLauncher/Views/Styles/Styles.axaml"/>
 		<Style Selector="TextBox">
 			<Setter Property="ContextMenu">
 				<ContextMenu DataContext="{Binding $parent[TextBox]}">

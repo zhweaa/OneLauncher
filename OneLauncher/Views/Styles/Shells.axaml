@@ -1,0 +1,66 @@
+<Styles xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:controls="using:OneLauncher.Views.Controls">
+    <Style Selector="controls|PageShell">
+        <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+        <Setter Property="VerticalContentAlignment" Value="Stretch"/>
+        <Setter Property="Template">
+            <ControlTemplate>
+                <SplitView IsPaneOpen="{Binding IsPaneOpen, RelativeSource={RelativeSource TemplatedParent}, Mode=TwoWay}"
+                           DisplayMode="Overlay"
+                           UseLightDismissOverlayMode="False"
+                           OpenPaneLength="{TemplateBinding OpenPaneLength}"
+                           PanePlacement="Right"
+                           PaneBackground="{DynamicResource PaneBackgroundBrush}">
+                    <SplitView.Pane>
+                        <TransitioningContentControl Content="{TemplateBinding PaneContent}"
+                                                     Background="{DynamicResource PaneBackgroundBrush}">
+                            <TransitioningContentControl.PageTransition>
+                                <CrossFade Duration="0:0:0.16"/>
+                            </TransitioningContentControl.PageTransition>
+                        </TransitioningContentControl>
+                    </SplitView.Pane>
+                    <Grid IsEnabled="{Binding !IsPaneOpen, RelativeSource={RelativeSource TemplatedParent}}">
+                        <ContentPresenter Content="{TemplateBinding Content}"
+                                          ContentTemplate="{TemplateBinding ContentTemplate}"
+                                          HorizontalContentAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                          VerticalContentAlignment="{TemplateBinding VerticalContentAlignment}"/>
+                        <Border IsVisible="{Binding IsPaneOpen, RelativeSource={RelativeSource TemplatedParent}}"
+                                Background="{DynamicResource ModalScrimBrush}"/>
+                    </Grid>
+                </SplitView>
+            </ControlTemplate>
+        </Setter>
+    </Style>
+
+    <Style Selector="controls|PaneHeader">
+        <Setter Property="HorizontalAlignment" Value="Stretch"/>
+        <Setter Property="Template">
+            <ControlTemplate>
+                <Grid MinHeight="44" ColumnDefinitions="Auto,*,Auto" VerticalAlignment="Center">
+                    <Button Classes="pane-toolbar"
+                            Command="{TemplateBinding BackCommand}"
+                            HorizontalAlignment="Left"
+                            VerticalAlignment="Center"
+                            ToolTip.Tip="返回"
+                            AutomationProperties.Name="返回">
+                        <Grid ColumnDefinitions="18,*" ColumnSpacing="7" VerticalAlignment="Center">
+                            <Image Source="/Assets/icos/back.png" Width="18" Height="18" VerticalAlignment="Center"/>
+                            <TextBlock Grid.Column="1" Text="{TemplateBinding BackLabel}" VerticalAlignment="Center"/>
+                        </Grid>
+                    </Button>
+                    <TextBlock Grid.Column="1"
+                               Classes="pane-title"
+                               Text="{TemplateBinding Title}"
+                               TextTrimming="CharacterEllipsis"
+                               VerticalAlignment="Center"
+                               Margin="16,0,0,0"/>
+                    <ContentPresenter Grid.Column="2"
+                                      Content="{TemplateBinding TrailingContent}"
+                                      HorizontalAlignment="Right"
+                                      VerticalAlignment="Center"/>
+                </Grid>
+            </ControlTemplate>
+        </Setter>
+    </Style>
+</Styles>

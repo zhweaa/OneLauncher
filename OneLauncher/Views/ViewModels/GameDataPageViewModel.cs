@@ -30,6 +30,8 @@ using System.Threading.Tasks;
 
 namespace OneLauncher.Views.ViewModels;
 //internal class GameDataPageDisplayListRefreshMessage { }
+internal sealed class GameDataTagCreatedMessage { }
+
 internal partial class GameDataItem : BaseViewModel
 {
     public GameData data { get; set; }
@@ -87,16 +89,29 @@ internal partial class GameDataItem : BaseViewModel
 }
 internal partial class GameDataTagItem : BaseViewModel
 {
-    private readonly GameDataManager _gameDataManager;
-    public GameDataTag Data { get; set; }
-    public GameDataTagItem(GameDataTag tag,GameDataManager gameDataManager)
+    private readonly GameDataManager? _gameDataManager;
+    public GameDataTag? Data { get; }
+    public bool IsCreateAction { get; }
+    public bool CanDelete => !IsCreateAction;
+    public string DisplayName => IsCreateAction ? "新建标签..." : Data?.Name ?? string.Empty;
+
+    private GameDataTagItem()
+    {
+        IsCreateAction = true;
+    }
+
+    public GameDataTagItem(GameDataTag tag, GameDataManager? gameDataManager)
     {
         Data = tag;
         _gameDataManager = gameDataManager;
     }
+
+    public static GameDataTagItem CreateAction() => new();
+
     [RelayCommand]
     private async Task DeleteTag()
     {
+        if (Data is null || _gameDataManager is null) return;
         await _gameDataManager.RemoveTagAsync(Data.ID);
         WeakReferenceMessenger.Default.Send(new MainWindowShowFlyoutMessage($"标签 '{Data.Name}' 已删除", NotificationType.Success));
     }
@@ -116,8 +131,19 @@ internal partial class GameDataPageViewModel : BaseViewModel
         Dispatcher.UIThread.Post(() => 
         {
             GameDataList = _gameDataManager.AllGameData.Select(x => new GameDataItem(x, _gameDataManager)).ToList();
-            AvailableTags = new ObservableCollection<GameDataTagItem>(_gameDataManager.Data.Tags.Values.Select(x => new GameDataTagItem(x, _gameDataManager)).ToList());
+            AvailableTags = BuildAvailableTags();
         });
+    }
+
+    private ObservableCollection<GameDataTagItem> BuildAvailableTags()
+    {
+        var items = new ObservableCollection<GameDataTagItem>
+        {
+            GameDataTagItem.CreateAction()
+        };
+        foreach (var tag in _gameDataManager.Data.Tags.Values)
+            items.Add(new GameDataTagItem(tag, _gameDataManager));
+        return items;
     }
     
     public GameDataPageViewModel(
@@ -129,7 +155,7 @@ internal partial class GameDataPageViewModel : BaseViewModel
         this._newGameDataPaneViewModelFactory = newGameDataPaneViewModelFactory;
         this._editVMFactory = editGameDataPaneViewModelFactory;
         this._gameDataManager = gameDataManager;
-        AvailableTags = new ObservableCollection<GameDataTagItem>(_gameDataManager.Data.Tags.Values.Select(x => new GameDataTagItem(x,_gameDataManager)).ToList());
+        AvailableTags = BuildAvailableTags();
 #if DEBUG
         // 造密码的Avalonia设计器天天报错
         // 设计时数据
@@ -165,6 +191,7 @@ internal partial class GameDataPageViewModel : BaseViewModel
             };
             AvailableTags = new ObservableCollection<GameDataTagItem>()
             {
+                GameDataTagItem.CreateAction(),
                 gameTag1
             };
         }
@@ -214,25 +241,28 @@ internal partial class GameDataPageViewModel : BaseViewModel
     [ObservableProperty]
     private ObservableCollection<GameDataTagItem> availableTags;
     [ObservableProperty]
-    private GameDataTag? selectedTag;
+    private GameDataTagItem? selectedTag;
     [ObservableProperty]
     private string? newTagName = string.Empty;
     [RelayCommand]
     private async Task CreateNewTag()
     {
         if(string.IsNullOrWhiteSpace(NewTagName)) return;
+        var tagName = NewTagName.Trim();
         var newTagId = Guid.NewGuid();
         await _gameDataManager.CreateTag(new GameDataTag
         {
-            Name = NewTagName,
+            Name = tagName,
             ID = newTagId
         },newTagId);
         NewTagName = string.Empty;
-        WeakReferenceMessenger.Default.Send(new MainWindowShowFlyoutMessage($"标签 '{NewTagName}' 已创建", NotificationType.Success));
+        SelectedTag = null;
+        WeakReferenceMessenger.Default.Send(new MainWindowShowFlyoutMessage($"标签 '{tagName}' 已创建", NotificationType.Success));
+        WeakReferenceMessenger.Default.Send(new GameDataTagCreatedMessage());
     }
-    partial void OnSelectedTagChanged(GameDataTag? value)
+    partial void OnSelectedTagChanged(GameDataTagItem? value)
     {
-        if (value == null) return;
+        if (value?.IsCreateAction == true) return;
     }
     [RelayCommand]
     private void ResetFilter()
