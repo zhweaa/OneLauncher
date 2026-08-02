@@ -30,7 +30,7 @@ public class ServerEntry(Guid id, string instanceId, ServerInfo serverInfo, stri
 
     // 以下是预留属性
     [JsonIgnore]
-    public uint? PlayersOnline;
+    public uint? PlayersMax;
     [JsonIgnore]
     public uint? Ping
     {
@@ -40,8 +40,9 @@ public class ServerEntry(Guid id, string instanceId, ServerInfo serverInfo, stri
             {
                 using Ping pingSender = new();
                 PingReply reply = pingSender.Send(ServerInfo.Ip, 120);
+                var time = reply.RoundtripTime;
                 return reply.Status == IPStatus.Success
-                    ? (uint)Math.Min(reply.RoundtripTime, uint.MaxValue)
+                    ? (uint)Math.Min(time, uint.MaxValue)
                     : null;
             }
             catch (PingException)
@@ -82,11 +83,13 @@ public class ServerEntry(Guid id, string instanceId, ServerInfo serverInfo, stri
             bool online;
             string? description;
             string? icon;
+            uint? playersMax;
             try
             {
                 online = node["online"]?.GetValue<bool>() ?? false;
                 description = node["motd"]?["clean"]?.GetValue<string>();
                 icon = node["icon"]?.GetValue<string>();
+                playersMax = node["players"]?["max"]?.GetValue<uint>();
             }
             catch (Exception ex) when (ex is JsonException or InvalidOperationException)
             {
@@ -100,6 +103,8 @@ public class ServerEntry(Guid id, string instanceId, ServerInfo serverInfo, stri
                     $"无法连接到服务器 {ServerInfo.Ip}:{ServerInfo.Port}",
                     OlanExceptionAction.Warning);
             }
+
+            PlayersMax = playersMax;
 
             // 先检查是否已经存在配置，讲究一个不变现有原则。
             if (icon != null && !File.Exists(IconFileUrl))

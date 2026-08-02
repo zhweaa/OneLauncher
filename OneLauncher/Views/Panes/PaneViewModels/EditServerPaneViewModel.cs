@@ -23,6 +23,7 @@ internal partial class EditServerPaneViewModel : BaseViewModel
     private readonly DBManager _dbManager;
     private readonly ServerEntry _editingServer;
     private readonly Action _onCloseCallback;
+    private readonly Action? _onServerInfoUpdated;
 
     [ObservableProperty] private string serverName;
     [ObservableProperty] private string? serverDescription;
@@ -38,11 +39,13 @@ internal partial class EditServerPaneViewModel : BaseViewModel
     public EditServerPaneViewModel(
         DBManager dbManager,
         ServerEntry editingServer,
-        Action onCloseCallback)
+        Action onCloseCallback,
+        Action? onServerInfoUpdated = null)
     {
         _dbManager = dbManager;
         _editingServer = editingServer;
         _onCloseCallback = onCloseCallback;
+        _onServerInfoUpdated = onServerInfoUpdated;
         ServerName = editingServer.Name;
         ServerDescription = editingServer.Description;
         ServerIP = editingServer.ServerInfo.Ip;
@@ -103,6 +106,7 @@ internal partial class EditServerPaneViewModel : BaseViewModel
             ServerDescription = _editingServer.Description;
             CurrentIcon = ServerIconLoader.Load(_editingServer);
             await _dbManager.Save();
+            _onServerInfoUpdated?.Invoke();
             ShowMessage("已更新服务器信息。", NotificationType.Success);
         }
         catch (OlanException ex)

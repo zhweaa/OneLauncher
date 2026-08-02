@@ -1,4 +1,5 @@
 using Avalonia.Controls;
+using Avalonia.Media;
 using Avalonia.Media.Imaging;
 using Avalonia.Platform;
 using Avalonia.Threading;
@@ -43,16 +44,40 @@ internal static class ServerIconLoader
 
 internal sealed class ServerItem : BaseViewModel
 {
+    private static readonly IBrush GoodPingBrush = new SolidColorBrush(Color.Parse("#34C759"));
+    private static readonly IBrush WarningPingBrush = new SolidColorBrush(Color.Parse("#FF9F0A"));
+    private static readonly IBrush PoorPingBrush = new SolidColorBrush(Color.Parse("#FF453A"));
+
     public ServerEntry data { get; }
     public Bitmap Icon { get; }
     public bool IsDefault { get; }
     public bool HasDescription => !string.IsNullOrWhiteSpace(data.Description);
+    public uint? Ping { get; }
+    public uint? PlayersMax { get; }
+    public bool HasPlayersMax => PlayersMax.HasValue;
+    public string PlayersMaxText => PlayersMax is uint value ? $"最大人数: {value}" : string.Empty;
+    public bool HasPing => Ping.HasValue;
+    public string PingText => Ping switch
+    {
+        null => string.Empty,
+        0 => "<1 ms",
+        uint value => $"{value} ms"
+    };
+    public IBrush PingBrush => Ping switch
+    {
+        null => Brushes.Transparent,
+        < 100 => GoodPingBrush,
+        < 200 => WarningPingBrush,
+        _ => PoorPingBrush
+    };
 
-    public ServerItem(ServerEntry serverEntry, Guid? defaultServerId)
+    public ServerItem(ServerEntry serverEntry, Guid? defaultServerId, uint? ping)
     {
         data = serverEntry;
         Icon = ServerIconLoader.Load(serverEntry);
         IsDefault = serverEntry.Id == defaultServerId;
+        Ping = ping;
+        PlayersMax = serverEntry.PlayersMax;
     }
 }
 
@@ -61,6 +86,7 @@ internal partial class ServerPageViewModel : BaseViewModel
     private readonly DBManager _dbManager;
     private readonly AddServerPaneViewModelFactory _addServerPaneViewModelFactory;
     private readonly EditServerPaneViewModelFactory _editServerPaneViewModelFactory;
+    private readonly Dictionary<Guid, uint?> _pingByServerId = new();
 
     public List<ServerItem> ServerList { get; private set; } = new();
     [ObservableProperty] private UserControl? paneContent;
@@ -76,17 +102,71 @@ internal partial class ServerPageViewModel : BaseViewModel
         _editServerPaneViewModelFactory = editServerPaneViewModelFactory;
         RefList();
         _dbManager.OnDataChanged += RefList;
+        _ = ProbePingsAsync();
     }
 
     private void RefList()
     {
-        Dispatcher.UIThread.Post(() =>
+        Dispatcher.UIThread.Post(RebuildList);
+    }
+
+    private void RebuildList()
+    {
+        Guid? defaultServerId = _dbManager.Data.OlanSettings.DefaultServerID;
+        ServerList = _dbManager.Data.ServerList
+            .Select(serverEntry => new ServerItem(
+                serverEntry,
+                defaultServerId,
+                _pingByServerId.TryGetValue(serverEntry.Id, out uint? ping) ? ping : null))
+            .ToList();
+        OnPropertyChanged(nameof(ServerList));
+    }
+
+    private async Task ProbePingsAsync()
+    {
+        ServerEntry[] entries = _dbManager.Data.ServerList.ToArray();
+        uint?[] pings = await Task.WhenAll(entries.Select(ReadPingAsync));
+
+        await Dispatcher.UIThread.InvokeAsync(() =>
         {
-            Guid? defaultServerId = _dbManager.Data.OlanSettings.DefaultServerID;
-            ServerList = _dbManager.Data.ServerList
-                .Select(serverEntry => new ServerItem(serverEntry, defaultServerId))
-                .ToList();
-            OnPropertyChanged(nameof(ServerList));
+            for (int index = 0; index < entries.Length; index++)
+                _pingByServerId[entries[index].Id] = pings[index];
+
+            RebuildList();
+        });
+    }
+
+    private static async Task<uint?> ReadPingAsync(ServerEntry serverEntry)
+    {
+        try
+        {
+            return await Task.Run(() => serverEntry.Ping).ConfigureAwait(false);
+        }
+        catch
+        {
+            // A malformed host or an unavailable ICMP provider should only hide the
+            // optional indicator; it must not prevent the server card from rendering.
+            return null;
+        }
+    }
+
+    private void RefreshPing(Guid serverId)
+    {
+        _ = RefreshPingAsync(serverId);
+    }
+
+    private async Task RefreshPingAsync(Guid serverId)
+    {
+        ServerEntry? serverEntry = _dbManager.Data.ServerList
+            .FirstOrDefault(server => server.Id == serverId);
+        if (serverEntry == null)
+            return;
+
+        uint? ping = await ReadPingAsync(serverEntry);
+        await Dispatcher.UIThread.InvokeAsync(() =>
+        {
+            _pingByServerId[serverId] = ping;
+            RebuildList();
         });
     }
 
@@ -101,7 +181,9 @@ internal partial class ServerPageViewModel : BaseViewModel
         IsPaneShow = true;
         PaneContent = new AddServerPane
         {
-            DataContext = _addServerPaneViewModelFactory.Create(() => IsPaneShow = false)
+            DataContext = _addServerPaneViewModelFactory.Create(
+                () => IsPaneShow = false,
+                serverId => RefreshPing(serverId))
         };
     }
 
@@ -113,7 +195,8 @@ internal partial class ServerPageViewModel : BaseViewModel
         {
             DataContext = _editServerPaneViewModelFactory.Create(
                 serverEntry,
-                () => IsPaneShow = false)
+                () => IsPaneShow = false,
+                () => RefreshPing(serverEntry.Id))
         };
     }
 

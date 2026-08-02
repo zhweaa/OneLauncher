@@ -16,11 +16,14 @@ internal sealed class AddServerPaneViewModelFactory
         _gameDataManager = gameDataManager;
     }
 
-    public AddServerPaneViewModel Create(Action onCloseCallback)
+    public AddServerPaneViewModel Create(
+        Action onCloseCallback,
+        Action<Guid>? onServerInfoUpdated = null)
     {
         return new AddServerPaneViewModel(
             _dbManager,
             _gameDataManager,
-            onCloseCallback);
+            onCloseCallback,
+            onServerInfoUpdated);
     }
 }

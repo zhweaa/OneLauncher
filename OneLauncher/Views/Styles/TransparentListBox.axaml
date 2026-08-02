@@ -52,6 +52,9 @@
 			</Transitions>
 		</Setter>
 	</Style>
+	<Style Selector="ListBox.card-list ListBoxItem > Border.data-card">
+		<Setter Property="Height" Value="96"/>
+	</Style>
 	<Style Selector="ListBox.card-list ListBoxItem:selected > Border">
 		<Setter Property="Background" Value="{DynamicResource ListItemBackgroundBrush}"/>
 		<Setter Property="BorderBrush" Value="{DynamicResource BorderSubtleBrush}"/>

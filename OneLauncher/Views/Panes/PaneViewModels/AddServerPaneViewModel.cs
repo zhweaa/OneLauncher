@@ -17,6 +17,7 @@ internal partial class AddServerPaneViewModel : BaseViewModel
 {
     private readonly DBManager _dbManager;
     private readonly Action _onCloseCallback;
+    private readonly Action<Guid>? _onServerInfoUpdated;
 
     [ObservableProperty] private List<GameData> availableInstances;
     [ObservableProperty] private GameData? selectedInstance;
@@ -28,10 +29,12 @@ internal partial class AddServerPaneViewModel : BaseViewModel
     public AddServerPaneViewModel(
         DBManager dbManager,
         GameDataManager gameDataManager,
-        Action onCloseCallback)
+        Action onCloseCallback,
+        Action<Guid>? onServerInfoUpdated = null)
     {
         _dbManager = dbManager;
         _onCloseCallback = onCloseCallback;
+        _onServerInfoUpdated = onServerInfoUpdated;
         AvailableInstances = gameDataManager.AllGameData;
 
         string? defaultInstanceId = _dbManager.Data.OlanSettings.DefaultInstanceID;
@@ -91,6 +94,7 @@ internal partial class AddServerPaneViewModel : BaseViewModel
         _dbManager.Data.ServerList.Add(serverEntry);
         await _dbManager.Save();
         await serverEntry.GetAASServerInfo();
+        _onServerInfoUpdated?.Invoke(serverEntry.Id);
         WeakReferenceMessenger.Default.Send(
             new MainWindowShowFlyoutMessage(
                 $"已添加服务器收藏：{serverEntry.Name}",

@@ -15,11 +15,13 @@ internal sealed class EditServerPaneViewModelFactory
 
     public EditServerPaneViewModel Create(
         ServerEntry serverEntry,
-        Action onCloseCallback)
+        Action onCloseCallback,
+        Action? onServerInfoUpdated = null)
     {
         return new EditServerPaneViewModel(
             _dbManager,
             serverEntry,
-            onCloseCallback);
+            onCloseCallback,
+            onServerInfoUpdated);
     }
 }

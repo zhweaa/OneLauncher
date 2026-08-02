@@ -58,14 +58,14 @@
         <Setter Property="VerticalAlignment" Value="Center"/>
     </Style>
     <Style Selector="Button.danger-action">
-        <Setter Property="Background" Value="{DynamicResource DangerSubtleBrush}"/>
-        <Setter Property="Foreground" Value="{DynamicResource DangerBrush}"/>
+        <Setter Property="Background" Value="{DynamicResource DangerBrush}"/>
+        <Setter Property="Foreground" Value="{DynamicResource OnAccentBrush}"/>
         <Setter Property="BorderBrush" Value="{DynamicResource DangerBrush}"/>
         <Setter Property="BorderThickness" Value="1"/>
         <Setter Property="CornerRadius" Value="{StaticResource ControlCornerRadius}"/>
     </Style>
     <Style Selector="Button.danger-action:pointerover /template/ ContentPresenter">
-        <Setter Property="Background" Value="{DynamicResource DangerBrush}"/>
+        <Setter Property="Background" Value="{DynamicResource DangerHoverBrush}"/>
         <Setter Property="Foreground" Value="{DynamicResource OnAccentBrush}"/>
     </Style>
 

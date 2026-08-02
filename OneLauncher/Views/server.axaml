@@ -33,7 +33,7 @@
                  SelectionMode="Multiple">
             <ListBox.ItemTemplate>
                 <DataTemplate x:DataType="vm:ServerItem">
-                    <Border Padding="10">
+                    <Border Classes="data-card" Padding="10">
                         <Grid ColumnDefinitions="Auto,*,Auto"
                               VerticalAlignment="Center">
                             <Border Grid.Column="0"
@@ -60,15 +60,22 @@
                                             Spacing="10"
                                             Margin="0,5,0,0">
                                     <TextBlock Classes="item-meta">
-                                        <Run Text="地址:" />
-                                        <Run Text="{Binding data.ServerInfo.Ip}" />
-                                        <Run Text=":" />
-                                        <Run Text="{Binding data.ServerInfo.Port}" />
-                                    </TextBlock>
-                                    <TextBlock Classes="item-meta">
                                         <Run Text="实例:" />
                                         <Run Text="{Binding data.InstanceId}" />
                                     </TextBlock>
+                                    <StackPanel Orientation="Horizontal" Spacing="6">
+                                        <Ellipse Width="8"
+                                                 Height="8"
+                                                 IsVisible="{Binding HasPing}"
+                                                 Fill="{Binding PingBrush}"
+                                                 VerticalAlignment="Center" />
+                                        <TextBlock Classes="item-meta"
+                                                   IsVisible="{Binding HasPing}"
+                                                   Text="{Binding PingText}" />
+                                    </StackPanel>
+                                    <TextBlock Classes="item-meta"
+                                               IsVisible="{Binding HasPlayersMax}"
+                                               Text="{Binding PlayersMaxText}" />
                                 </StackPanel>
                             </StackPanel>
 

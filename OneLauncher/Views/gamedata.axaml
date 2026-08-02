@@ -91,7 +91,7 @@
 			<ListBox Grid.Row="1" Classes="card-list" ItemsSource="{Binding GameDataList}" SelectionMode="Multiple">
 				<ListBox.ItemTemplate>
 					<DataTemplate x:DataType="vm:GameDataItem">
-						<Border Padding="10">
+                        <Border Classes="data-card" Padding="10">
 							<Grid ColumnDefinitions="Auto,*,Auto" VerticalAlignment="Center">
 								<Border Grid.Column="0" CornerRadius="6" ClipToBounds="True">
 									<Image Width="64" Height="64" Source="{Binding Icon}"/>
