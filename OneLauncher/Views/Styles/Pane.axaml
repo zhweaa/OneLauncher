@@ -135,7 +135,10 @@
         <Setter Property="CornerRadius" Value="{StaticResource ControlCornerRadius}"/>
     </Style>
     <Style Selector="ProgressBar.pane-progress">
-        <Setter Property="Height" Value="8"/>
+        <Setter Property="Height" Value="12"/>
+    </Style>
+    <Style Selector="ProgressBar.pane-progress /template/ TextBlock">
+        <Setter Property="VerticalAlignment" Value="Center"/>
     </Style>
     <Style Selector="ListBox.pane-list">
         <Setter Property="Background" Value="Transparent"/>

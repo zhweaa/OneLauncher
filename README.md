@@ -1,115 +1,94 @@
 # OneLauncher
 
-**OneLauncher** 是一个以快速为功能核心以傻瓜式为设计准则的轻量化 Minecraft 启动器
+轻量、快速、少配置的 Minecraft 启动器。
 
-快速安装（Windosw PowerShell）：
+## Windows 一键安装
+
+在 Windows PowerShell 中运行：
 
 ```powershell
 Invoke-Expression ((New-Object System.Net.WebClient).DownloadString('https://raw.githubusercontent.com/zhweaa/OneLauncher/master/OneLauncher.Desktop/install.ps1'))
 ```
 
-## 系统要求
+安装脚本可选择仅下载启动器，或同时安装 .NET 10 Desktop Runtime 与 Java 21。
 
-- **操作系统**：
-  - 对于Windows，需为Windows10-x64及以上
-  - 对于MacOS，仅支持Arm平台
-  
-- **运行环境**：
-  - 在依赖框架的构建中需要.NET10（或更高版本 可以在[这里](https://dotnet.microsoft.com/zh-cn/download/dotnet/9.0)下载）    
-    *注意：部分较新的Windows可能自带此依赖，无需安装*
-    
-  - Java 环境  
-    *OneLauncher支持自动下载并使用合适的Java，如果你的系统无Java运行时，请在下载时启动此选项*
-    *；如果自动程序不起作用，我们推荐[Eclipse Adoptium](https://adoptium.net/zh-CN/download/)*
-- **特定平台功能限制**
-  - **联机** 仅限Windows
-  - **Web Accoount Manger登入方式** 仅限Windows
-    
-## 支持的额外功能列表
-- 命令行模式
-- 多下载源下载游戏
-- 导入PCL2版本
-- 自定义/优化启动参数
-- 查看新闻
-- 服务器书签
-- 内存优化
-- 模组加载器
-  - Fabric
-  - Neoforge
-  - Quilt
-  - Forge（有限支持）
-- 一键开服
-- 管理本地模组
-- 导入Modpack包
-- 微软登入验证
-- 外置登入验证
-- 离线登入验证
-- 联机
-- 下载模组
-  - Modrinth
+## 使用
 
-## 跨平台安装与构建指南
+1. 在“版本管理”选择 Minecraft 版本、模组加载器和 Java，点击下载。
+2. 在“游戏数据”调整实例、账户和启动参数。
+3. 回到首页选择实例，点击“快速游戏”。
 
-### 通过下载源代码并构建的方式使用
+## 核心功能
 
-1. 下载源代码
-2. 使用[Visual Studio](https://visualstudio.microsoft.com/)或[Rider](https://www.jetbrains.com/rider/)打开[OneLauncher.sln](https://github.com/abbcccbba/OneLauncher/blob/master/OneLauncher.sln)
-3. 将[OneLauncher.Desktop](https://github.com/abbcccbba/OneLauncher/blob/master/OneLauncher.Desktop/OneLauncher.Desktop.csproj)设为启动项目
-4. 运行，便可以看到窗口。构建为可执行文件请参考[这里](https://www.google.com/)
+- **Microsoft 正版登录**：Windows 直接调用系统 Web Account Manager（WAM）完成 Microsoft 账户授权，无需打开浏览器、无需输入验证码；随后自动完成 Xbox Live、Minecraft Services 和正版权益验证。
+- **版本与实例**：Mojang、BMCL、OneLauncher 多源竞速下载，支持 SHA-1 校验、PCL2 版本导入和 `.mrpack` 整合包导入。
+- **模组与资源**：支持 Fabric、Quilt、NeoForge，Forge 为预览支持；通过 Modrinth 检索并安装模组、资源包和光影。
+- **Java 管理**：按 Minecraft 版本自动下载匹配的 Java，支持多版本运行时。
+- **账户与服务器**：支持 Microsoft、Yggdrasil 外置和离线账户；收藏服务器并关联游戏实例。
+- **Windows 联机**：与 [MinecraftConnectTool（MCT）](https://github.com/MCZLF/MinecraftConnectTool) 合作提供 P2P 联机能力。
+- **跨平台桌面**：基于 Avalonia，支持 Windows、Linux 和 macOS；MCT 联机及 WAM 登录为 Windows 专属能力。
 
-### 对于Windows AOT编译
+## 界面
 
-请在启动项目（即OneLauncher.Desktop）内添加以下配置
+![OneLauncher 首页](docs/assets/screenshots/home.png)
 
-``` XML
-<PropertyGroup>
-  <!-- 启用AOT编译，通用，无论Win还是Mac对于AOT都需要开启 -->
-	<PublishAot>true</PublishAot>
-</PropertyGroup>
-<ItemGroup Label="ImportLib">
-  <!-- 针对Windows的发布不生成单文件解决访问，静态链接，对于Mac可以删去，因为最终还是要打包到App包且这些静态库仅适用于Windows -->
-  <!-- 项目配置中不会包含这些静态库，请到 https://github.com/abbcccbba/OneLauncher/releases/tag/v0.1.4AOTv1.2.0/ 下载并放入libs文件夹-->
-	<DirectPInvoke Include="libHarfBuzzSharp" />
-	<NativeLibrary Include="libs\libHarfBuzzSharp.lib" />
-	<DirectPInvoke Include="libSkiaSharp" />
-	<NativeLibrary Include="libs\libSkiaSharp.lib" />
-	<DirectPInvoke Include="av_libglesv2" />
-	<NativeLibrary Include="libs\av_libglesv2.lib" />
-</ItemGroup>  
+![Microsoft 系统登录](docs/assets/screenshots/account-login.png)
+
+![游戏数据编辑](docs/assets/screenshots/game-data.png)
+
+![Modrinth 资源检索](docs/assets/screenshots/modrinth.png)
+
+![Minecraft 下载](docs/assets/screenshots/download.png)
+
+> 项目仍在持续开发中。界面、下载源和联机服务可能随版本更新而变化。
+
+## 开发
+
+### 环境要求
+
+- [.NET 10 SDK](https://dotnet.microsoft.com/download/dotnet/10.0)
+- Visual Studio 2022、Rider 或其他支持 .NET 10 的 IDE
+- Java 可由启动器自动安装，也可自行准备
+
+### 构建和运行
+
+```powershell
+git clone https://github.com/zhweaa/OneLauncher.git
+cd OneLauncher
+dotnet restore OneLauncher.sln
+dotnet run --project OneLauncher.Desktop
 ```
 
-## 开源与贡献
+发布 Windows x64：
 
-此项目使用 Apache 2.0 许可证开源  
+```powershell
+dotnet publish OneLauncher.Desktop -c Release -r win-x64 --self-contained false
+```
 
-OneLauncher 当前处于早期开发阶段，许多功能尚未完成。我们非常欢迎开发者共同参与完善： 
+### 命令行入口
 
-如果你有任何问题或请求可以在[这里](https://github.com/abbcccbba/OneLauncher/issues)发起提问  
+```text
+--quicklyPlay <instance-id>       快速启动实例
+--joinServer <server-id-or-name>  启动收藏服务器
+--releaseMemory                   释放游戏进程内存
+```
 
-### 开源项目或需注明署名使用及贡献人员名单
+## 项目结构
 
-**省略.NET与Microsoft.,Windows.等基础框架**
+```text
+OneLauncher/          # Avalonia UI
+OneLauncher.Core/     # 下载、启动、实例和模组管理
+OneLauncher.Core.Net/ # 账户、Java、Modrinth、服务器和 MCT
+OneLauncher.Desktop/  # 桌面入口
+OneLauncher.Console/  # 命令行入口
+```
 
-- 使用项目[Avalonia](https://github.com/AvaloniaUI/Avalonia)
-- 引用项目[AsyncImageLoader.Avalonia](https://github.com/AvaloniaUtils/AsyncImageLoader.Avalonia)
-- 借鉴项目[ProjBobcat](https://github.com/Corona-Studio/ProjBobcat/)
-- 使用图标[ICONS8](https://icons8.com/icons/)
+UI 规范见 [`docs/UI_FI.md`](docs/UI_FI.md)，架构说明见 [`Welcome.md`](Welcome.md)。
 
-### 此项目Mojang（Microsoft）的关系
+## 开源与致谢
 
-此项目是由[Lnetfabe](https://github.com/abbcccbba/)（化名）开发的以个人名义发布的开源软件 ，并由社区驱动更新 ，任何第三方服务器的接入均为改善体验而存。
+本项目使用 [Apache License 2.0](https://www.apache.org/licenses/LICENSE-2.0) 开源，使用或参考 [Avalonia](https://github.com/AvaloniaUI/Avalonia)、[CommunityToolkit.Mvvm](https://github.com/CommunityToolkit/dotnet)、[AsyncImageLoader.Avalonia](https://github.com/AvaloniaUtils/AsyncImageLoader.Avalonia)、[ProjBobcat](https://github.com/Corona-Studio/ProjBobcat/)、[Modrinth](https://modrinth.com/) 和 [MinecraftConnectTool](https://github.com/MCZLF/MinecraftConnectTool)。
 
-本软件作者（Lnetface）均与Mojang（Microsoft）无从属关系。  
-此项目仅为个人学习项目，任何人、组织、公司或国家（等个体或集体）在使用本软件时导致的任何事情或发生的任何事情均与作者无关。 
+OneLauncher 与 Mojang、Microsoft 或 Minecraft 官方没有从属关系。更多法律信息见 [`Terms_of_Service.md`](Terms_of_Service.md) 和 [`Privacy_Policy.md`](Privacy_Policy.md)。
 
-**本软件提供的离线登入功能仅对中国大陆用户开放，对于国外用户请自觉登入正版账号并不使用这个功能，对于使用者的任何侵权行为均与原作者无关**
-
-### 开发中功能
-
-- 高级Java管理
-- 下载自定义版本的模组加载器
-
-## 更多
-
-[服务条款](https://github.com/abbcccbba/OneLauncher/blob/master/Terms_of_Service.md)
-[隐私声明](https://github.com/abbcccbba/OneLauncher/blob/master/Privacy_Policy.md)
+欢迎联系作者讨论问题或提交 Issue：QQ `1826379500`。
