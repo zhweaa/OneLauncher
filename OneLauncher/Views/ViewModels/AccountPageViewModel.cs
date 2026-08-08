@@ -62,8 +62,9 @@ internal partial class AccountPageViewModel : BaseViewModel
         {
             foreach (var user in UserModelList)
             {
-                using (var task = new MojangProfile(user.um))
-                    await task.GetSkinHeadImage();
+                if(user.um.UserType == AccountType.Msa)
+                    using (var task = new MojangProfile(user.um))
+                        await task.GetSkinHeadImage();
             }
             RefList();
             WeakReferenceMessenger.Default.Send(new MainWindowShowFlyoutMessage("刷新完毕", Avalonia.Controls.Notifications.NotificationType.Success));

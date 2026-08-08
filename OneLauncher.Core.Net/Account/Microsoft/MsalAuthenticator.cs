@@ -113,12 +113,54 @@ public class MsalAuthenticator : IDisposable
     {
         var authenticator = new MsalAuthenticator(clientId);
 
-        var storageProperties =
-         new StorageCreationPropertiesBuilder("onelauncher.msal.cache.dat", Path.Combine( Init.BasePath,"playerdata"))
-         .Build();
-        authenticator.cacheHelper = await MsalCacheHelper.CreateAsync(storageProperties);
+        var cacheDirectory = Path.Combine(Init.BasePath, "playerdata");
+        Directory.CreateDirectory(cacheDirectory);
+        var storageBuilder = new StorageCreationPropertiesBuilder("onelauncher.msal.cache.dat", cacheDirectory);
+
+#if LINUX
+        // The default Linux storage configuration in some MSAL Extensions versions
+        // leaves keyring attribute names unset, which fails during first startup.
+        // Supply stable metadata explicitly so desktop Linux keyrings can be used.
+        storageBuilder.WithLinuxKeyring(
+            "com.onelauncher.msal",
+            MsalCacheHelper.LinuxKeyRingDefaultCollection,
+            "OneLauncher Microsoft authentication cache",
+            new KeyValuePair<string, string>("application", "OneLauncher"),
+            new KeyValuePair<string, string>("version", "1"));
+#endif
+
+        try
+        {
+            authenticator.cacheHelper = await MsalCacheHelper.CreateAsync(storageBuilder.Build());
+        }
+        catch (Exception ex) when (OperatingSystem.IsLinux() && IsLinuxCachePersistenceUnavailable(ex))
+        {
+            // WSL and headless Linux often do not provide libsecret/dbus. In that
+            // environment MSAL's documented fallback is a local unprotected file.
+            // The cache directory is private to the current user.
+            var fallbackStorage = new StorageCreationPropertiesBuilder(
+                    "onelauncher.msal.cache.dat", cacheDirectory)
+                .WithLinuxUnprotectedFile()
+                .Build();
+            authenticator.cacheHelper = await MsalCacheHelper.CreateAsync(fallbackStorage);
+        }
         authenticator.cacheHelper.RegisterCache(authenticator.msalClient.UserTokenCache);
         return authenticator;
+    }
+
+    private static bool IsLinuxCachePersistenceUnavailable(Exception exception)
+    {
+        for (var current = exception; current is not null; current = current.InnerException)
+        {
+            if (current is ArgumentException or MsalCachePersistenceException or
+                DllNotFoundException or EntryPointNotFoundException or
+                PlatformNotSupportedException or InvalidOperationException)
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
     public async Task<UserModel?> TryToGetMinecraftMojangAccessTokenForLoginedAccounts(IAccount account)
     {

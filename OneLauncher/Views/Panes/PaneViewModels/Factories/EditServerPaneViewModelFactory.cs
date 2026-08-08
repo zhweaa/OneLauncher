@@ -16,12 +16,14 @@ internal sealed class EditServerPaneViewModelFactory
     public EditServerPaneViewModel Create(
         ServerEntry serverEntry,
         Action onCloseCallback,
-        Action? onServerInfoUpdated = null)
+        Action onServerInfoUpdated,
+        Action onEditGameData)
     {
         return new EditServerPaneViewModel(
             _dbManager,
             serverEntry,
             onCloseCallback,
-            onServerInfoUpdated);
+            onServerInfoUpdated,
+            onEditGameData);
     }
 }

@@ -161,16 +161,26 @@ public class MojangProfile : IDisposable
         string sessionUrl = $"https://crafatar.com/renders/body/{uuid}";
 
         // 2. 调用第三方API下载完整的皮肤图片
-        byte[] skinImageBytes;
+        Byte[] skinImage;
         try
         {
-            skinImageBytes = await httpClient.GetByteArrayAsync(sessionUrl);
-            await File.WriteAllBytesAsync(Path.Combine(outputPath, $"{uuid}.png"), skinImageBytes);
+            var responseMessage = await httpClient.GetAsync(sessionUrl);
+            if ((int)responseMessage.StatusCode != 521)
+            {
+                skinImage = await responseMessage.Content.ReadAsByteArrayAsync();
+                await File.WriteAllBytesAsync(Path.Combine(outputPath, $"{uuid}.png"), skinImage);
+            }
+            else
+            {
+                sessionUrl = $"{Init.ConfigManger.Data.OlanSettings.CrafatarUrl}/renders/body/{uuid}";
+                skinImage = await httpClient.GetByteArrayAsync(sessionUrl);
+                await File.WriteAllBytesAsync(Path.Combine(outputPath, $"{uuid}.png"), skinImage);
+            }
         }
         catch (HttpRequestException ex)
         {
             throw new OlanException(
-                "网络异常", 
+                "网络异常",
                 $"无法从服务器下载皮肤图片{Environment.NewLine}点击 忽略 按钮忽略这个错误并使用史蒂夫皮肤图片",
                 OlanExceptionAction.Error,
                 ex);

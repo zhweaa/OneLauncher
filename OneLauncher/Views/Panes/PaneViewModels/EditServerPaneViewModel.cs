@@ -23,7 +23,8 @@ internal partial class EditServerPaneViewModel : BaseViewModel
     private readonly DBManager _dbManager;
     private readonly ServerEntry _editingServer;
     private readonly Action _onCloseCallback;
-    private readonly Action? _onServerInfoUpdated;
+    private readonly Action _onServerInfoUpdated;
+    private readonly Action _onEditGameData;
 
     [ObservableProperty] private string serverName;
     [ObservableProperty] private string? serverDescription;
@@ -40,12 +41,14 @@ internal partial class EditServerPaneViewModel : BaseViewModel
         DBManager dbManager,
         ServerEntry editingServer,
         Action onCloseCallback,
-        Action? onServerInfoUpdated = null)
+        Action onServerInfoUpdated,
+        Action onEditGameData)
     {
         _dbManager = dbManager;
         _editingServer = editingServer;
         _onCloseCallback = onCloseCallback;
         _onServerInfoUpdated = onServerInfoUpdated;
+        _onEditGameData = onEditGameData;
         ServerName = editingServer.Name;
         ServerDescription = editingServer.Description;
         ServerIP = editingServer.ServerInfo.Ip;
@@ -118,6 +121,8 @@ internal partial class EditServerPaneViewModel : BaseViewModel
             await OlanExceptionWorker.ForUnknowException(ex, () => _ = GetServerInfo());
         }
     }
+    [RelayCommand]
+    private async Task EditGameData() => _onEditGameData();
 
     [RelayCommand]
     private async Task AddToQuicklyPlay()

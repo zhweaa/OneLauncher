@@ -26,6 +26,7 @@ public class AppSettings
     public DownloadSourceStrategy DownloadMinecraftSourceStrategy { get; set; } = DownloadSourceStrategy.OfficialOnly;
     public string? InstallPath { get; set; }
     public string? ApiKey { get; set; } = null;
+    public string CrafatarUrl { get; set; } = "127.0.0.1:3000";
     public string? DefaultInstanceID { get; set; }
     public Guid? DefaultServerID { get; set; }
     // 每天一更新

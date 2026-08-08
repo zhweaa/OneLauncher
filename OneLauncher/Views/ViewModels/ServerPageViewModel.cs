@@ -84,8 +84,10 @@ internal sealed class ServerItem : BaseViewModel
 internal partial class ServerPageViewModel : BaseViewModel
 {
     private readonly DBManager _dbManager;
+    private readonly GameDataManager _gameDataManager;
     private readonly AddServerPaneViewModelFactory _addServerPaneViewModelFactory;
     private readonly EditServerPaneViewModelFactory _editServerPaneViewModelFactory;
+    private readonly EditGameDataPaneViewModelFactory _editGameDataPaneViewModelFactory;
     private readonly Dictionary<Guid, uint?> _pingByServerId = new();
 
     public List<ServerItem> ServerList { get; private set; } = new();
@@ -94,17 +96,22 @@ internal partial class ServerPageViewModel : BaseViewModel
 
     public ServerPageViewModel(
         DBManager dbManager,
+        GameDataManager gameDataManager,
         AddServerPaneViewModelFactory addServerPaneViewModelFactory,
-        EditServerPaneViewModelFactory editServerPaneViewModelFactory)
+        EditServerPaneViewModelFactory editServerPaneViewModelFactory,
+        EditGameDataPaneViewModelFactory editGameDataPaneViewModelFactory
+        )
     {
         _dbManager = dbManager;
+        _gameDataManager = gameDataManager;
         _addServerPaneViewModelFactory = addServerPaneViewModelFactory;
         _editServerPaneViewModelFactory = editServerPaneViewModelFactory;
+        _editGameDataPaneViewModelFactory = editGameDataPaneViewModelFactory;
         RefList();
         _dbManager.OnDataChanged += RefList;
         _ = ProbePingsAsync();
     }
-
+    #region
     private void RefList()
     {
         Dispatcher.UIThread.Post(RebuildList);
@@ -151,6 +158,7 @@ internal partial class ServerPageViewModel : BaseViewModel
     }
 
     private void RefreshPing(Guid serverId)
+    #endregion
     {
         _ = RefreshPingAsync(serverId);
     }
@@ -196,7 +204,15 @@ internal partial class ServerPageViewModel : BaseViewModel
             DataContext = _editServerPaneViewModelFactory.Create(
                 serverEntry,
                 () => IsPaneShow = false,
-                () => RefreshPing(serverEntry.Id))
+                () => RefreshPing(serverEntry.Id),
+                () => {
+                    PaneContent = new EditGameDataPane()
+                    {
+                        DataContext = _editGameDataPaneViewModelFactory.Create(
+                            _gameDataManager.GetInstanceFromId(serverEntry!.InstanceId!)!,
+                            () => IsPaneShow = false)
+                    };
+                })
         };
     }
 
