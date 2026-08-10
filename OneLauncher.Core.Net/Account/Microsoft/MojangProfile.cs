@@ -161,9 +161,9 @@ public class MojangProfile : IDisposable
         string sessionUrl = $"https://crafatar.com/renders/body/{uuid}";
 
         // 2. 调用第三方API下载完整的皮肤图片
-        Byte[] skinImage;
         try
         {
+            Byte[] skinImage;
             var responseMessage = await httpClient.GetAsync(sessionUrl);
             if ((int)responseMessage.StatusCode != 521)
             {
@@ -172,7 +172,7 @@ public class MojangProfile : IDisposable
             }
             else
             {
-                sessionUrl = $"{Init.ConfigManger.Data.OlanSettings.CrafatarUrl}/renders/body/{uuid}";
+                sessionUrl = $"{Init.ConfigManger.Data.DefaultSettings.CrafatarUrl}{uuid}";
                 skinImage = await httpClient.GetByteArrayAsync(sessionUrl);
                 await File.WriteAllBytesAsync(Path.Combine(outputPath, $"{uuid}.png"), skinImage);
             }

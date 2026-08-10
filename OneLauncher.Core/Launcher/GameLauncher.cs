@@ -57,7 +57,7 @@ public class GameLauncher : IGameLauncher, IDisposable
             .SetGamePath(useRootMode ? gameRootPath : gameData.InstancePath)
             .SetModType(gameData.ModLoader);
         // 设置额外参数
-        JvmArguments jvmArgsToUse = gameData.CustomJvmOptimizationArguments ?? Init.ConfigManger.Data.OlanSettings.MinecraftJvmArguments;
+        JvmArguments jvmArgsToUse = gameData.CustomJvmOptimizationArguments ?? Init.ConfigManger.Data.DefaultSettings.MinecraftJvmArguments;
         List<string> ojr = new(1);
         if (jvmArgsToUse.mode != OptimizationMode.None)
             ojr.AddRange(jvmArgsToUse.GetArguments(commandBuilder.versionInfo.GetJavaVersion(), gameData));

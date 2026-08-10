@@ -30,6 +30,7 @@ public static partial class Init
     // 必要的时候还是得耦合一下的，啥都得传递那他妈的写起来太难受了
     public static DBManager ConfigManger => ConfigManager;
     public static GameDataManager GameDataManger => GameDataManager;
+    public static JavaManager JavaManger => JavaManager;
     internal static DBManager ConfigManager { get; private set; }
     internal static AccountManager AccountManager { get; private set; }
     internal static GameDataManager GameDataManager { get; private set; }

@@ -36,7 +36,7 @@ internal partial class SettingsPageViewModel : BaseViewModel
             return;
 #endif
         // 使用注入的实例
-        _dbManger.Data.OlanSettings.MinecraftJvmArguments = JvmArguments.CreateFromMode(OptimizationMode.Conservative);
+        _dbManger.Data.DefaultSettings.MinecraftJvmArguments = JvmArguments.CreateFromMode(OptimizationMode.Conservative);
         _dbManger.Save();
     }
     partial void OnIsM2Changed(bool value)
@@ -47,7 +47,7 @@ internal partial class SettingsPageViewModel : BaseViewModel
             return;
 #endif
         // 使用注入的实例
-        _dbManger.Data.OlanSettings.MinecraftJvmArguments = JvmArguments.CreateFromMode(OptimizationMode.Standard);
+        _dbManger.Data.DefaultSettings.MinecraftJvmArguments = JvmArguments.CreateFromMode(OptimizationMode.Standard);
         _dbManger.Save();
     }
     partial void OnIsM3Changed(bool value)
@@ -58,7 +58,7 @@ internal partial class SettingsPageViewModel : BaseViewModel
             return;
 #endif
         // 使用注入的实例
-        _dbManger.Data.OlanSettings.MinecraftJvmArguments = JvmArguments.CreateFromMode(OptimizationMode.Aggressive);
+        _dbManger.Data.DefaultSettings.MinecraftJvmArguments = JvmArguments.CreateFromMode(OptimizationMode.Aggressive);
         _dbManger.Save();
     }
     [RelayCommand]
@@ -235,7 +235,7 @@ internal partial class SettingsPageViewModel : BaseViewModel
             LeftButtonListSpacing = _dbManger.Data.OlanSettings.LeftButtonListSpacing;
             IsServerPageVisible = _dbManger.Data.OlanSettings.IsServerPageVisible;
             IsVersionPageVisible = _dbManger.Data.OlanSettings.IsVersionPageVisible;
-            switch (_dbManger.Data.OlanSettings.MinecraftJvmArguments.mode)
+            switch (_dbManger.Data.DefaultSettings.MinecraftJvmArguments.mode)
             {
                 case OptimizationMode.Conservative:
                     IsM1 = true;

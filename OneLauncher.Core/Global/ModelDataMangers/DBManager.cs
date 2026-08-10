@@ -10,23 +10,29 @@ namespace OneLauncher.Core.Global.ModelDataMangers;
 [JsonSerializable(typeof(JvmArguments))]
 [JsonSerializable(typeof(AppSettings))]
 [JsonSerializable(typeof(AppConfig))]
+[JsonSerializable(typeof(DefaultConfig))]
 [JsonSerializable(typeof(UserModel))]
 [JsonSerializable(typeof(UserVersion))]
 [JsonSerializable(typeof(ServerEntry))]
 [JsonSerializable(typeof(ModType))]
 [JsonSerializable(typeof(ModEnum))]
 public partial class OneLauncherAppConfigsJsonContext : JsonSerializerContext { }
-public class AppSettings
+public class DefaultConfig
 {
     public JvmArguments MinecraftJvmArguments { get; set; } = JvmArguments.CreateFromMode();
+    public string CrafatarUrl { get; set; } = "http://119.36.194.123:18792/renders/body/";
+    public string? ApiKey { get; set; } = null;
+    public List<string> RecommandedModsForServer { get; set; } = new List<string>();
+    public List<string> RecommandedModsForSurvival { get; set; } = new List<string>();
+}
+public class AppSettings
+{
     // 下载
     public int MaximumDownloadThreads { get; set; } = 24;
     public int MaximumSha1Threads { get; set; } = 24;
     public bool IsSha1Enabled { get; set; } = true;
     public DownloadSourceStrategy DownloadMinecraftSourceStrategy { get; set; } = DownloadSourceStrategy.OfficialOnly;
     public string? InstallPath { get; set; }
-    public string? ApiKey { get; set; } = null;
-    public string CrafatarUrl { get; set; } = "127.0.0.1:3000";
     public string? DefaultInstanceID { get; set; }
     public Guid? DefaultServerID { get; set; }
     // 每天一更新
@@ -35,7 +41,7 @@ public class AppSettings
     public bool IsServerPageVisible { get; set; } = false;
     public bool IsVersionPageVisible { get; set; } = true;
 }
-[JsonUnmappedMemberHandling(JsonUnmappedMemberHandling.Skip)]
+//[JsonUnmappedMemberHandling(JsonUnmappedMemberHandling.Skip)]
 public class AppConfig
 {
     // 除了系统自带的Java以外启动器安装的所有Java版本列表
@@ -45,6 +51,7 @@ public class AppConfig
     // 玩家收藏的所有服务器列表，内部对应GameData
     public List<ServerEntry> ServerList { get; set; } = new();
     public AppSettings OlanSettings { get; set; } = new AppSettings();
+    public DefaultConfig DefaultSettings { get; set; } = new DefaultConfig();
 }
 public class DBManager : BasicDataManager<AppConfig>
 {

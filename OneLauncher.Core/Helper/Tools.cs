@@ -233,14 +233,11 @@ public static class Tools
     /// <returns>只包含纯粹正式版版本号的列表。</returns>
     public static List<string> McVsFilter(List<string> versions)
     {
-        // 静态编译正则表达式，匹配 1.x 或 1.x.x 格式的正式版
-        Regex OfficialVersionRegex = new Regex(
-            @"^1\.[0-9]{1,2}(?:\.[0-9]{1,2})?$",
-            RegexOptions.IgnoreCase | RegexOptions.Compiled
-        );
+        // 匹配 1.x 历史版本号，以及 24+ 等新的日历版本号（如 26.2, 26.2.1）
+        Regex officialVersionRegex = new Regex(@"^(?:1|[2-9][0-9])\.[0-9]{1,2}(?:\.[0-9]{1,3})?$");
 
-        return versions
-            .Where(version => OfficialVersionRegex.IsMatch(version))
-            .ToList();
+        return versions?
+            .Where(version => officialVersionRegex.IsMatch(version))
+            .ToList() ?? new List<string>();
     }
 }

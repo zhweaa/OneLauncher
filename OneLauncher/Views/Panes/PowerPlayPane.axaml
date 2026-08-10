@@ -72,10 +72,13 @@
                 </StackPanel>
 
                 <TextBlock Classes="pane-section-title" Text="运行日志"/>
+                <SelectableTextBlock/>
                 <Border Classes="pane-surface" MinHeight="140">
-                    <TextBox Text="{Binding LogOutput}" AcceptsReturn="True" IsReadOnly="True"
+                    <ScrollViewer>
+                        <TextBox Text="{Binding LogOutput}" AcceptsReturn="True" IsReadOnly="True"
                              TextWrapping="Wrap" BorderThickness="0" Background="Transparent"
                              VerticalContentAlignment="Top"/>
+                    </ScrollViewer>
                 </Border>
             </StackPanel>
         </ScrollViewer>
