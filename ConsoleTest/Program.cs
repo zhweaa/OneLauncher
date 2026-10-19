@@ -1,6 +1,12 @@
 ﻿using OneLauncher.Core.Downloader.DownloadMinecraftProviders;
 using OneLauncher.Core.Global;
 using OneLauncher.Core.Helper.Models;
+Task? regressionTask = RegressionTestRunner.TryRun(args);
+if (regressionTask != null)
+{
+    await regressionTask;
+    return;
+}
 await Init.Initialize(); // 原本的代码还是需要执行一下的
 var core = await UnitedCore.Initialize();
 var task = core.TaskManager.CreateTask("下载MC");

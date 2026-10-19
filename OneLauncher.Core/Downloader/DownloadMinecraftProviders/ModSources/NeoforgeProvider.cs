@@ -53,8 +53,8 @@ internal class NeoforgeProvider : IModLoaderConcreteProviders
             _context.ID
         );
         _clientLzmaTempPath = lzmaPath;
-        // 合并下载信息
-        return versionLibs.Concat(installerLibs).ToList();
+        // 与 Forge 共用的安装清单也可能包含重复库。
+        return DownloadFileOperations.Deduplicate(versionLibs.Concat(installerLibs));
     }
 
     public async Task RunInstaller(IProgress<string> Put, CancellationToken token)

@@ -26,14 +26,16 @@ public enum DownProgress
 internal partial class DownloadMinecraft
 {
     private readonly JavaManager _javaManager = Init.JavaManager;
-    private readonly RaceDownloader _raceDownloader = new RaceDownloader(Init.Download.UnityClient);
-    private Task DownloadClientTasker(NdDowItem main)
+    private RaceDownloader RaceDownloader => new(info.DownloadTool.UnityClient);
+    private async Task DownloadClientTasker(NdDowItem main)
     {
         NdDowItem[] downloadSources = _urlProviders.Select(p => p.GetClientMainFile(main)).ToArray();
-        return _raceDownloader.RaceSingleFileAsync(
+        await RaceDownloader.RaceSingleFileAsync(
             downloadSources,
             cancelToken
         );
+        if (!cancelToken.IsCancellationRequested)
+            ReportDownloadCompletion(DownProgress.DownMain, main.path, Path.GetFileName(main.path));
     }
     private Task DownloadAssetsSupportTasker(List<NdDowItem> assets)
     {
@@ -41,13 +43,10 @@ internal partial class DownloadMinecraft
             .SelectMany(provider => provider.GetAssetsFiles(assets));
         IEnumerable<IGrouping<string, NdDowItem>> groupedByFile = allPossibleDownloads
             .GroupBy(item => item.path);
-        return _raceDownloader.RaceManyFilesAsync(
+        return RaceDownloader.RaceManyFilesAsync(
             groupedByFile,
             info.MaxDownloadThreads,
-            new Progress<string>(fileName =>
-            {
-                progress?.Report((DownProgress.DownAssets, alls, Interlocked.Increment(ref dones), fileName));
-            }),
+            new InlineProgress<string>(path => ReportDownloadCompletion(DownProgress.DownAssets, path, Path.GetFileName(path))),
             cancelToken
         );
     }
@@ -58,13 +57,10 @@ internal partial class DownloadMinecraft
             .SelectMany(provider => provider.GetLibrariesFiles(libraries));
         IEnumerable<IGrouping<string, NdDowItem>> groupedByFile = allPossibleDownloads
             .GroupBy(item => item.path);
-        await _raceDownloader.RaceManyFilesAsync(
+        await RaceDownloader.RaceManyFilesAsync(
             groupedByFile,
             info.MaxDownloadThreads,
-            new Progress<string>(fileName =>
-            {
-                progress?.Report((DownProgress.DownLibs, alls, Interlocked.Increment(ref dones), fileName));
-            }),
+            new InlineProgress<string>(path => ReportDownloadCompletion(DownProgress.DownLibs, path, Path.GetFileName(path))),
             cancelToken
         );
 
@@ -81,27 +77,34 @@ internal partial class DownloadMinecraft
     {
         // 先把依赖库下载了
         await info.DownloadTool.DownloadListAsync(
-                new Progress<(int a, string b)>(p =>
-                {
-                    Interlocked.Increment(ref dones);
-                    progress?.Report((DownProgress.DownAndInstModFiles, alls, dones, p.b));
-                }),
-                modNds, info.MaxDownloadThreads, cancelToken);
+                modNds, info.MaxDownloadThreads, cancelToken,
+                file => ReportDownloadCompletion(DownProgress.DownAndInstModFiles, file.path, file.url));
         // 处理器需要Java
         await javaInstallTask;
         // 依次执行每个加载器的处理器
         foreach (var provider in modProviders)
             await provider.RunInstaller(
-                new Progress<string>(p =>
+                new InlineProgress<string>(p =>
                 {
                     progress?.Report((DownProgress.DownAndInstModFiles, alls, dones, p));
                 }), cancelToken);
         
     }
-    private Task LogginInstallTasker(NdDowItem log4j2_xml)
+    private async Task LogginInstallTasker(NdDowItem log4j2_xml)
     {
-        Interlocked.Increment(ref dones);
-        return info.DownloadTool.DownloadFile(log4j2_xml.url, log4j2_xml.path, cancelToken);
+        await info.DownloadTool.DownloadFile(log4j2_xml.url, log4j2_xml.path, cancelToken);
+        ReportDownloadCompletion(DownProgress.DownLog4j2, log4j2_xml.path, Path.GetFileName(log4j2_xml.path));
+    }
+    private void ReportDownloadCompletion(DownProgress stage, string path, string message)
+    {
+        lock (_progressLock)
+        {
+            string key = Path.GetFullPath(path);
+            if (!_pendingPaths.Contains(key) || !_completedPaths.Add(key))
+                return;
+            dones = _completedPaths.Count;
+            progress?.Report((stage, alls, dones, message));
+        }
     }
     private Task JavaInstallTasker() => 
         _javaManager.InstallJava(info.VersionMojangInfo.GetJavaVersion(), JavaProvider.Adoptium, token: cancelToken);

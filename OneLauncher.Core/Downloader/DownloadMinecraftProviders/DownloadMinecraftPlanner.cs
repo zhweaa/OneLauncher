@@ -62,8 +62,9 @@ internal partial class DownloadMinecraft
         if (providers.Count != 0)
             foreach (var provider in providers)
             {
-                modFiles.AddRange(await provider.GetDependencies());
-                allFiles.AddRange(modFiles);
+                var dependencies = await provider.GetDependencies();
+                modFiles.AddRange(dependencies);
+                allFiles.AddRange(dependencies);
             }
         
         return new DownloadPlan(

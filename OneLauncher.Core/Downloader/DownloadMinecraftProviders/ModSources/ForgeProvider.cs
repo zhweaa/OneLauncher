@@ -52,8 +52,8 @@ internal class ForgeProvider : IModLoaderConcreteProviders
             _context.ID
         );
         _clientLzmaTempPath = lzmaPath;
-        // 合并下载信息
-        return versionLibs.Concat(installerLibs).ToList();
+        // 运行依赖与安装依赖可能包含同一个库，按目标路径合并。
+        return DownloadFileOperations.Deduplicate(versionLibs.Concat(installerLibs));
     }
 
     public async Task RunInstaller(IProgress<string> Put,CancellationToken token)

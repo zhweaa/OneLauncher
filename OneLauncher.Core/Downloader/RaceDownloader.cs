@@ -40,7 +40,7 @@ internal class RaceDownloader
                 {
                     await RaceSingleFileAsync(item, ct);
                     if (!ct.IsCancellationRequested)
-                        progress?.Report(Path.GetFileName(item.FirstOrDefault().path));
+                        progress?.Report(item.FirstOrDefault().path);
                 });
         }
         catch (OperationCanceledException) when (token.IsCancellationRequested)
@@ -153,7 +153,8 @@ internal class RaceDownloader
         CancellationToken cancelToken)
     {
         // 不包含SHA1校验
-        string temporaryPath = $"{main.path}.downloading";
+        using var pathLease = await DownloadFileOperations.AcquireAsync(main.path, cancelToken);
+        string temporaryPath = DownloadFileOperations.CreateTemporaryPath(main.path);
         try
         {
             using var contentStream = await response.Content.ReadAsStreamAsync();

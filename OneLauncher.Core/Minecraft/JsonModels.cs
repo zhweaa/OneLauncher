@@ -86,6 +86,8 @@ public class MinecraftDownloads
     public MinecraftDownloadUrl? Client { get; set; }
     [JsonPropertyName("server")]
     public MinecraftDownloadUrl? Server { get; set; }
+    [JsonPropertyName("client_mappings")]
+    public MinecraftDownloadUrl? ClientMappings { get; set; }
 }
 
 // 表示主文件的下载信息和地址

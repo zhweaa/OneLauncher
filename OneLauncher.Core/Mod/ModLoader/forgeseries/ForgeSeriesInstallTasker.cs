@@ -139,83 +139,41 @@ namespace OneLauncher.Core.Mod.ModLoader.forgeseries
                 var cpArgs = BuildClasspathArgument(procDef.Classpath, librariesPath, mainJar);
                 var stdArgs = BuildProcessorArguments(procDef.Args, placeholderDict, librariesPath, alls, dones);
 
-                var process = new Process
+                string logDirectory = Path.Combine(_gameRootPath, "logs", "installer");
+                Directory.CreateDirectory(logDirectory);
+                string logPath = Path.Combine(logDirectory, $"processor-{dones}-{DateTime.UtcNow:yyyyMMdd-HHmmss}-{Guid.NewGuid():N}.log");
+                Action<string> report = message => ProcessorsOutEvent?.Invoke(alls, dones, message);
+                if (await ForgeMappingsDownloader.TryDownloadAsync(_downloadTask, procDef.Jar, stdArgs,
+                    Path.Combine(Path.GetDirectoryName(mainJarPath)!, "version.json"), report, token))
                 {
-                    StartInfo = new ProcessStartInfo
-                    {
-                        FileName = javaPath,
-                        Arguments = $"{cpArgs} {mainClass} {stdArgs}",
-                        RedirectStandardOutput = true,
-                        RedirectStandardError = true,
-                        UseShellExecute = false,
-                        CreateNoWindow = true,
-                        WorkingDirectory = _gameRootPath,
-                        StandardOutputEncoding = Encoding.UTF8,
-                        StandardErrorEncoding = Encoding.UTF8
-                    }
+                    await File.WriteAllTextAsync(logPath, "Mojang 映射由启动器下载/缓存，大小和 SHA1 校验通过。", token);
+                    continue;
+                }
+
+                var startInfo = new ProcessStartInfo
+                {
+                    FileName = javaPath,
+                    RedirectStandardOutput = true,
+                    RedirectStandardError = true,
+                    UseShellExecute = false,
+                    CreateNoWindow = true,
+                    WorkingDirectory = _gameRootPath,
+                    StandardOutputEncoding = Encoding.UTF8,
+                    StandardErrorEncoding = Encoding.UTF8
                 };
+                startInfo.ArgumentList.Add("-cp");
+                startInfo.ArgumentList.Add(cpArgs);
+                startInfo.ArgumentList.Add(mainClass);
+                foreach (string arg in stdArgs)
+                    startInfo.ArgumentList.Add(arg);
 
                 ProcessorsOutEvent?.Invoke(alls, dones, $"正在运行处理器 {dones}/{alls}...");
-                await RunSingleProcessorAsync(process, dones, alls, token);
+                await ForgeProcessorRunner.RunAsync(startInfo, logPath, dones, alls, report, token);
             }
             ProcessorsOutEvent?.Invoke(alls, alls, "所有安装处理器已成功运行！");
         }
 
         #region Private Helper Methods
-
-        private async Task RunSingleProcessorAsync(Process process, int current, int total, CancellationToken token)
-        {
-            try
-            {
-                var outputTcs = new TaskCompletionSource<bool>();
-                var errorTcs = new TaskCompletionSource<bool>();
-
-                process.EnableRaisingEvents = true;
-
-                process.OutputDataReceived += (s, e) =>
-                {
-                    if (string.IsNullOrEmpty(e.Data))
-                        return;
-                    ProcessorsOutEvent?.Invoke(total, current, e.Data);
-                    Debug.WriteLine(e.Data);
-                };
-
-                process.ErrorDataReceived += (s, e) =>
-                {
-                    if (string.IsNullOrEmpty(e.Data))
-                        return;
-                    ProcessorsOutEvent?.Invoke(total, current, e.Data);
-                    Debug.WriteLine(e.Data);
-                };
-
-                process.Exited += (s, e) =>
-                {
-                    outputTcs.TrySetResult(true);
-                    errorTcs.TrySetResult(true);
-                };
-
-                process.Start();
-                process.BeginOutputReadLine();
-                process.BeginErrorReadLine();
-
-                await process.WaitForExitAsync(token);
-
-                if (process.ExitCode != 0)
-                {
-                    throw new OlanException("安装处理器失败", $"处理器 {current}/{total} 执行失败，退出代码为: {process.ExitCode}。请查看日志获取详细错误信息。", OlanExceptionAction.Error);
-                }
-            }
-            catch(OperationCanceledException)
-            {
-                // 取消时彻底关闭处理器
-                process.Kill();
-                throw;
-            }
-            catch (Exception ex) when (ex is not OlanException)
-            {
-                throw new OlanException("处理器调用失败", $"启动或等待处理器 {current}/{total} 时发生意外错误。", OlanExceptionAction.Error, ex);
-            }
-        }
 
         private void CreateOutputDirectories(List<string> args, Dictionary<string, string> placeholders, string librariesPath, int all, int done)
         {
@@ -282,29 +240,29 @@ namespace OneLauncher.Core.Mod.ModLoader.forgeseries
                 cpBuilder.Append(Tools.MavenToPath(librariesPath, cpEntry));
                 cpBuilder.Append(sep);
             }
-            return $"-cp \"{cpBuilder.ToString()}{mainPath}\"";
+            return $"{cpBuilder}{mainPath}";
         }
 
-        private string BuildProcessorArguments(List<string> argsTemplate, Dictionary<string, string> placeholders, string librariesPath, int all, int done)
+        private List<string> BuildProcessorArguments(List<string> argsTemplate, Dictionary<string, string> placeholders, string librariesPath, int all, int done)
         {
-            var stdArgsBuilder = new StringBuilder();
+            var arguments = new List<string>();
             foreach (var arg in argsTemplate)
             {
                 if (arg.StartsWith("{") && arg.EndsWith("}"))
                 {
-                    if (placeholders.TryGetValue(arg.Trim('{', '}'), out var value)) stdArgsBuilder.Append($"\"{value}\" ");
-                    else ProcessorsOutEvent?.Invoke(all, done, $"[警告] 未找到占位符 {arg}，将忽略此参数。");
+                    if (placeholders.TryGetValue(arg.Trim('{', '}'), out var value)) arguments.Add(value);
+                    else throw new OlanException("安装配置错误", $"处理器 {done}/{all} 的占位符 {arg} 无法解析。");
                 }
                 else if (arg.StartsWith("["))
                 {
-                    stdArgsBuilder.Append($"\"{Tools.MavenToPath(librariesPath, arg)}\" ");
+                    arguments.Add(Tools.MavenToPath(librariesPath, arg));
                 }
                 else
                 {
-                    stdArgsBuilder.Append($"{arg} ");
+                    arguments.Add(arg);
                 }
             }
-            return stdArgsBuilder.ToString().Trim();
+            return arguments;
         }
 
         private Dictionary<string, string> BuildPlaceholderDictionary(ForgeSeriesInstallProfile profile, string librariesPath, string gameRootPath, string minecraftJarPath, string clientLzmaPath)

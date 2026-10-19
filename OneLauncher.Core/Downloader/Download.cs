@@ -381,68 +381,61 @@ internal partial class Download : IDisposable
         return RunDownloadListAsync(progress, downloadNds, maxConcurrentDownloads, token);
     }
 
+    internal Task DownloadListAsync(List<NdDowItem> downloadNds, int maxConcurrentDownloads,
+        CancellationToken token, Action<NdDowItem> completedDownload) =>
+        RunDownloadListAsync(null!, downloadNds, maxConcurrentDownloads, token, completedDownload);
+
     private async Task RunDownloadListAsync(
         IProgress<(int completedFiles, string FilesName)> progress,
         List<NdDowItem> downloadNds,
         int maxConcurrentDownloads,
-        CancellationToken token)
+        CancellationToken token,
+        Action<NdDowItem>? completedDownload = null)
     {
         int completedFiles = 0;
-
-        try
-        {
-            await Parallel.ForEachAsync(
-                downloadNds,
-                new ParallelOptions
-                {
-                    MaxDegreeOfParallelism = maxConcurrentDownloads,
-                    CancellationToken = token
-                },
-                async (item, ct) =>
+        // 调用方可能合并了多个安装清单；相同目标只能创建一个下载任务。
+        var uniqueDownloads = DownloadFileOperations.Deduplicate(downloadNds);
+        await Parallel.ForEachAsync(
+            uniqueDownloads,
+            new ParallelOptions
+            {
+                MaxDegreeOfParallelism = maxConcurrentDownloads,
+                CancellationToken = token
+            },
+            async (item, ct) =>
+            {
+                // 空 URL 的项目由安装处理器生成，不算作成功下载。
+                if (string.IsNullOrEmpty(item.url))
+                    return;
+                for (int attempt = 0; ; attempt++)
                 {
                     try
                     {
-                        // 原子递增已完成文件数
-                        Interlocked.Increment(ref completedFiles);
-                        // 报告进度
-                        progress?.Report((completedFiles, item.url));
-                        // 执行下载操作
                         await DownloadFile(item.url, item.path, ct);
+                        break;
+                    }
+                    catch (HttpRequestException ex) when (attempt < 3)
+                    {
+                        Debug.WriteLine($"重试下载: {ex.Message}, URL: {item.url}");
+                        await Task.Delay(TimeSpan.FromSeconds(Math.Pow(2, attempt)), ct);
                     }
                     catch (HttpRequestException ex)
                     {
-                        for (int attempt = 0; attempt < 3; attempt++)
-                        {
-                            await Task.Delay(TimeSpan.FromSeconds(Math.Pow(2, attempt)), ct);
-                            try
-                            {
-                                await DownloadFile(item.url, item.path, ct);
-                                return; // 成功下载，退出重试循环
-                            }
-                            catch (HttpRequestException ex2)
-                            {
-                                Debug.WriteLine($"重试下载失败: {ex2.Message}, URL: {item.url}");
-                                continue;
-                            }
-                        }
                         throw new OlanException("下载失败", "重试到达阈值抛出", OlanExceptionAction.Error, ex);
                     }
-                    catch (OperationCanceledException) when (ct.IsCancellationRequested)
-                    {
-                        // 取消下载不进入重试，也不转换为失败。
-                    }
-                });
-        }
-        catch (OperationCanceledException) when (token.IsCancellationRequested)
-        {
-            // 并行下载已取消，保持任务的已取消状态。
-        }
+                }
+                ct.ThrowIfCancellationRequested();
+                int completed = Interlocked.Increment(ref completedFiles);
+                completedDownload?.Invoke(item);
+                progress?.Report((completed, item.url));
+            });
     }
     public async Task DownloadFile(string url,string savepath, CancellationToken? token = null)
     {
         if (string.IsNullOrEmpty(url))
             return;
         CancellationToken cancellationToken = token ?? CancellationToken.None;
+        using var pathLease = await DownloadFileOperations.AcquireAsync(savepath, cancellationToken);
         string temporaryPath = GetTemporaryDownloadPath(savepath);
         try
         {
@@ -469,7 +462,7 @@ internal partial class Download : IDisposable
         }
     }
 
-    private static string GetTemporaryDownloadPath(string savepath) => $"{savepath}.downloading";
+    private static string GetTemporaryDownloadPath(string savepath) => DownloadFileOperations.CreateTemporaryPath(savepath);
 
     private static void DeleteTemporaryDownload(string path)
     {
@@ -489,6 +482,7 @@ internal partial class Download : IDisposable
     }
     public async Task DownloadFileAndSha1(string url, string savepath,string sha1, CancellationToken token)
     {
+        using var pathLease = await DownloadFileOperations.AcquireAsync(savepath, token);
         string temporaryPath = GetTemporaryDownloadPath(savepath);
         try
         {
@@ -531,7 +525,7 @@ internal partial class Download : IDisposable
     public List<NdDowItem> CheckFilesExists(List<NdDowItem> FDI, CancellationToken token)
     {
         List<NdDowItem> filesToDownload = new List<NdDowItem>(FDI.Count);
-        foreach (var item in FDI)
+        foreach (var item in DownloadFileOperations.Deduplicate(FDI))
         {
             token.ThrowIfCancellationRequested();
             if (File.Exists(item.path))

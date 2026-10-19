@@ -11,7 +11,6 @@ using OneLauncher.Core.Net.ModService.Modrinth;
 namespace OneLauncher.Core.Downloader.DownloadMinecraftProviders;
 internal partial class DownloadMinecraft
 {
-    private readonly DBManager _configManager = Init.ConfigManager;
     private IDownloadSourceUrlProvider[] _urlProviders;
     internal DownloadInfo info;
 
@@ -19,6 +18,9 @@ internal partial class DownloadMinecraft
     public readonly IProgress<(DownProgress Title, int AllFiles, int DownedFiles, string DowingFileName)>? progress;
     public int alls = 0;
     public int dones = 0;
+    private readonly HashSet<string> _pendingPaths = new(OperatingSystem.IsWindows() ? StringComparer.OrdinalIgnoreCase : StringComparer.Ordinal);
+    private readonly HashSet<string> _completedPaths = new(OperatingSystem.IsWindows() ? StringComparer.OrdinalIgnoreCase : StringComparer.Ordinal);
+    private readonly object _progressLock = new();
     
     public DownloadMinecraft(
         DownloadInfo info,
@@ -62,7 +64,15 @@ internal partial class DownloadMinecraft
         var plan = await CreateDownloadPlan();
 
         // 3. 初始化进度报告
-        alls = plan.AllFilesGoVerify.Count;
+        lock (_progressLock)
+        {
+            _pendingPaths.Clear();
+            _completedPaths.Clear();
+            foreach (var file in plan.AllFilesGoVerify.Where(file => !string.IsNullOrEmpty(file.url)))
+                _pendingPaths.Add(Path.GetFullPath(file.path));
+            alls = _pendingPaths.Count;
+            dones = 0;
+        }
         progress?.Report((DownProgress.Meta, alls, dones, "下载计划生成完毕，开始下载..."));
 
         if (cancelToken.IsCancellationRequested)
