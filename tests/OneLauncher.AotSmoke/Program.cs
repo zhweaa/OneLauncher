@@ -22,6 +22,8 @@ AppBuilder.Configure<OneLauncher.App>()
     .UseHeadless(new AvaloniaHeadlessPlatformOptions { UseHeadlessDrawing = false })
     .SetupWithoutStarting();
 
+ImportTaskRegressionTests.Run(args.Length == 1 ? args[0] : null);
+
 var assertions = 0;
 void Check(bool condition, string message)
 {

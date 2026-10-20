@@ -14,6 +14,7 @@ using OneLauncher.Core.Helper.ImportPCL2Version;
 using OneLauncher.Core.Helper.Models;
 using OneLauncher.Core.Minecraft;
 using OneLauncher.Core.Mod.ModPack;
+using OneLauncher.Core.Services;
 using OneLauncher.Views.Panes;
 using OneLauncher.Views.Panes.PaneViewModels;
 using OneLauncher.Views.Panes.PaneViewModels.Factories;
@@ -123,6 +124,7 @@ internal partial class HomePageViewModel : BaseViewModel
     [RelayCommand]
     public async Task ImportVersionByPCL2()
     {
+        TaskInstance? importTask = null;
         try
         {
             var topLevel = TopLevel.GetTopLevel(MainWindow.mainwindow);
@@ -140,38 +142,17 @@ internal partial class HomePageViewModel : BaseViewModel
                     return;
 
                 string path = selectedFile.Path.LocalPath;
-                if (!File.Exists(Path.Combine(path, "PCL", "Setup.ini")))
-                {
-                    WeakReferenceMessenger.Default.Send(new MainWindowShowFlyoutMessage("这不是有效的PCL版本文件夹", NotificationType.Warning, "导入失败"));
-                    return;
-                }
-                WeakReferenceMessenger.Default.Send(new MainWindowShowFlyoutMessage("正在导入。。。（这可能需要较长时间）"));
-                await new PCL2Importer(new Progress<(DownProgress Title, int AllFiles, int DownedFiles, string DowingFileName)>(p =>
-                {
-                    // 避免安装器进度报告过于频繁
-                    if (p.Title == DownProgress.DownAndInstModFiles)
-                        return;
-                    WeakReferenceMessenger.Default.Send(new MainWindowShowFlyoutMessage(
-                        $"[{p.DownedFiles}/{p.AllFiles}] 操作:{p.DowingFileName}",
-                        NotificationType.Information,
-                        p.Title switch
-                        {
-                            DownProgress.Meta => "正在分析PCL2实例",
-                            DownProgress.Done => "导入完成",
-                            _ => "操作中"
-                        } + " - 正在导入"));
-                    Debug.WriteLine($"Titli:{p.Title}\nAll:{p.AllFiles},Down:{p.DownedFiles}\nOutput:\n{p.DowingFileName}");
-                })).ImportAsync(path);
-                WeakReferenceMessenger.Default.Send(new MainWindowShowFlyoutMessage("导入完成！", NotificationType.Success));
+                importTask = _unitedCore.TaskManager.CreateTask($"PCL 导入：{Path.GetFileName(path)}");
+                OpenTaskCenter();
+                await ImportTaskRunner.RunAsync(importTask,
+                    (progress, token) => new PCL2Importer(progress, token).ImportAsync(path));
             }
-        }
-        catch (OlanException ex)
-        {
-            await OlanExceptionWorker.ForOlanException(ex, () => _ = ImportVersionByPCL2());
         }
         catch (Exception ex)
         {
-            await OlanExceptionWorker.ForUnknowException(ex, () => _ = ImportVersionByPCL2());
+            importTask ??= _unitedCore.TaskManager.CreateTask("PCL 导入");
+            importTask.SetFailed(ex);
+            OpenTaskCenter();
         }
     }
     private PowerPlayPane? _powerPlayGo;
@@ -212,9 +193,12 @@ internal partial class HomePageViewModel : BaseViewModel
     [RelayCommand]
     public async Task Import()
     {
-        var topLevel = TopLevel.GetTopLevel(MainWindow.mainwindow);
-        if (topLevel?.StorageProvider is { } storageProvider && storageProvider.CanOpen)
+        TaskInstance? importTask = null;
+        try
         {
+            var topLevel = TopLevel.GetTopLevel(MainWindow.mainwindow);
+            if (topLevel?.StorageProvider is not { CanOpen: true } storageProvider)
+                return;
             var mrpackFileType = new FilePickerFileType("Modrinth整合包文件")
             {
                 Patterns = new[] { "*.mrpack" },
@@ -234,20 +218,17 @@ internal partial class HomePageViewModel : BaseViewModel
                 return;
 
             string filePath = selectedFile.Path.LocalPath;
-            WeakReferenceMessenger.Default.Send(new MainWindowShowFlyoutMessage("正在导入。。。（请打开任务中心查看进度）"));
-            var task = _unitedCore.TaskManager.CreateTask("整合包导入");
-            await ModpackImporter.ImportFromMrpackAsync(filePath,
-                Init.GameRootPath,
-                new Progress<(DownProgress a, int b, int c, string d)>
-                (p =>
-                {
-                    double progressPercentage = (p.b == 0) ? 0 : (double)p.c / p.b * 100;
-                    task.SetProgress($"当前文件：{p.d}",progressPercentage);
-                    Debug.WriteLine($"导入进度：{p.a}, 总文件数：{p.b}, 已下载文件数：{p.c}, 当前文件：{p.d}");
-                })
-                , task!.Token!.Token);
-            WeakReferenceMessenger.Default.Send(new MainWindowShowFlyoutMessage("导入完成！"));
-            task.SetDone();
+            importTask = _unitedCore.TaskManager.CreateTask($"整合包导入：{Path.GetFileName(filePath)}");
+            OpenTaskCenter();
+            await ImportTaskRunner.RunAsync(importTask,
+                (progress, token) => ModpackImporter.ImportFromMrpackAsync(filePath,
+                    Init.GameRootPath, progress, token));
+        }
+        catch (Exception ex)
+        {
+            importTask ??= _unitedCore.TaskManager.CreateTask("整合包导入");
+            importTask.SetFailed(ex);
+            OpenTaskCenter();
         }
     }
     #endregion
