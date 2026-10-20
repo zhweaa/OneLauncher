@@ -23,6 +23,7 @@ public partial class LaunchCommandBuilder
     private ModEnum modType = ModEnum.none;
     private ServerInfo? serverInfo = null;
     private UserModel loginUser;
+    private bool usesImportedManifest;
 
     // 构造函数保持不变
     private LaunchCommandBuilder(
@@ -44,13 +45,14 @@ public partial class LaunchCommandBuilder
     #region 链式调用
     /// <param name="basePath">游戏基本路径（minecraft）</param>
     /// <param name="versionId">启动游戏的基本版本ID（如1.21.5）</param>
-    public static async Task<LaunchCommandBuilder> CreateAsync(string basePath, string versionId)
+    public static async Task<LaunchCommandBuilder> CreateAsync(string basePath, string versionId, string? importedManifestPath = null)
     {
         return new LaunchCommandBuilder(basePath, versionId)
         {
             versionInfo = new VersionInfomations(
-            await File.ReadAllTextAsync(Path.Combine(basePath,"versions",versionId, "version.json")),
-            basePath)
+            await File.ReadAllTextAsync(importedManifestPath ?? Path.Combine(basePath,"versions",versionId, "version.json")),
+            basePath),
+            usesImportedManifest = importedManifestPath != null
         };
     }
     /// <summary>设置传递给游戏的游戏目录</summary>
@@ -104,6 +106,17 @@ public partial class LaunchCommandBuilder
         _javaManager.GetJavaExecutablePath(versionInfo.GetJavaVersion());
     public async Task<LaunchCommand> BuildCommand()
     {
+        if (usesImportedManifest)
+        {
+            loginUser ??= Init.AccountManager.GetDefaultUser();
+            ConfigureAuthentication();
+            var importedArgs = new List<string>();
+            if (extraJvmArgs != null) importedArgs.AddRange(extraJvmArgs);
+            importedArgs.AddRange(ImportedLaunchArguments.Build(versionInfo, gamePath, loginUser, Init.ApplicationVersoin, serverInfo)
+                .Select(ImportedLaunchArguments.Quote));
+            if (extraGameArgs != null) importedArgs.AddRange(extraGameArgs);
+            return new LaunchCommand(importedArgs, commandArgs);
+        }
         IModArgStrategy? strategy = null; // 策略可以是null，代表原版
         if (modType != ModEnum.none)
             strategy = await CreateAndInitStrategy();

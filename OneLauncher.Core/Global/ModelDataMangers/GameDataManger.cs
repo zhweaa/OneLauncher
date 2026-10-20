@@ -222,12 +222,20 @@ public class GameDataManager : BasicDataManager<GameDataRoot>
         return
             Data.Instances.GetValueOrDefault(defaultInstanceId); 
     }
-    public Task AddGameDataAsync(GameData newData)
+    public async Task AddGameDataAsync(GameData newData)
     {
         Data.Instances.Add(newData.InstanceId,newData);
-        // 确保物理文件夹被创建
-        Directory.CreateDirectory(newData.InstancePath);
-        return Save();
+        try
+        {
+            // 确保物理文件夹被创建；IO 失败时也撤销本次内存登记。
+            Directory.CreateDirectory(newData.InstancePath);
+            await Save();
+        }
+        catch
+        {
+            Data.Instances.Remove(newData.InstanceId);
+            throw;
+        }
     }
     public Task RemoveGameDataAsync(string dataToRemove)
     {

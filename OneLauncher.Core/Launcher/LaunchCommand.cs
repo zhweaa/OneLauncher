@@ -6,7 +6,7 @@ using System.Text;
 using System.Threading.Tasks;
 
 namespace OneLauncher.Core.Launcher;
-public struct LaunchCommand(IEnumerable<string> fileArgs, IEnumerable<string> commandArgs) : IDisposable
+public sealed class LaunchCommand(IEnumerable<string> fileArgs, IEnumerable<string> commandArgs) : IDisposable
 {
     private IEnumerable<string> commandArgs = commandArgs; // 必须在命令行的参数
     private IEnumerable<string> fileArgs = fileArgs; // 可以在命令行也可以在文件中的参数
@@ -25,7 +25,8 @@ public struct LaunchCommand(IEnumerable<string> fileArgs, IEnumerable<string> co
         if (launchArg.Length > 32000) // 标准是8191的命令行长度上限，但这里调用的是CreateProcess API
         {
             Debug.WriteLine($"参数长度：{launchArg.Length}");
-            tempFilePath = Path.GetTempFileName();
+            // 引用类型保留异步方法中的文件状态，Dispose 才能清理实际使用的文件。
+            tempFilePath ??= Path.GetTempFileName();
             await File.WriteAllTextAsync(tempFilePath, launchArg
 #if ONELAUNCHER_TARGET_WINDOWS
                 .Replace("\\", @"\\") // Windows需要转义

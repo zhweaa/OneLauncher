@@ -13,6 +13,7 @@ public sealed class LaunchService : IGameLauncher, IDisposable
     public event Action<string>? GameOutputEvent;
 
     private readonly GameLauncher _gameLauncher = new();
+    public string GameDirectory => _gameLauncher.GameDirectory;
     private readonly TaskInstance _task;
     private readonly CancellationToken _cancellationToken;
     private int _hasLaunched;

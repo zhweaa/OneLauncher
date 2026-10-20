@@ -54,6 +54,8 @@ public class MinecraftVersionInfo
     public JavaVersion? JavaVersion { get; set; }
     [JsonPropertyName("id")]
     public string? ID { get; set; }
+    [JsonPropertyName("minecraftArguments")]
+    public string? LegacyGameArguments { get; set; }
 }
 
 // 表示Java版本信息
@@ -144,6 +146,9 @@ public class MinecraftLibraryArtifact
 // 表示启动参数（jvm和game）
 public class MinecraftArguments
 {
+    [JsonPropertyName("game")]
+    [JsonConverter(typeof(JvmArgumentConverter))]
+    public List<object>? Game { get; set; }
     [JsonPropertyName("jvm")]
     [JsonConverter(typeof(JvmArgumentConverter))] // 使用自定义转换器处理混合类型
     public List<object>? Jvm { get; set; } // object 可以是 string 或 MinecraftArgument
@@ -207,6 +212,8 @@ public class MinecraftArgument
 // 表示规则
 public class MinecraftRule
 {
+    [JsonPropertyName("features")]
+    public Dictionary<string, bool>? Features { get; set; }
     [JsonPropertyName("action")]
     public string? Action { get; set; } // action 可以是 "allow" 或 "disallow"，可以为空
 

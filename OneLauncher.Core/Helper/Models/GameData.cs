@@ -16,6 +16,8 @@ public class GameData
     public string Name { get; set; }
     public string VersionId { get; set; }
     public ModEnum ModLoader { get; set; }
+    public string? ModLoaderVersion { get; set; }
+    public bool HasImportedLaunchManifest { get; set; }
     public DateTime CreationTime { get; set; }
     public Guid DefaultUserModelID { get; set; }
     [JsonIgnore]

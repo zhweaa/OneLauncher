@@ -14,13 +14,16 @@ public class VersionAssetIndex
     public static List<NdDowItem> ParseAssetsIndex(string jsonString, string path)
     {
         var assets = new List<NdDowItem>();
-        var jsonDocument = JsonDocument.Parse(jsonString);
+        using var jsonDocument = JsonDocument.Parse(jsonString);
         var objects = jsonDocument.RootElement.GetProperty("objects");
         foreach (var property in objects.EnumerateObject())
         {
             string fileName = property.Name;
             string hash = property.Value.GetProperty("hash").GetString();
             int size = property.Value.GetProperty("size").GetInt32();
+
+            if (hash == null || hash.Length != 40 || !hash.All(Uri.IsHexDigit) || size < 0)
+                throw new JsonException("资源索引包含无效的 SHA1 或文件大小。");
 
             string hashPrefix = hash.Substring(0, 2);
 

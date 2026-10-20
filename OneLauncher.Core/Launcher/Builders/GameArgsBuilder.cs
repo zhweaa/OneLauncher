@@ -15,12 +15,7 @@ public partial class LaunchCommandBuilder
     {
         if(loginUser == null) loginUser = Init.AccountManager.GetDefaultUser();
         List<string> Args = new List<string>(20);
-        if(loginUser.UserType == AccountType.Yggdrasil)
-        {
-            commandArgs.Add($"-javaagent:\"{(Path.Combine(Init.InstalledPath, "authlib.jar"))}\"={loginUser!.YggdrasilInfo!.Value.AuthUrl}");
-            Debug.WriteLine(loginUser.YggdrasilInfo.Value.APIMetadata);
-            commandArgs.Add($"-Dauthlibinjector.yggdrasil.prefetched={loginUser.YggdrasilInfo.Value.APIMetadata}");
-        }
+        ConfigureAuthentication();
         string userType = loginUser.UserType switch
         {
             AccountType.Offline => "legacy",
@@ -72,5 +67,12 @@ public partial class LaunchCommandBuilder
         if(extraGameArgs != null)
             Args.AddRange(extraGameArgs);
         return Args;
+    }
+
+    private void ConfigureAuthentication()
+    {
+        if (loginUser.UserType != AccountType.Yggdrasil) return;
+        commandArgs.Add($"-javaagent:\"{Path.Combine(Init.InstalledPath, "authlib.jar")}\"={loginUser.YggdrasilInfo!.Value.AuthUrl}");
+        commandArgs.Add($"-Dauthlibinjector.yggdrasil.prefetched={loginUser.YggdrasilInfo.Value.APIMetadata}");
     }
 }

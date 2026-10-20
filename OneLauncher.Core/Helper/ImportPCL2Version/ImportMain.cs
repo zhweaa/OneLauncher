@@ -1,153 +1,237 @@
-﻿using OneLauncher.Core.Compatible.ImportPCL2Version;
-using OneLauncher.Core.Downloader;
+﻿using OneLauncher.Core.Downloader;
 using OneLauncher.Core.Downloader.DownloadMinecraftProviders;
 using OneLauncher.Core.Global;
-using OneLauncher.Core.Global.ModelDataMangers;
 using OneLauncher.Core.Helper.Models;
-using System.IO;
-using System.Linq;
-using System.Text.Json;
-using System.Threading;
-using System.Threading.Tasks;
+using OneLauncher.Core.Minecraft;
+using System.IO.Compression;
+using System.Security.Cryptography;
 
 namespace OneLauncher.Core.Helper.ImportPCL2Version;
 
-/// <summary>
-/// 负责处理从 PCL2 实例文件夹导入游戏到 OneLauncher 的全部逻辑。
-/// </summary>
+/// <summary>迁移已经安装的 PCL 实例，保留其启动清单，不重新选择或安装加载器。</summary>
 public class PCL2Importer
 {
-    private readonly IProgress<(DownProgress Title, int AllFiles, int DownedFiles, string DowingFileName)> _progress;
+    private readonly IProgress<(DownProgress Title, int AllFiles, int DownedFiles, string DowingFileName)>? _progress;
     private readonly CancellationToken _token;
-    private readonly Download _downloader = Init.Download;
+    private readonly Download _downloader;
+    private readonly string _gameRoot;
+    private readonly Guid _userId;
+    private readonly Func<GameData, Task> _register;
 
-    private readonly GameDataManager _gameDataManager = Init.GameDataManager;
-    private readonly DBManager _configManager = Init.ConfigManager;
-    private readonly AccountManager _accountManager = Init.AccountManager;
+    public GameData? ImportedInstance { get; private set; }
 
     public PCL2Importer(IProgress<(DownProgress Title, int AllFiles, int DownedFiles, string DowingFileName)> progress, CancellationToken? token = null)
+        : this(Init.GameRootPath, Init.Download, Init.AccountManager.GetDefaultUser().UserID,
+            Init.GameDataManager.AddGameDataAsync, progress, token ?? CancellationToken.None)
     {
-        _progress = progress;
-        _token = token ?? CancellationToken.None;
     }
 
-    /// <summary>
-    /// [入口方法] 开始从 PCL2 实例文件夹进行导入。
-    /// </summary>
-    /// <param name="pclInstancePath">PCL2 的单个版本实例文件夹路径 (例如 E:\mc\.minecraft\versions\1.21.1-Fabric 0.16.14)。</param>
+    // 隔离验证使用显式上下文，不能初始化或写入用户账号和实例配置。
+    internal PCL2Importer(string gameRoot, Download downloader, Guid userId, Func<GameData, Task> register,
+        IProgress<(DownProgress Title, int AllFiles, int DownedFiles, string DowingFileName)>? progress = null,
+        CancellationToken token = default)
+    {
+        _gameRoot = Path.GetFullPath(gameRoot);
+        _downloader = downloader;
+        _userId = userId;
+        _register = register;
+        _progress = progress;
+        _token = token;
+    }
+
     public async Task ImportAsync(string pclInstancePath)
     {
-        _progress?.Report((DownProgress.Meta, 0, 0, "分析PCL2实例..."));
+        ImportedInstance = null;
+        _token.ThrowIfCancellationRequested();
+        Report(DownProgress.Meta, 0, 0, "读取 PCL 启动配置");
+        var metadata = await PclVersionResolver.ReadAsync(pclInstancePath, _token);
+        var gameData = new GameData(metadata.Name, metadata.MinecraftVersion, metadata.ModLoader, _userId)
+        {
+            HasImportedLaunchManifest = true,
+            ModLoaderVersion = metadata.LoaderVersion
+        };
+        string instanceRoot = PclImportPaths.Resolve(_gameRoot, "instance");
+        string finalPath = PclImportPaths.Resolve(instanceRoot, gameData.InstanceId);
+        string stagingPath = PclImportPaths.Resolve(instanceRoot, $".pcl-import-{Guid.NewGuid():N}");
+        if (Directory.Exists(finalPath))
+            throw new OlanException("导入失败", "目标实例目录已存在，请重新导入。");
+        Directory.CreateDirectory(stagingPath);
+        bool published = false;
+        try
+        {
+            var version = new VersionInfomations(metadata.Manifest.ToJsonString(), _gameRoot);
+            await EnsureResourceAsync(version.GetMainFile(), metadata.ClientJarPath, _token);
+            var libraries = DownloadFileOperations.Deduplicate(version.GetLibraries().Concat(
+                metadata.RuntimeResources.Select(resource => new NdDowItem("",
+                    PclImportPaths.Resolve(_gameRoot, "libraries/" + resource.RelativePath), resource.Size, resource.Sha1))));
+            Report(DownProgress.DownLibs, libraries.Count, 0, "迁移原实例依赖库");
+            int completed = 0;
+            foreach (var library in libraries)
+            {
+                string source = PclImportPaths.Resolve(metadata.MinecraftRoot, Path.GetRelativePath(_gameRoot, library.path));
+                await EnsureResourceAsync(library, source, _token);
+                Report(DownProgress.DownLibs, libraries.Count, ++completed, Path.GetFileName(library.path));
+            }
 
-        // 1. 解析PCL2的 version.json 获取基础信息
-        string pclVersionJsonPath = FindPclVersionJson(pclInstancePath);
-        using var fs = File.OpenRead(pclVersionJsonPath);
-        var pclInfo = await JsonSerializer.DeserializeAsync<PCL2VersionJsonModels>(fs, PCL2VersionJsonContent.Default.PCL2VersionJsonModels, _token);
+            var index = version.GetAssets();
+            await EnsureResourceAsync(index, PclImportPaths.Resolve(metadata.MinecraftRoot,
+                Path.GetRelativePath(_gameRoot, index.path)), _token);
+            var assets = DownloadFileOperations.Deduplicate(VersionAssetIndex.ParseAssetsIndex(
+                await File.ReadAllTextAsync(index.path, _token), _gameRoot));
+            int assetsDone = 0;
+            await Parallel.ForEachAsync(assets, new ParallelOptions { MaxDegreeOfParallelism = 4, CancellationToken = _token },
+                async (asset, token) =>
+                {
+                    string source = PclImportPaths.Resolve(metadata.MinecraftRoot, Path.GetRelativePath(_gameRoot, asset.path));
+                    await EnsureResourceAsync(asset, source, token);
+                    int done = Interlocked.Increment(ref assetsDone);
+                    Report(DownProgress.DownAssets, assets.Count, done, "迁移资源对象");
+                });
+            if (version.GetLoggingConfig() is { } logging)
+            {
+                string sourceLogging = PclImportPaths.Resolve(metadata.MinecraftRoot, $"assets/log_configs/{Path.GetFileName(logging.path)}");
+                if (!File.Exists(sourceLogging)) sourceLogging = PclImportPaths.Resolve(metadata.InstancePath, Path.GetFileName(logging.path));
+                await EnsureResourceAsync(logging, sourceLogging, _token);
+            }
 
-        string mcVersion = pclInfo.ClientVersionID;
-        string customName = pclInfo.UserCustomName;
-        ModEnum modLoader = Tools.MainClassToModEnum(pclInfo.MainClass);
+            Report(DownProgress.Meta, 0, 0, "迁移 Mods、配置和存档");
+            await CopyContentAsync(metadata.InstancePath, stagingPath, metadata.VersionJsonPath, true);
+            string natives = PclImportPaths.Resolve(stagingPath, "natives");
+            foreach (string archivePath in version.NativesLibs.Distinct())
+                ExtractNatives(archivePath, natives);
 
-        _progress?.Report((DownProgress.Meta, 0, 0, $"已识别: {customName} (MC: {mcVersion}, 加载器: {modLoader})"));
-
-        // 2. 创建OneLauncher游戏实例
-        var gameData = new GameData(customName, mcVersion, modLoader, _accountManager.GetDefaultUser().UserID);
-        Directory.CreateDirectory(gameData.InstancePath);
-
-        var versionsDir = new DirectoryInfo(pclInstancePath).Parent;
-        string pclMinecraftRoot = versionsDir?.Parent?.FullName
-                                  ?? throw new OlanException("导入失败", "无法确定PCL2的 .minecraft 根目录。");
-
-        // 3. **核心改进：使用 Planner 制定计划**
-        _progress?.Report((DownProgress.Meta, 0, 0, "正在规划文件迁移与下载..."));
-        var downloadInfo = await DownloadInfo.Create(
-            gameData.VersionId,
-            new ModType { IsFabric = modLoader == ModEnum.fabric, IsNeoForge = modLoader == ModEnum.neoforge, IsForge = modLoader == ModEnum.forge, IsQuilt = modLoader == ModEnum.quilt },gameDataD: gameData);
-
-        // 4. **核心改进：执行文件迁移（本地优先）**
-        //    创建一个临时的DownloadMinecraft实例，仅为调用其内部Planner
-        var planner = new DownloadMinecraft(downloadInfo, _progress, _token);
-        var plan = await planner.CreateDownloadPlan(); //
-
-        //    从PCL2目录迁移所需文件，这会把文件复制到OneLauncher的目标目录
-        await MigrateFilesFromPcl(plan.AllFilesGoVerify, pclMinecraftRoot, Init.GameRootPath);
-
-        // 5. **核心改进：执行完整的下载和安装流程**
-        //    现在文件已经就位，我们调用标准的下载/安装流程。
-        //    它会自动跳过已存在的文件，并为Forge/NeoForge执行安装器。
-        var mcDownloader = new DownloadMinecraft(
-            downloadInfo,
-            _progress,
-            _token
-        );
-
-        await mcDownloader.MinecraftBasic( 
-        );
-
-        // 6. 迁移用户数据 (Mods, Saves, etc.)
-        _progress?.Report((DownProgress.Meta, 0, 0, "正在迁移用户数据..."));
-        await MigratePclInstanceContentAsync(pclInstancePath, gameData.InstancePath); //
-
-        // 7. 将实例添加到管理器并保存
-        await _gameDataManager.AddGameDataAsync(gameData);
-        _progress?.Report((DownProgress.Done, 1, 1, "导入成功！即将完成。"));
+            // 仅修改副本的 id；完整库、加载器版本和参数仍来自原实例。
+            await File.WriteAllTextAsync(Path.Combine(stagingPath, "launch.json"), metadata.Manifest.ToJsonString(), _token);
+            _token.ThrowIfCancellationRequested();
+            Directory.Move(stagingPath, finalPath);
+            published = true;
+            await _register(gameData);
+            ImportedInstance = gameData;
+            Report(DownProgress.Done, 1, 1, "导入完成");
+        }
+        catch
+        {
+            // 这两个目录都由本次新建，失败不回滚共享缓存、更不修改 PCL 原实例。
+            string cleanupPath = published ? finalPath : stagingPath;
+            PclImportPaths.RequireWithin(instanceRoot, cleanupPath);
+            if (Directory.Exists(cleanupPath)) Directory.Delete(cleanupPath, true);
+            throw;
+        }
     }
 
-    /// <summary>
-    /// 从PCL2目录迁移所需文件，并返回需要网络下载的文件列表。
-    /// 
-    /// 意图解释：在当前设计中返回值不作使用，仅执行复制文件，不存在文件会在下载组件检查后下载
-    /// </summary>
-    private async Task<List<NdDowItem>> MigrateFilesFromPcl(List<NdDowItem> requiredFiles, string pclRoot, string olanRoot)
+    private async Task EnsureResourceAsync(NdDowItem item, string? source, CancellationToken token)
     {
-        var filesToDownload = new List<NdDowItem>();
-        int allFiles = requiredFiles.Count;
-        int migratedCount = 0;
-        _progress?.Report((DownProgress.Meta, allFiles, migratedCount, $"正在迁移文件"));
-        foreach (var file in requiredFiles)
+        PclImportPaths.RequireWithin(_gameRoot, item.path);
+        if (await IsValidAsync(item.path, item, token)) return;
+        if (source != null) PclImportPaths.RequireRegular(source);
+        if (source != null && await IsValidAsync(source, item, token))
+        {
+            using var lease = await DownloadFileOperations.AcquireAsync(item.path, token);
+            if (await IsValidAsync(item.path, item, token)) return;
+            Directory.CreateDirectory(Path.GetDirectoryName(item.path)!);
+            string temp = DownloadFileOperations.CreateTemporaryPath(item.path);
+            try
+            {
+                await CopyFileAsync(source, temp, token);
+                if (!await IsValidAsync(temp, item, token))
+                    throw new OlanException("导入失败", $"复制后校验失败：{Path.GetFileName(item.path)}");
+                File.Move(temp, item.path, true);
+            }
+            finally
+            {
+                if (File.Exists(temp)) File.Delete(temp);
+            }
+            return;
+        }
+        if (string.IsNullOrWhiteSpace(item.url))
+            throw new OlanException("导入失败", $"原实例缺少或损坏加载器生成文件：{Path.GetFileName(item.path)}。请先在 PCL 中修复该实例，再重新导入。");
+        if (!Uri.TryCreate(item.url, UriKind.Absolute, out var uri) || uri.Scheme is not ("https" or "http"))
+            throw new OlanException("导入失败", $"资源下载地址无效：{Path.GetFileName(item.path)}");
+        if (!string.IsNullOrEmpty(item.sha1))
+            await _downloader.DownloadFileAndSha1(item.url, item.path, item.sha1, token);
+        else
+            await _downloader.DownloadFile(item.url, item.path, token);
+        if (!await IsValidAsync(item.path, item, token))
+            throw new OlanException("导入失败", $"下载后校验失败：{Path.GetFileName(item.path)}");
+    }
+
+    private static async Task<bool> IsValidAsync(string path, NdDowItem item, CancellationToken token)
+    {
+        token.ThrowIfCancellationRequested();
+        if (!File.Exists(path)) return false;
+        if (item.size > 0 && new FileInfo(path).Length != item.size) return false;
+        await using var stream = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read, 81920, true);
+        if (!string.IsNullOrEmpty(item.sha1) && !Convert.ToHexString(await SHA1.HashDataAsync(stream, token)).Equals(item.sha1, StringComparison.OrdinalIgnoreCase))
+            return false;
+        stream.Position = 0;
+        if (Path.GetExtension(item.path).Equals(".jar", StringComparison.OrdinalIgnoreCase))
+        {
+            try { using var archive = new ZipArchive(stream, ZipArchiveMode.Read); return archive.Entries.Count > 0; }
+            catch (InvalidDataException) { return false; }
+        }
+        return stream.Length > 0;
+    }
+
+    private async Task CopyContentAsync(string source, string destination, string versionJson, bool topLevel)
+    {
+        var files = new List<(string Source, string Target)>();
+        PlanContent(source, destination, versionJson, topLevel, files);
+        Report(DownProgress.DownAndInstModFiles, files.Count, 0, "迁移 Mods、配置和存档");
+        int completed = 0;
+        foreach (var file in files)
         {
             _token.ThrowIfCancellationRequested();
-
-            // 将Olan的绝对路径转换为相对于.minecraft根目录的路径
-            string relativePath = Path.GetRelativePath(olanRoot, file.path);
-            string pclFilePath = Path.Combine(pclRoot, relativePath);
-
-            if (File.Exists(pclFilePath))
-            {
-                // 本地文件存在，执行复制
-                Directory.CreateDirectory(Path.GetDirectoryName(file.path));
-                File.Copy(pclFilePath, file.path, true);
-                migratedCount++;
-            }
-            else
-            {
-                // 本地文件不存在，加入下载列表
-                filesToDownload.Add(file);
-            }
+            await CopyFileAsync(file.Source, file.Target, _token);
+            Report(DownProgress.DownAndInstModFiles, files.Count, ++completed,
+                Path.GetRelativePath(destination, file.Target));
         }
-        return filesToDownload;
     }
 
-    /// <summary>
-    /// 迁移PCL2实例内容到OneLauncher实例目录。
-    /// </summary>
-    private async Task MigratePclInstanceContentAsync(string sourceInstancePath, string destinationInstancePath)
+    private void PlanContent(string source, string destination, string versionJson, bool topLevel,
+        List<(string Source, string Target)> files)
     {
-        await Tools.CopyDirectoryAsync(sourceInstancePath, destinationInstancePath, _token); //
+        foreach (string file in Directory.EnumerateFiles(source))
+        {
+            _token.ThrowIfCancellationRequested();
+            PclImportPaths.RequireRegular(file);
+            string name = Path.GetFileName(file);
+            if (topLevel && (file.Equals(versionJson, PclImportPaths.Comparison) ||
+                name.Equals("launch.json", StringComparison.OrdinalIgnoreCase) ||
+                name.Equals(Path.GetFileName(source) + ".jar", StringComparison.OrdinalIgnoreCase))) continue;
+            files.Add((file, PclImportPaths.Resolve(destination, name)));
+        }
+        foreach (string directory in Directory.EnumerateDirectories(source))
+        {
+            _token.ThrowIfCancellationRequested();
+            PclImportPaths.RequireRegular(directory);
+            string name = Path.GetFileName(directory);
+            if (topLevel && (name.Equals("PCL", StringComparison.OrdinalIgnoreCase) || name.Equals("logs", StringComparison.OrdinalIgnoreCase) ||
+                name.Equals("natives", StringComparison.OrdinalIgnoreCase) || name.EndsWith("-natives", StringComparison.OrdinalIgnoreCase))) continue;
+            string target = PclImportPaths.Resolve(destination, name);
+            Directory.CreateDirectory(target);
+            PlanContent(directory, target, versionJson, false, files);
+        }
     }
-    /// <summary>
-    /// 从PCL2路径寻找版本文件以收集足够的信息完成导入
-    /// </summary>
-    private string FindPclVersionJson(string versionPath)
+
+    private static async Task CopyFileAsync(string source, string target, CancellationToken token)
     {
-        string expectedJsonName = $"{Path.GetFileName(versionPath)}.json";
-        string primaryJsonPath = Path.Combine(versionPath, expectedJsonName);
-
-        if (File.Exists(primaryJsonPath)) return primaryJsonPath;
-
-        var anyJson = Directory.EnumerateFiles(versionPath, "*.json").FirstOrDefault();
-        if (anyJson != null) return anyJson;
-
-        throw new OlanException("导入失败", $"在 '{versionPath}' 中未找到任何 .json 配置文件。");
+        await using var input = new FileStream(source, FileMode.Open, FileAccess.Read, FileShare.Read, 81920, true);
+        await using var output = new FileStream(target, FileMode.CreateNew, FileAccess.Write, FileShare.None, 81920, true);
+        await input.CopyToAsync(output, token);
     }
+
+    private void ExtractNatives(string archivePath, string destination)
+    {
+        using var archive = ZipFile.OpenRead(archivePath);
+        foreach (var entry in archive.Entries)
+        {
+            _token.ThrowIfCancellationRequested();
+            string target = PclImportPaths.Resolve(destination, entry.FullName);
+            if (entry.FullName.StartsWith("META-INF/", StringComparison.OrdinalIgnoreCase) || string.IsNullOrEmpty(entry.Name)) continue;
+            Directory.CreateDirectory(Path.GetDirectoryName(target)!);
+            entry.ExtractToFile(target, true);
+        }
+    }
+
+    private void Report(DownProgress stage, int all, int done, string message) => _progress?.Report((stage, all, done, message));
 }
