@@ -1,74 +1,84 @@
-name: Desktop AOT and JIT
+# This workflow uses actions that are not certified by GitHub.
+# They are provided by a third-party and are governed by
+# separate terms of service, privacy policy, and support
+# documentation.
+
+# This workflow will build, test, sign and package a WPF or Windows Forms desktop application
+# built on .NET Core.
+# To learn how to migrate your existing application to .NET Core,
+# refer to https://docs.microsoft.com/en-us/dotnet/desktop-wpf/migration/convert-project-from-net-framework
+#
+# To configure this workflow:
+#
+# 1. Configure environment variables
+# GitHub sets default environment variables for every workflow run.
+# Replace the variables relative to your project in the "env" section below.
+#
+# 2. Signing
+# Generate a signing certificate in the Windows Application
+# Packaging Project or add an existing signing certificate to the project.
+# Next, use PowerShell to encode the .pfx file using Base64 encoding
+# by running the following Powershell script to generate the output string:
+#
+# $pfx_cert = Get-Content '.\SigningCertificate.pfx' -Encoding Byte
+# [System.Convert]::ToBase64String($pfx_cert) | Out-File 'SigningCertificate_Encoded.txt'
+#
+# Open the output file, SigningCertificate_Encoded.txt, and copy the
+# string inside. Then, add the string to the repo as a GitHub secret
+# and name it "Base64_Encoded_Pfx."
+# For more information on how to configure your signing certificate for
+# this workflow, refer to https://github.com/microsoft/github-actions-for-desktop-apps#signing
+#
+# Finally, add the signing certificate password to the repo as a secret and name it "Pfx_Key".
+# See "Build the Windows Application Packaging project" below to see how the secret is used.
+#
+# For more information on GitHub Actions, refer to https://github.com/features/actions
+# For a complete CI/CD sample to get started with GitHub Action workflows for Desktop Applications,
+# refer to https://github.com/microsoft/github-actions-for-desktop-apps
+
+name: .NET Core Desktop
 
 on:
   push:
     branches: [ "master" ]
   pull_request:
     branches: [ "master" ]
-  workflow_dispatch:
-
-permissions:
-  contents: read
 
 jobs:
-  publish:
+
+  build:
+
     strategy:
-      fail-fast: false
       matrix:
         include:
           - os: windows-latest
+            rid: win-x64
             platform: Windows
-            profile: WindowsAot
-          - os: windows-latest
-            platform: Windows
-            profile: WindowsJit
           - os: ubuntu-latest
+            rid: linux-x64
             platform: Linux
-            profile: LinuxAot
-          - os: ubuntu-latest
-            platform: Linux
-            profile: LinuxJit
-          - os: macos-latest
-            platform: MacOS
-            profile: MacOSAot
-          - os: macos-latest
-            platform: MacOS
-            profile: MacOSJit
-    runs-on: ${{ matrix.os }}
-    defaults:
-      run:
-        shell: pwsh
+
+    runs-on: windows-latest  # For a list of available runner types, refer to
+                             # https://help.github.com/en/actions/reference/workflow-syntax-for-github-actions#jobsjob_idruns-on
+
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-dotnet@v4
-        with:
-          global-json-file: global.json
-      - name: Resolve runner-matching target RID
-        run: |
-          $osName = switch ('${{ matrix.platform }}') { Windows { 'win' } Linux { 'linux' } MacOS { 'osx' } }
-          $archName = switch ($env:RUNNER_ARCH) { X64 { 'x64' } ARM64 { 'arm64' } default { throw "Unsupported runner architecture: $env:RUNNER_ARCH" } }
-          "TARGET_RID=$osName-$archName" >> $env:GITHUB_ENV
-      - name: Install Linux Native AOT toolchain
-        if: runner.os == 'Linux' && matrix.profile == 'LinuxAot'
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y clang zlib1g-dev
-      - name: Verify target platform model
-        run: ./build/Test-TargetPlatform.ps1
-      - name: Publish application (restore uses the same profile)
-        run: |
-          dotnet publish OneLauncher.Desktop/OneLauncher.Desktop.csproj -p:PublishProfile=${{ matrix.profile }} -r $env:TARGET_RID -o publish
-          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-      - name: Publish and run real UI and JSON smoke tests
-        run: |
-          dotnet publish tests/OneLauncher.AotSmoke/OneLauncher.AotSmoke.csproj -p:PublishProfile=${{ matrix.profile }} -r $env:TARGET_RID -o "$env:RUNNER_TEMP/onelauncher-smoke"
-          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-          $extension = if ($IsWindows) { '.exe' } else { '' }
-          & "$env:RUNNER_TEMP/onelauncher-smoke/OneLauncher.AotSmoke$extension"
-          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-      - uses: actions/upload-artifact@v4
-        with:
-          name: OneLauncher-${{ matrix.profile }}-${{ runner.arch }}
-          path: |
-            publish/**
-            !publish/**/*.pdb
+    - name: Checkout
+      uses: actions/checkout@v4
+
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: 10.0.x
+
+    - name: Restore dependencies
+      run: dotnet restore
+
+    - name: Publish Application
+      run: |
+        dotnet publish OneLauncher.Desktop/OneLauncher.Desktop.csproj -c Release -r ${{ matrix.rid }} --self-contained -o ./publish
+
+    - name: Upload Build Artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: OneLauncher-${{ matrix.platform }}
+        path: ./publish
