@@ -1,0 +1,29 @@
+{
+  "instances": {
+    "ccb4f01e": {
+      "Name": "1.21.1 - \u539F\u7248",
+      "VersionId": "1.21.1",
+      "ModLoader": 0,
+      "CreationTime": "2026-10-23T18:44:32.3341483+08:00",
+      "DefaultUserModelID": "fe9b3537-2307-47f9-8798-7e79a47a7233",
+      "CustomJvmOptimizationArguments": null,
+      "ExtraJvmArguments": null,
+      "CustomGameArguments": null
+    },
+    "9b186ec7": {
+      "Name": "1.21.1 - \u539F\u7248",
+      "VersionId": "1.21.1",
+      "ModLoader": 0,
+      "CreationTime": "2026-10-23T18:44:32.804704+08:00",
+      "DefaultUserModelID": "fe9b3537-2307-47f9-8798-7e79a47a7233",
+      "CustomJvmOptimizationArguments": null,
+      "ExtraJvmArguments": null,
+      "CustomGameArguments": null
+    }
+  },
+  "defaults": {
+    "1.21.1": "9b186ec7"
+  },
+  "tags": {},
+  "tagMap": {}
+}

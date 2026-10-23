@@ -10,7 +10,7 @@
 	<Application.Resources>
 		<ResourceDictionary>
 			<ResourceDictionary.MergedDictionaries>
-				<ResourceInclude Source="avares://OneLauncher/Views/Styles/Theme.axaml"/>
+				<ResourceInclude Source="avares://OneLauncher/Styles/Theme.axaml"/>
 			</ResourceDictionary.MergedDictionaries>
 			<vm:ModEnumToStringConverter x:Key="ModEnumConverter"/>
 			<vm:DownloadSourceStrategyToStringConverter x:Key="DownloadSourceStrategyConverter"/>
@@ -19,7 +19,7 @@
 
 	<Application.Styles>
 		<FluentTheme />
-		<StyleInclude Source="avares://OneLauncher/Views/Styles/Styles.axaml"/>
+		<StyleInclude Source="avares://OneLauncher/Styles/Styles.axaml"/>
 		<Style Selector="TextBox">
 			<Setter Property="controls:TextBoxEditMenu.Enabled" Value="True"/>
 		</Style>

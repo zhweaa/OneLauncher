@@ -1,10 +1,10 @@
-﻿using OneLauncher.Core.DefaultComponent.Downloader.DownloadMinecraftProviders.DownloadSources;
+using OneLauncher.Core.DefaultComponent.Downloader.DownloadMinecraftProviders.DownloadSources;
 using OneLauncher.Core.Global;
 using OneLauncher.Core.Global.ModelDataMangers;
 using OneLauncher.Core.Helper.Models;
 using OneLauncher.Core.Minecraft;
 using OneLauncher.Core.DefaultComponent.Mod.ModLoader.fabric;
-using OneLauncher.Core.DefaultComponent.Mod.ModLoader.forgeseries;
+using OneLauncher.Core.DefaultComponent.Resource.Mod.Loader.ForgeSeries;
 using OneLauncher.Core.DefaultComponent.Mod.ModService.Modrinth;
 
 

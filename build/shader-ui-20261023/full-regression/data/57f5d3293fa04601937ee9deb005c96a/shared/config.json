@@ -1,0 +1,48 @@
+{
+  "AvailableJavas": {},
+  "ServerList": [],
+  "OlanSettings": {
+    "MaximumDownloadThreads": 24,
+    "MaximumSha1Threads": 24,
+    "IsSha1Enabled": true,
+    "DownloadMinecraftSourceStrategy": 0,
+    "InstallPath": null,
+    "DefaultInstanceID": null,
+    "DefaultServerID": null,
+    "LastVersionManifestRefreshTime": "2026-10-23T08:29:56.9855943+00:00",
+    "LeftButtonListSpacing": 19,
+    "ShowIdentifiers": true,
+    "IsVersionPageVisible": false,
+    "IsGameDataPageVisible": true,
+    "IsServerPageVisible": true,
+    "IsDownloadPageVisible": true,
+    "IsModsBrowserPageVisible": true,
+    "IsAccountPageVisible": true
+  },
+  "DefaultSettings": {
+    "MinecraftJvmArguments": {
+      "mode": 2,
+      "MaxHeapSize": 0,
+      "InitialHeapSize": 0,
+      "UseG1GC": true,
+      "UseZGC": false,
+      "UseShenandoahGC": false,
+      "MaxGCPauseMillis": 50,
+      "G1HeapRegionSize": 16,
+      "G1NewSizePercent": 30,
+      "G1MaxNewSizePercent": 60,
+      "G1ReservePercent": 15,
+      "G1UseStringDeduplication": true,
+      "UseGenerationalGCForZOrShenandoah": true,
+      "DisableExplicitGC": true,
+      "ParallelRefProcEnabled": true,
+      "AlwaysPreTouch": false,
+      "PerfDisableSharedMem": true,
+      "UseAikarFlags": true
+    },
+    "CrafatarUrl": "http://106.55.4.15:18792/renders/body/",
+    "ApiKey": null,
+    "RecommandedModsForServer": [],
+    "RecommandedModsForSurvival": []
+  }
+}

@@ -13,11 +13,12 @@ using OneLauncher.Codes;
 using OneLauncher.Core.Global;
 using OneLauncher.Views.Panes;
 using OneLauncher.Views.Panes.PaneViewModels;
-using OneLauncher.Views.Panes.PaneViewModels.Factories;
 using OneLauncher.Views.ViewModels;
 using System;
 using System.Diagnostics;
 using System.Threading.Tasks;
+using OneLauncher.ViewModel.PaneViewModels.Factories;
+using OneLauncher.Interfaces;
 
 namespace OneLauncher.Views;
 internal class MainWindowShowFlyoutMessage
@@ -25,10 +26,12 @@ internal class MainWindowShowFlyoutMessage
     public readonly string Title;
     public readonly string Context;
     public readonly NotificationType Type;
-    public MainWindowShowFlyoutMessage(string context, NotificationType type = NotificationType.Information,string ? title = null)
+    public readonly bool OpenTaskCenterAfterClick;
+    public MainWindowShowFlyoutMessage(string context, NotificationType type = NotificationType.Information,bool openTaskCenterAfterClick = false,string ? title = null)
     {
         this.Context = context;
         this.Type = type;
+        this.OpenTaskCenterAfterClick = openTaskCenterAfterClick;
         // 以前的API没有标题，防止乱套给他个默认值
         this.Title = title ?? type switch
         {
@@ -82,6 +85,7 @@ public partial class MainWindow : Window
             servises.AddSingleton<PowerPlayPaneViewModelFactory>();
             servises.AddSingleton<TaskCenterPaneViewModelFactory>();
             servises.AddSingleton<InstallModPaneViewModelFactory>();
+            servises.AddSingleton<InstallPackPaneViewModelFactory>();
             servises.AddSingleton<UserModelLoginPaneViewModelFactory>();
 
             provider = servises.BuildServiceProvider();
@@ -90,7 +94,7 @@ public partial class MainWindow : Window
             Init.ConfigManger.OnDataChanged += OnConfigDataChanged;
             _isUiSettingsSubscribed = true;
             // 注册消息
-            WeakReferenceMessenger.Default.Register<MainWindowShowFlyoutMessage>(this, (re, message) => ShowFlyout(message.Title,message.Context,message.Type));
+            WeakReferenceMessenger.Default.Register<MainWindowShowFlyoutMessage>(this, (re, message) => ShowFlyout(message.Title,message.Context,message.Type,message.OpenTaskCenterAfterClick));
         }
         catch(OlanException e)
         {
@@ -122,9 +126,6 @@ public partial class MainWindow : Window
                 { DataContext = provider.GetRequiredService<GameDataPageViewModel>() };
                 serverPage = new server()
                 { DataContext = provider.GetRequiredService<ServerPageViewModel>() };
-                var migrationNotice = provider.GetRequiredService<UnitedCore>().VersionListManager.MigrationNotice;
-                if (!string.IsNullOrWhiteSpace(migrationNotice))
-                    ShowFlyout("版本索引迁移", migrationNotice);
             }
             catch (OlanException ex)
             {
@@ -177,9 +178,40 @@ public partial class MainWindow : Window
     /// 在右下角显示提示信息
     /// </summary>
     /// <param ID="text">提示信息内容</param>
-    public void ShowFlyout(string title,string text,NotificationType type = NotificationType.Information) =>
-        Dispatcher.UIThread.Post(() =>
-        NotificationManager.Show(new Notification(title, text, type, TimeSpan.FromSeconds(5))));
+    public void ShowFlyout(string title,string text,NotificationType type = NotificationType.Information,bool openTaskCenterAfterClick = false)
+    {
+        Action? onClick = openTaskCenterAfterClick ? OpenTaskCenterForCurrentPage : null;
+        Dispatcher.UIThread.Post(() => NotificationManager.Show(
+            new Notification(title, text, type, TimeSpan.FromSeconds(5), onClick)));
+    }
+
+    private void OpenTaskCenterForCurrentPage()
+    {
+        if (PageContent.Content is not Control { DataContext: IPageHost page })
+            return;
+
+        var pane = new TaskCenterPane();
+        var closeCallback = new TaskCenterCloseCallback(page, pane);
+        pane.DataContext = provider.GetRequiredService<TaskCenterPaneViewModelFactory>()
+            .Create(closeCallback.Close);
+
+        if (page.PaneContent?.DataContext is TaskCenterPaneViewModel previousTaskCenter)
+            previousTaskCenter.Dispose();
+
+        page.PaneContent = pane;
+        page.IsPaneShow = true;
+    }
+
+    private sealed class TaskCenterCloseCallback(IPageHost page, TaskCenterPane pane)
+    {
+        public void Close()
+        {
+            if (ReferenceEquals(page.PaneContent, pane))
+                page.IsPaneShow = false;
+            if (pane.DataContext is TaskCenterPaneViewModel taskCenter)
+                taskCenter.Dispose();
+        }
+    }
     
     // 统一事件方法
     private void ListBox_SelectionChanged(object? sender, Avalonia.Controls.SelectionChangedEventArgs e)

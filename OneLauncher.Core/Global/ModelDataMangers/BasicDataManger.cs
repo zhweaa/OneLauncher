@@ -52,7 +52,7 @@ public abstract class BasicDataManager<T> where T : class, new()
         await PostInitialize();
     }
 
-    // Verify a committed migration before removing legacy data.
+    // Read and validate the manager's own configuration document.
     protected async Task<T> ReadDataAsync()
     {
         try

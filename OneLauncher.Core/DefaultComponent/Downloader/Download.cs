@@ -1,6 +1,7 @@
-﻿using OneLauncher.Core.Global;
+using OneLauncher.Core.Global;
 using OneLauncher.Core.Helper.Models;
 using OneLauncher.Core.DefaultComponent.Mod.ModService.Modrinth;
+using OneLauncher.Core.DefaultComponent.Resource.ModService.Modrinth;
 using System.Buffers;
 using System.Diagnostics;
 using System.IO.Compression;
@@ -35,198 +36,6 @@ internal partial class Download : IDisposable
         UnityClient.DefaultRequestHeaders.UserAgent.ParseAdd("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36");
     }
     public readonly HttpClient UnityClient;
-
-    /// <summary>
-    /// 开始异步下载Mod（可选是否下载依赖项）
-    /// </summary>
-    /// <param Name="progress">进度回调：总字节数，已经下载的字节数，当前正在操作的文件名</param>
-    /// <param Name="ModID">Mod ID （Modrinth）</param>
-    /// <param Name="ModPath">Mods文件夹路径</param>
-    /// <param Name="version">需要安装Mod的版本的版本号</param>
-    /// <param Name="IsIncludeDependencies">是否下载依赖</param>
-    /// <param Name="maxConcurrentDownloads">最大下载线程</param>
-    /// <param Name="maxConcurrentSha1">最大Sha1校验线程</param>
-    /// <param Name="IsSha1">是否校验Sha1</param>
-    /// <returns></returns>
-    public async Task StartDownloadMod(
-        IProgress<(long AllSizes, long DownedSizes, string DowingFileName)> progress,
-        string ModID,
-        string ModPath,
-        string version,
-        ModEnum modType,
-        bool IsIncludeDependencies = true,
-        int maxConcurrentDownloads = 8,
-        int maxConcurrentSha1 = 4,
-        bool IsSha1 = true,
-        CancellationToken? token = null
-    )
-    {
-        CancellationToken cancellationToken = token ?? CancellationToken.None;
-
-        var GetTask = new GetModrinth(ModID, version,modType, ModPath);
-        await GetTask.Init();
-
-        // 获取主 Mod 文件信息
-        NdDowItem? mainMod = GetTask.GetDownloadInfos();
-        if (!mainMod.HasValue)
-            return;
-
-        List<NdDowItem> allFiles = new List<NdDowItem> { (NdDowItem)mainMod };
-
-        // 如果需要下载依赖项，则获取依赖项信息并添加到下载列表
-        if (IsIncludeDependencies)
-        {
-            List<NdDowItem> dependencies = GetTask.GetDependenciesInfos();
-            if (dependencies != null)
-                allFiles.AddRange(dependencies);
-        }
-
-        // 过滤掉已经存在的文件
-        List<NdDowItem> filesToDownload = CheckFilesExists(allFiles, cancellationToken);
-        if (!filesToDownload.Any())
-        {
-            long totalExistingBytes = allFiles.Sum(item => (long)item.size);
-            progress?.Report((totalExistingBytes, totalExistingBytes, "所有文件均已存在。"));
-            if (IsSha1)
-            {
-                progress?.Report((totalExistingBytes, totalExistingBytes, "正在校验文件..."));
-                await CheckAllSha1(allFiles, maxConcurrentSha1, cancellationToken);
-            }
-            progress?.Report((totalExistingBytes, totalExistingBytes, "处理完成！"));
-            return;
-        }
-
-        long totalBytesToDownload = filesToDownload.Sum(item => (long)item.size);
-
-        // --- 优化点 1: 移除 fileDownloadProgressMap, 使用一个 long 变量通过原子操作更新 ---
-        long accumulatedDownloadedBytes = 0;
-
-        // --- 优化点 2: 为进度报告节流（Throttling）准备变量 ---
-        int lastReportTimestamp = 0;
-        const int reportIntervalMs = 100; // 每 100ms 报告一次
-
-        // 初始报告总大小和0已下载
-        progress?.Report((totalBytesToDownload, 0, "开始下载Mod文件..."));
-
-        var semaphore = new SemaphoreSlim(maxConcurrentDownloads);
-
-        await Parallel.ForEachAsync(
-            filesToDownload,
-            new ParallelOptions { MaxDegreeOfParallelism = maxConcurrentDownloads, CancellationToken = cancellationToken },
-            async (item, ct) =>
-            {
-                await semaphore.WaitAsync(ct);
-                try
-                {
-                    // ===== 主下载逻辑 =====
-                    Directory.CreateDirectory(Path.GetDirectoryName(item.path)!);
-                    using (var request = new HttpRequestMessage(HttpMethod.Get, item.url))
-                    {
-                        request.Headers.CacheControl = new CacheControlHeaderValue { NoCache = true, NoStore = true, MustRevalidate = true };
-                        using (var response = await UnityClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, ct))
-                        {
-                            response.EnsureSuccessStatusCode();
-                            using (var httpStream = await response.Content.ReadAsStreamAsync(ct))
-                            {
-                                using (var fileStream = new FileStream(item.path, FileMode.Create, FileAccess.Write, FileShare.None, bufferSize: 8192, useAsync: true))
-                                {
-                                    var buffer = new byte[8192];
-                                    int bytesRead;
-                                    while ((bytesRead = await httpStream.ReadAsync(buffer, 0, buffer.Length, ct)) > 0)
-                                    {
-                                        await fileStream.WriteAsync(buffer, 0, bytesRead, ct);
-
-                                        // --- 优化点 3: 使用 Interlocked.Add 进行无锁、线程安全的累加 ---
-                                        Interlocked.Add(ref accumulatedDownloadedBytes, bytesRead);
-
-                                        // --- 优化点 4: 节流，控制进度报告频率 ---
-                                        int currentTimestamp = Environment.TickCount;
-                                        if (currentTimestamp - lastReportTimestamp > reportIntervalMs)
-                                        {
-                                            lastReportTimestamp = currentTimestamp;
-                                            // 报告总进度。第一个参数应为总大小，以确保进度条最大值稳定
-                                            progress?.Report((totalBytesToDownload, accumulatedDownloadedBytes, Path.GetFileName(item.path)));
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-                catch (HttpRequestException) // 注意：只捕获 HttpRequestException 以进入重试
-                {
-                    // ===== 重试逻辑 (内联) =====
-                    const int maxRetries = 3;
-                    for (int attempt = 0; attempt < maxRetries; attempt++)
-                    {
-                        try
-                        {
-                            await Task.Delay(TimeSpan.FromSeconds(Math.Pow(2, attempt)), ct);
-                            Directory.CreateDirectory(Path.GetDirectoryName(item.path)!);
-                            using (var request = new HttpRequestMessage(HttpMethod.Get, item.url))
-                            {
-                                request.Headers.CacheControl = new CacheControlHeaderValue { NoCache = true, NoStore = true, MustRevalidate = true };
-                                using (var response = await UnityClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, ct))
-                                {
-                                    response.EnsureSuccessStatusCode();
-                                    using (var httpStream = await response.Content.ReadAsStreamAsync(ct))
-                                    {
-                                        using (var fileStream = new FileStream(item.path, FileMode.Create, FileAccess.Write, FileShare.None, bufferSize: 8192, useAsync: true))
-                                        {
-                                            var buffer = new byte[8192];
-                                            int bytesRead;
-                                            while ((bytesRead = await httpStream.ReadAsync(buffer, 0, buffer.Length, ct)) > 0)
-                                            {
-                                                await fileStream.WriteAsync(buffer, 0, bytesRead, ct);
-
-                                                // --- 优化点 3 (同样应用于重试逻辑): 使用 Interlocked.Add ---
-                                                Interlocked.Add(ref accumulatedDownloadedBytes, bytesRead);
-
-                                                // --- 优化点 4 (同样应用于重试逻辑): 节流 ---
-                                                int currentTimestamp = Environment.TickCount;
-                                                if (currentTimestamp - lastReportTimestamp > reportIntervalMs)
-                                                {
-                                                    lastReportTimestamp = currentTimestamp;
-                                                    progress?.Report((totalBytesToDownload, accumulatedDownloadedBytes, Path.GetFileName(item.path)));
-                                                }
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                            break; // 重试成功，跳出 for 循环
-                        }
-                        catch (HttpRequestException ex2)
-                        {
-                            Debug.WriteLine($"重试下载失败: {ex2.Message}, URL: {item.url}");
-                            if (attempt == maxRetries - 1) // 最后一次重试也失败
-                            {
-                                throw new OlanException("下载失败", "重试到达阈值抛出", OlanExceptionAction.Error, ex2);
-                            }
-                        }
-                    }
-                }
-                catch (Exception ex) // 捕获其他未知异常
-                {
-                    Debug.WriteLine($"下载文件时发生意外错误: {ex.Message}, URL: {item.url}");
-                    throw; // 重新抛出异常，让上层处理
-                }
-                finally
-                {
-                    semaphore.Release();
-                }
-            }
-        );
-
-        if (IsSha1)
-        {
-            progress?.Report((totalBytesToDownload, totalBytesToDownload, "正在校验文件..."));
-            await CheckAllSha1(allFiles, maxConcurrentSha1, cancellationToken);
-        }
-
-        // 确保最后一次进度是100%
-        progress?.Report((totalBytesToDownload, totalBytesToDownload, "下载完成！"));
-    }
 
     public async Task DownloadFileBig(
         string url,
@@ -568,9 +377,9 @@ internal partial class Download : IDisposable
                     if (!string.Equals(calculatedSha1, item.sha1, StringComparison.OrdinalIgnoreCase))
                     {
                         throw new OlanException(
-                            "下载失败",
-                            $"无法校验文件({item.path})Sha1，实际：{calculatedSha1}预期：{item.sha1}",
-                            OlanExceptionAction.Warning);
+                            "安全验证异常",
+                            $"无法校验文件({item.path})Sha1，实际：{calculatedSha1}预期：{item.sha1}{Environment.NewLine}您的电脑可能被黑客入侵了",
+                            OlanExceptionAction.FatalError);
                     }
                 }
                 

@@ -1,0 +1,67 @@
+{
+  "instances": {
+    "2294a944": {
+      "Name": "none \u5B9E\u4F8B",
+      "VersionId": "1.21.1",
+      "ModLoader": 0,
+      "CreationTime": "2026-10-23T16:20:22.9985569+08:00",
+      "DefaultUserModelID": "00000000-0000-0000-0000-000000000000",
+      "CustomJvmOptimizationArguments": null,
+      "ExtraJvmArguments": null,
+      "CustomGameArguments": null
+    },
+    "e475edbf": {
+      "Name": "fabric \u5B9E\u4F8B",
+      "VersionId": "1.21.1",
+      "ModLoader": 1,
+      "CreationTime": "2026-10-23T16:20:23.0010745+08:00",
+      "DefaultUserModelID": "00000000-0000-0000-0000-000000000000",
+      "CustomJvmOptimizationArguments": null,
+      "ExtraJvmArguments": null,
+      "CustomGameArguments": null
+    },
+    "387c6fc9": {
+      "Name": "forge \u5B9E\u4F8B",
+      "VersionId": "1.21.1",
+      "ModLoader": 3,
+      "CreationTime": "2026-10-23T16:20:23.0010774+08:00",
+      "DefaultUserModelID": "00000000-0000-0000-0000-000000000000",
+      "CustomJvmOptimizationArguments": null,
+      "ExtraJvmArguments": null,
+      "CustomGameArguments": null
+    },
+    "3fdac26c": {
+      "Name": "neoforge \u5B9E\u4F8B",
+      "VersionId": "1.21.1",
+      "ModLoader": 2,
+      "CreationTime": "2026-10-23T16:20:23.0010777+08:00",
+      "DefaultUserModelID": "00000000-0000-0000-0000-000000000000",
+      "CustomJvmOptimizationArguments": null,
+      "ExtraJvmArguments": null,
+      "CustomGameArguments": null
+    },
+    "366ccde2": {
+      "Name": "quilt \u5B9E\u4F8B",
+      "VersionId": "1.21.1",
+      "ModLoader": 4,
+      "CreationTime": "2026-10-23T16:20:23.0010779+08:00",
+      "DefaultUserModelID": "00000000-0000-0000-0000-000000000000",
+      "CustomJvmOptimizationArguments": null,
+      "ExtraJvmArguments": null,
+      "CustomGameArguments": null
+    },
+    "e832df0e": {
+      "Name": "cancel",
+      "VersionId": "1.21.1",
+      "ModLoader": 0,
+      "CreationTime": "2026-10-23T16:20:25.8935101+08:00",
+      "DefaultUserModelID": "00000000-0000-0000-0000-000000000000",
+      "CustomJvmOptimizationArguments": null,
+      "ExtraJvmArguments": null,
+      "CustomGameArguments": null
+    }
+  },
+  "defaults": {},
+  "tags": {},
+  "tagMap": {}
+}

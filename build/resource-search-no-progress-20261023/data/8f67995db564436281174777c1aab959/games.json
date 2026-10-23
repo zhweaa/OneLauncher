@@ -1,0 +1,87 @@
+{
+  "instances": {
+    "bb221790": {
+      "Name": "none \u5B9E\u4F8B",
+      "VersionId": "1.21.1",
+      "ModLoader": 0,
+      "CreationTime": "2026-10-23T16:36:15.0814265+08:00",
+      "DefaultUserModelID": "00000000-0000-0000-0000-000000000000",
+      "CustomJvmOptimizationArguments": null,
+      "ExtraJvmArguments": null,
+      "CustomGameArguments": null
+    },
+    "9074024c": {
+      "Name": "fabric \u5B9E\u4F8B",
+      "VersionId": "1.21.1",
+      "ModLoader": 1,
+      "CreationTime": "2026-10-23T16:36:15.0838525+08:00",
+      "DefaultUserModelID": "00000000-0000-0000-0000-000000000000",
+      "CustomJvmOptimizationArguments": null,
+      "ExtraJvmArguments": null,
+      "CustomGameArguments": null
+    },
+    "8dc1b8c5": {
+      "Name": "forge \u5B9E\u4F8B",
+      "VersionId": "1.21.1",
+      "ModLoader": 3,
+      "CreationTime": "2026-10-23T16:36:15.0838551+08:00",
+      "DefaultUserModelID": "00000000-0000-0000-0000-000000000000",
+      "CustomJvmOptimizationArguments": null,
+      "ExtraJvmArguments": null,
+      "CustomGameArguments": null
+    },
+    "f37d1b8c": {
+      "Name": "neoforge \u5B9E\u4F8B",
+      "VersionId": "1.21.1",
+      "ModLoader": 2,
+      "CreationTime": "2026-10-23T16:36:15.0838555+08:00",
+      "DefaultUserModelID": "00000000-0000-0000-0000-000000000000",
+      "CustomJvmOptimizationArguments": null,
+      "ExtraJvmArguments": null,
+      "CustomGameArguments": null
+    },
+    "c0696fa9": {
+      "Name": "quilt \u5B9E\u4F8B",
+      "VersionId": "1.21.1",
+      "ModLoader": 4,
+      "CreationTime": "2026-10-23T16:36:15.0838557+08:00",
+      "DefaultUserModelID": "00000000-0000-0000-0000-000000000000",
+      "CustomJvmOptimizationArguments": null,
+      "ExtraJvmArguments": null,
+      "CustomGameArguments": null
+    },
+    "b2ff441f": {
+      "Name": "cancel",
+      "VersionId": "1.21.1",
+      "ModLoader": 0,
+      "CreationTime": "2026-10-23T16:36:18.0367223+08:00",
+      "DefaultUserModelID": "00000000-0000-0000-0000-000000000000",
+      "CustomJvmOptimizationArguments": null,
+      "ExtraJvmArguments": null,
+      "CustomGameArguments": null
+    },
+    "b3a311d2": {
+      "Name": "slow-mod",
+      "VersionId": "1.21.1",
+      "ModLoader": 1,
+      "CreationTime": "2026-10-23T16:36:19.5985745+08:00",
+      "DefaultUserModelID": "00000000-0000-0000-0000-000000000000",
+      "CustomJvmOptimizationArguments": null,
+      "ExtraJvmArguments": null,
+      "CustomGameArguments": null
+    },
+    "f63f7479": {
+      "Name": "close-cancel",
+      "VersionId": "1.21.1",
+      "ModLoader": 0,
+      "CreationTime": "2026-10-23T16:36:19.6203809+08:00",
+      "DefaultUserModelID": "00000000-0000-0000-0000-000000000000",
+      "CustomJvmOptimizationArguments": null,
+      "ExtraJvmArguments": null,
+      "CustomGameArguments": null
+    }
+  },
+  "defaults": {},
+  "tags": {},
+  "tagMap": {}
+}

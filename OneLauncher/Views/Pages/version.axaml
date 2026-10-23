@@ -1,0 +1,130 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d" d:DesignWidth="1070" d:DesignHeight="620"
+             x:Class="OneLauncher.Views.version"
+			 xmlns:vm="clr-namespace:OneLauncher.Views.ViewModels;assembly=OneLauncher"
+			 xmlns:controls="using:OneLauncher.Views.Controls"
+			 xmlns:lo="clr-namespace:OneLauncher.Core.Helper.Models;assembly=OneLauncher.Core"
+			 x:CompileBindings="True"
+			 x:DataType="vm:VersionPageViewModel"
+			 >
+	<controls:PageShell IsPaneOpen="{Binding IsPaneShow,Mode=TwoWay}"
+						PaneContent="{Binding PaneContent}">
+		<Grid RowDefinitions="52,*" Margin="24">
+		<StackPanel Margin="9,0,0,0" Orientation="Horizontal" Grid.Row="0" Spacing="28" >
+			<TextBlock Classes="page-title" Text="版本管理"/>
+			<Button Classes="toolbar-action">
+				<StackPanel Orientation="Horizontal" Spacing="6">
+					<Image Source="{DynamicResource IconSettings1}" Width="20" Height="20"/>
+					<TextBlock Text="排序"/>
+				</StackPanel>
+				<Button.Flyout>
+					<Flyout>
+						<StackPanel>
+							<Button Content="按时间排序（旧）"
+									Command="{Binding SortingCommand}"
+									CommandParameter="{x:Static lo:SortingType.AnTime_OldFront}"/>
+							<Button Content="按时间排序（新）"
+									Command="{Binding SortingCommand}"
+									CommandParameter="{x:Static lo:SortingType.AnTime_NewFront}"/>
+							<Button Content="按版本排序（旧）"
+									Command="{Binding SortingCommand}"
+									CommandParameter="{x:Static lo:SortingType.AnVersion_OldFront}"/>
+							<Button Content="按版本排序（新）"
+									Command="{Binding SortingCommand}"
+									CommandParameter="{x:Static lo:SortingType.AnVersion_NewFront}"/>
+						</StackPanel>
+					</Flyout>
+				</Button.Flyout>
+			</Button>
+
+		</StackPanel>
+		<ListBox x:Name="navVL" Classes="card-list" Grid.Row="1" ItemsSource="{Binding Items,Mode=TwoWay}" SelectionMode="Multiple">
+			<ListBox.ItemTemplate>
+				<DataTemplate x:DataType="vm:VersionItem">
+					<Border Padding="10">
+						<Grid RowDefinitions="*,*" Margin="12,0,0,0" ColumnDefinitions="*,Auto" >
+							<StackPanel Grid.Row="0" Grid.Column="0" Orientation="Horizontal" Spacing="4">
+								<TextBlock Classes="item-title" Text="{Binding versionExp.VersionID}"/>
+							</StackPanel>
+							<TextBlock Classes="item-meta" Margin="0,8,0,0" Grid.Row="1" Grid.Column="0" Text="{Binding versionExp.AddTime}"/>
+							<StackPanel Spacing="4" Margin="0,0,8,2" Grid.Row="1" Grid.Column="1" HorizontalAlignment="Right" Orientation="Horizontal" >
+								<StackPanel Orientation="Horizontal" Spacing="4">
+									<Border Classes="status-badge" IsVisible="{Binding versionExp.modType.IsFabric}">
+										<TextBlock Text="Fabric"/>
+									</Border>
+									<Border Classes="status-badge" IsVisible="{Binding versionExp.modType.IsNeoForge}">
+										<TextBlock Text="NeoForge"/>
+									</Border>
+									<Border Classes="status-badge" IsVisible="{Binding versionExp.modType.IsForge}">
+										<TextBlock Text="Forge"/>
+									</Border>
+									<Border Classes="status-badge" IsVisible="{Binding versionExp.modType.IsQuilt}">
+										<TextBlock Text="Quilt"/>
+									</Border>
+								</StackPanel>
+								<Button Command="{Binding LaunchGameCommand}" CommandParameter="{Binding versionExp}">
+									<StackPanel Orientation="Horizontal" Spacing="2">
+										<Image Source="{DynamicResource IconLaunch}" Width="20" Height="20"/>
+										<TextBlock Text="根启动"/>
+									</StackPanel>
+								</Button>
+								<Button Command="{Binding $parent[ListBox].DataContext.CreateGameDataCommand}" CommandParameter="{Binding versionExp}">
+									<StackPanel Orientation="Horizontal" Spacing="2">
+										<Image Source="{DynamicResource IconAdd}" Width="20" Height="20"/>
+										<TextBlock Text="创建游戏数据"/>
+									</StackPanel>
+								</Button>
+								<Button>
+									<StackPanel Orientation="Horizontal">
+										<Image Source="{DynamicResource IconSettings1}" Width="20" Height="20"/>
+										<TextBlock Text="操作"/>
+									</StackPanel>
+									<Button.Flyout>
+										<MenuFlyout>
+											<MenuItem>
+												<MenuItem.Header>
+													<StackPanel Orientation="Horizontal">
+														<Image Source="{DynamicResource IconServer}" Width="20" Height="20"/>
+														<TextBlock Text="服务端..." />
+													</StackPanel>
+												</MenuItem.Header>
+												<MenuItem Command="{Binding $parent[ListBox].DataContext.OpenServerCommand}" CommandParameter="{Binding versionExp}">
+													<MenuItem.Header>
+														<StackPanel Orientation="Horizontal">
+															<Image Source="{DynamicResource IconLaunch}" Width="20" Height="20"/>
+															<TextBlock Text="一键开服"/>
+														</StackPanel>
+													</MenuItem.Header>
+												</MenuItem>
+												<MenuItem Command="{Binding OpenServerFolderCommand}">
+													<MenuItem.Header>
+														<StackPanel Orientation="Horizontal">
+															<Image Source="{DynamicResource IconBrowser}" Width="20" Height="20"/>
+															<TextBlock Text="打开服务端文件夹"/>
+														</StackPanel>
+													</MenuItem.Header>
+												</MenuItem>
+											</MenuItem>
+											<MenuItem Command="{Binding ReadMoreInformationsCommand}">
+												<MenuItem.Header>
+													<StackPanel Orientation="Horizontal">
+														<Image Source="{DynamicResource IconBrowser}" Width="20" Height="20"/>
+														<TextBlock Text="查看详细信息" />
+													</StackPanel>
+												</MenuItem.Header>
+											</MenuItem>
+										</MenuFlyout>
+									</Button.Flyout>
+								</Button>
+							</StackPanel>
+						</Grid>
+					</Border>
+				</DataTemplate>
+			</ListBox.ItemTemplate>
+		</ListBox>
+	</Grid>
+	</controls:PageShell>
+</UserControl>

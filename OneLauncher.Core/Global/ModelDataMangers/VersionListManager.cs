@@ -23,7 +23,6 @@ public sealed class VersionListManager : BasicDataManager<VersionListData>
     private readonly object _stateLock = new();
     public string GameRootPath { get; }
     public string IndexPath => ConfigPath;
-    public string? MigrationNotice { get; internal set; }
     protected override bool RequireValidDocument => true;
 
     public VersionListManager(string gameRootPath)
@@ -93,20 +92,6 @@ public sealed class VersionListManager : BasicDataManager<VersionListData>
         if (!string.Equals(root, GameRootPath, comparison))
             throw new OlanException("安装目录不匹配",
                 $"版本索引属于 {GameRootPath}，不能用于 {root}。请重新初始化对应安装目录。");
-    }
-
-    internal async Task VerifySavedDataAsync()
-    {
-        var saved = await ReadDataAsync();
-        var expected = GetVersions();
-        if (saved.VersionList.Count != expected.Count || saved.VersionList.Where((item, index) =>
-            item.VersionID != expected[index].VersionID || item.AddTime != expected[index].AddTime ||
-            item.modType.IsFabric != expected[index].modType.IsFabric ||
-            item.modType.IsForge != expected[index].modType.IsForge ||
-            item.modType.IsNeoForge != expected[index].modType.IsNeoForge ||
-            item.modType.IsQuilt != expected[index].modType.IsQuilt).Any())
-            throw new OlanException("版本索引迁移失败", $"重新读取 {IndexPath} 后内容不一致。",
-                OlanExceptionAction.FatalError);
     }
 
     private async Task CommitAsync(List<UserVersion> versions)

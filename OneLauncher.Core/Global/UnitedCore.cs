@@ -21,8 +21,7 @@ public class UnitedCore
     public static async Task<UnitedCore> Initialize()
     {
         var versionListManager = new VersionListManager(Init.GameRootPath);
-        await VersionListMigration.InitializeAsync(Init.ConfigManager, versionListManager,
-            Path.Combine(Init.BasePath, "config.json"));
+        await versionListManager.InitializeAsync();
 
         var taskManager = new TaskManager();
         var accountManger = new AccountManager(Path.Combine(Init.BasePath, "playerdata", "account.json"));

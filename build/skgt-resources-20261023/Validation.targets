@@ -1,0 +1,10 @@
+<Project>
+  <Target Name="UseSkgtValidation" BeforeTargets="CoreCompile"
+          Condition="'$(MSBuildProjectName)' == 'OneLauncher.RegressionTests'">
+    <ItemGroup>
+      <!-- The vector validation is self-contained; other runner sources are outside this check. -->
+      <Compile Remove="@(Compile)" />
+      <Compile Include="$(MSBuildThisFileDirectory)Program.cs" />
+    </ItemGroup>
+  </Target>
+</Project>

@@ -1,4 +1,5 @@
 ﻿using Microsoft.Identity.Client;
+using OneLauncher.Core.DefaultComponent.Resource.Mod.Loader;
 using OneLauncher.Core.Global;
 using OneLauncher.Core.Helper.Models;
 using System;
@@ -42,7 +43,7 @@ public static class Tools
     /// </summary>
     public static ModEnum MainClassToModEnum(string mainClass, IEnumerable<string>? libraries = null, IEnumerable<string>? gameArguments = null)
     {
-        return DefaultComponent.Mod.ModLoader.ModLoaderDetector.Detect(mainClass, libraries, gameArguments);
+        return ModLoaderDetector.Detect(mainClass, libraries, gameArguments);
     }
     public static async Task CopyDirectoryAsync(string sourceDir, string destDir, CancellationToken token)
     {

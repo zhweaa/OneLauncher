@@ -1,6 +1,6 @@
 using System.Text.Json;
 using System.Text.RegularExpressions;
-using OneLauncher.Core.DefaultComponent.Mod.ModLoader.forgeseries.Launch;
+using OneLauncher.Core.DefaultComponent.Resource.Mod.Loader.ForgeSeries.Launch;
 using OneLauncher.Core.Global;
 using OneLauncher.Core.Helper.Models;
 

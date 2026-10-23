@@ -13,7 +13,7 @@
             <controls:PaneHeader.TrailingContent>
                 <Button Classes="pane-toolbar" Command="{Binding RefreshModsCommand}">
                     <StackPanel Orientation="Horizontal" Spacing="8">
-                        <Image Source="/Assets/icos/refresh.png" Width="20" Height="20"/>
+                        <Image Source="{DynamicResource IconRefresh}" Width="20" Height="20"/>
                         <TextBlock Text="刷新"/>
                     </StackPanel>
                 </Button>

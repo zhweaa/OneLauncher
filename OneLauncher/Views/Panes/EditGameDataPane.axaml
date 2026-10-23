@@ -78,7 +78,7 @@
                 <TextBlock Classes="pane-section-title" Text="危险操作"/>
                 <Button Classes="pane-danger" HorizontalAlignment="Stretch">
                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Spacing="8">
-                        <Image Source="/Assets/icos/del.png" Width="20" Height="20"/>
+                        <Image Source="{DynamicResource IconDel}" Width="20" Height="20"/>
                         <TextBlock Text="移除此游戏数据"/>
                     </StackPanel>
                     <Button.Flyout>
@@ -109,7 +109,7 @@
             <Button Grid.Column="0" Classes="pane-secondary" Content="取消" Command="{Binding CancelCommand}"/>
             <Button Grid.Column="1" Classes="pane-primary" Command="{Binding SaveCommand}">
                 <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Spacing="8">
-                    <Image Source="/Assets/icos/save.png" Width="20" Height="20"/>
+                    <Image Source="{DynamicResource IconSave}" Width="20" Height="20"/>
                     <TextBlock Text="保存"/>
                 </StackPanel>
             </Button>

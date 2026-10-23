@@ -3,6 +3,7 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:lo="using:OneLauncher.Core.Helper.Models"
+             xmlns:sys="using:System"
              xmlns:vm="using:OneLauncher.Views.Panes.PaneViewModels"
              xmlns:controls="using:OneLauncher.Views.Controls"
              mc:Ignorable="d" d:DesignWidth="650" d:DesignHeight="620"
@@ -10,7 +11,7 @@
              x:DataType="vm:InstallModPaneViewModel"
              x:CompileBindings="True">
     <Grid RowDefinitions="Auto,Auto,*,Auto" Margin="20">
-        <controls:PaneHeader Grid.Row="0" Title="{Binding ModName}" BackCommand="{Binding ClosePaneCommand}"/>
+        <controls:PaneHeader Grid.Row="0" Title="{Binding PaneTitle}" BackCommand="{Binding ClosePaneCommand}"/>
         <Separator Grid.Row="1" Classes="pane-divider"/>
 
         <ScrollViewer Grid.Row="2">
@@ -20,39 +21,67 @@
                     <StackPanel Spacing="10">
                         <TextBlock Classes="pane-label" Text="游戏实例"/>
                         <ComboBox Classes="pane-field" ItemsSource="{Binding AvailableGameData}"
-                                  SelectedItem="{Binding SelectedGameData}"
+                                  SelectedItem="{Binding SelectedGameData}" IsEnabled="{Binding CanEdit}"
                                   PlaceholderText="选择要安装到的游戏实例">
                             <ComboBox.ItemTemplate>
                                 <DataTemplate x:DataType="lo:GameData">
-                                    <TextBlock Text="{Binding Name}"/>
+                                    <StackPanel>
+                                        <TextBlock Text="{Binding Name}"/>
+                                        <TextBlock Classes="pane-help" Text="{Binding VersionId}"/>
+                                    </StackPanel>
                                 </DataTemplate>
                             </ComboBox.ItemTemplate>
                         </ComboBox>
-                        <CheckBox IsChecked="{Binding IsICS}" Content="同时下载依赖"/>
+                        <TextBlock Classes="pane-help" Text="暂无游戏实例，请先在游戏数据中创建实例。" IsVisible="{Binding !HasInstances}"/>
+                        <CheckBox x:Name="DependenciesCheckBox" IsChecked="{Binding IsICS}" Content="同时下载依赖"
+                                  IsVisible="{Binding IsMod}" IsEnabled="{Binding CanEdit}"/>
+                        <TextBlock Classes="pane-help" IsVisible="{Binding IsShaderPack}"
+                                   Text="安装后可在游戏的光影设置中选择该光影包。"/>
                     </StackPanel>
                 </Border>
 
-                <StackPanel IsVisible="{Binding IsShowMoreInfo}" Spacing="8">
-                    <TextBlock Classes="pane-section-title" Text="支持的版本"/>
+                <Expander x:Name="SupportedVersionsExpander" IsVisible="{Binding IsShowMoreInfo}" Header="支持的版本"
+                          IsExpanded="False" HorizontalAlignment="Stretch">
                     <Border Classes="pane-surface" MaxHeight="190">
-                        <ListBox Classes="pane-list" ItemsSource="{Binding SupportVersions}"/>
+                        <ListBox Classes="card-list" ItemsSource="{Binding SupportVersions}" Focusable="False">
+                            <ListBox.Styles>
+                                <Style Selector="ListBoxItem">
+                                    <Setter Property="IsHitTestVisible" Value="False"/>
+                                    <Setter Property="Focusable" Value="False"/>
+                                </Style>
+                            </ListBox.Styles>
+                            <ListBox.ItemTemplate>
+                                <DataTemplate x:DataType="sys:String">
+                                    <TextBlock Classes="pane-help" Text="{Binding}"/>
+                                </DataTemplate>
+                            </ListBox.ItemTemplate>
+                        </ListBox>
                     </Border>
-                </StackPanel>
+                </Expander>
 
                 <TextBlock Classes="pane-section-title" Text="安装状态"/>
-                <Border Classes="pane-status">
+                <Border Classes="pane-status" BorderBrush="{Binding StatusBrush}" Background="{Binding StatusSurfaceBrush}">
                     <StackPanel Spacing="10">
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                            <PathIcon Data="{Binding StatusIcon}" Width="18" Height="18" Foreground="{Binding StatusBrush}"/>
+                            <TextBlock Text="{Binding StatusLabel}" Foreground="{Binding StatusBrush}" FontWeight="SemiBold"/>
+                        </StackPanel>
                         <Grid ColumnDefinitions="*,Auto">
                             <TextBlock Text="{Binding Dp}" TextWrapping="Wrap"/>
                             <TextBlock Grid.Column="1" Classes="pane-help" Text="{Binding Fs}" Margin="12,0,0,0"/>
                         </Grid>
-                        <ProgressBar Classes="pane-progress" Minimum="0" Maximum="100" Value="{Binding CurrentProgress}"/>
+                        <ProgressBar Classes="pane-progress" Minimum="0" Maximum="100" Value="{Binding CurrentProgress}"
+                                     Foreground="{Binding StatusBrush}"/>
                     </StackPanel>
                 </Border>
             </StackPanel>
         </ScrollViewer>
 
-        <Button Grid.Row="3" Classes="pane-primary" Content="安装" Command="{Binding ToInstallCommand}"
-                HorizontalAlignment="Stretch" Margin="0,16,0,0"/>
+        <Grid Grid.Row="3" ColumnDefinitions="*,*" ColumnSpacing="10" Margin="0,16,0,0">
+            <Button Grid.Column="0" Classes="pane-danger" Content="{Binding CancelLabel}"
+                    Command="{Binding CancelInstallCommand}" HorizontalAlignment="Stretch"/>
+            <Button Grid.Column="1" Classes="pane-primary" Content="安装" Command="{Binding ToInstallCommand}"
+                    HorizontalAlignment="Stretch"/>
+        </Grid>
     </Grid>
 </UserControl>

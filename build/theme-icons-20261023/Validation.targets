@@ -1,0 +1,9 @@
+<Project>
+  <Target Name="UseThemeIconValidation" BeforeTargets="CoreCompile"
+          Condition="'$(MSBuildProjectName)' == 'OneLauncher.RegressionTests'">
+    <ItemGroup>
+      <Compile Remove="@(Compile)" Condition="'%(Compile.Filename)' == 'Program'" />
+      <Compile Include="$(MSBuildThisFileDirectory)Program.cs" />
+    </ItemGroup>
+  </Target>
+</Project>

@@ -23,7 +23,61 @@ Directory.CreateDirectory(output);
 var root = Path.Combine(output, "data", Guid.NewGuid().ToString("N"));
 Directory.CreateDirectory(root);
 
-await CheckMigration();
+if (args.Contains("--launch-directory"))
+{
+    await LaunchWorkingDirectoryChecks.RunAsync(output);
+    return;
+}
+
+if (args.Contains("--download-ui"))
+{
+    AppBuilder.Configure<OneLauncher.App>().UseSkia()
+        .UseHeadless(new AvaloniaHeadlessPlatformOptions { UseHeadlessDrawing = false })
+        .SetupWithoutStarting();
+    var downloadTask = DownloadPaneUiChecks.RunAsync(output);
+    while (!downloadTask.IsCompleted)
+        Dispatcher.UIThread.RunJobs();
+    await downloadTask;
+    return;
+}
+
+if (args.Contains("--modpack-ui"))
+{
+    AppBuilder.Configure<OneLauncher.App>().UseSkia()
+        .UseHeadless(new AvaloniaHeadlessPlatformOptions { UseHeadlessDrawing = false })
+        .SetupWithoutStarting();
+    var packTask = ModpackUiChecks.RunAsync(output);
+    while (!packTask.IsCompleted)
+        Dispatcher.UIThread.RunJobs();
+    await packTask;
+    return;
+}
+
+if (args.Contains("--shader-ui"))
+{
+    AppBuilder.Configure<OneLauncher.App>().UseSkia()
+        .UseHeadless(new AvaloniaHeadlessPlatformOptions { UseHeadlessDrawing = false })
+        .SetupWithoutStarting();
+    var shaderTask = ShaderUiChecks.RunAsync(output);
+    while (!shaderTask.IsCompleted)
+        Dispatcher.UIThread.RunJobs();
+    await shaderTask;
+    return;
+}
+
+if (args.Contains("--notification-click"))
+{
+    AppBuilder.Configure<OneLauncher.App>().UseSkia()
+        .UseHeadless(new AvaloniaHeadlessPlatformOptions { UseHeadlessDrawing = false })
+        .SetupWithoutStarting();
+    var notificationTask = CheckNotificationClick();
+    while (!notificationTask.IsCompleted)
+        Dispatcher.UIThread.RunJobs();
+    await notificationTask;
+    return;
+}
+
+await CheckLegacyVersionListIgnored();
 await CheckVersionIndex();
 await CheckSharedManagers();
 await CheckInstallationGuards();
@@ -40,19 +94,11 @@ var shellTask = CheckNavigationShell();
 while (!shellTask.IsCompleted)
     Dispatcher.UIThread.RunJobs();
 await shellTask;
-Console.WriteLine("PASS: migration, version index, shared saves, settings bindings and flyout lifecycle");
+Console.WriteLine("PASS: ignored legacy version list, version index, shared saves, settings bindings and flyout lifecycle");
 
 void Assert(bool condition, string message)
 {
     if (!condition) throw new InvalidOperationException(message);
-}
-
-async Task Migrate(DBManager config, VersionListManager versions, string path)
-{
-    var type = typeof(VersionListManager).Assembly.GetType(
-        "OneLauncher.Core.Global.ModelDataMangers.VersionListMigration", true)!;
-    await (Task)type.GetMethod("InitializeAsync", BindingFlags.NonPublic | BindingFlags.Static)!
-        .Invoke(null, [config, versions, path])!;
 }
 
 async Task ExpectFailure(Func<Task> action, string path)
@@ -66,53 +112,56 @@ async Task ExpectFailure(Func<Task> action, string path)
     throw new InvalidOperationException("Expected a data error");
 }
 
-async Task CheckMigration()
+async Task CheckLegacyVersionListIgnored()
 {
-    var scenario = Path.Combine(root, "migration");
+    var scenario = Path.Combine(root, "ignored-legacy-version-list");
     var configPath = Path.Combine(scenario, "config.json");
     var gameRoot = Path.Combine(scenario, "custom-installed", "minecraft");
-    var config = new DBManager(configPath);
-    await config.InitializeAsync();
-    config.Data.OlanSettings.LeftButtonListSpacing = 17;
-    var date = new DateTime(2025, 1, 2, 3, 4, 5);
-    config.Data.LegacyVersionList =
-    [
-        new() { VersionID = "1.20.1", AddTime = date, modType = new() { IsFabric = true } },
-        new() { VersionID = "1.20.1", AddTime = date.AddDays(1), modType = new() { IsForge = true } },
-        new() { VersionID = "1.21.1", AddTime = date },
-        new() { VersionID = "../escape", AddTime = date }
-    ];
+    Directory.CreateDirectory(scenario);
     var metadata = Path.Combine(gameRoot, "versions", "1.20.1", "version.json");
     Directory.CreateDirectory(Path.GetDirectoryName(metadata)!);
     await File.WriteAllTextAsync(metadata, "{}");
-    await config.Save();
-    var original = await File.ReadAllTextAsync(configPath);
-    var versions = new VersionListManager(gameRoot);
-    await Migrate(config, versions, configPath);
-    var version = versions.GetVersions().Single();
-    Assert(version.VersionID == "1.20.1" && version.AddTime == date &&
-        version.modType.IsFabric && version.modType.IsForge, "Migration must merge flags and preserve time");
-    Assert(config.Data.LegacyVersionList == null && config.Data.OlanSettings.LeftButtonListSpacing == 17,
-        "Migration must preserve global settings and clear only the legacy versions");
-    Assert(!JsonDocument.Parse(await File.ReadAllTextAsync(configPath)).RootElement.TryGetProperty("VersionList", out _),
-        "Migrated global config must stop writing VersionList");
-    Assert(await File.ReadAllTextAsync(Directory.GetFiles(scenario, "config.pre-version-list-migration.*.json").Single()) == original,
-        "Migration backup must preserve exact original bytes");
-    Assert(versions.MigrationNotice?.Contains("2 个") == true, "Skipped entries must be reported");
 
-    // A valid empty index is authoritative; an old global list must not repopulate it.
-    var emptyRoot = Path.Combine(scenario, "other-root");
-    var empty = new VersionListManager(emptyRoot);
-    await empty.InitializeAsync();
-    config.Data.LegacyVersionList = [version];
-    await config.Save();
-    await Migrate(config, empty, configPath);
-    Assert(empty.GetVersions().Count == 0 && config.Data.LegacyVersionList == null,
-        "Existing empty index must win over legacy config");
-    Assert(empty.MigrationNotice?.Contains("未重复导入") == true, "Existing-index migration must report backup");
+    // Ignore the old field regardless of its shape, while preserving unrelated settings.
+    foreach (var legacyJson in new[] { "[{\"VersionID\":\"1.20.1\"}]", "null", "{}", "42", "\"obsolete\"" })
+    {
+        var original = "{\"VersionList\":" + legacyJson +
+            ",\"OlanSettings\":{\"LeftButtonListSpacing\":17},\"AvailableJavas\":{\"21\":\"java\"}}";
+        await File.WriteAllTextAsync(configPath, original);
+        var config = new DBManager(configPath);
+        await config.InitializeAsync();
+        Assert(config.Data.OlanSettings.LeftButtonListSpacing == 17 && config.Data.AvailableJavas[21] == "java",
+            "Ignoring the legacy version list must preserve global settings");
+        Assert(await File.ReadAllTextAsync(configPath) == original,
+            "Reading config must not trigger migration or rewrite it");
+        await config.Save();
+        using var saved = JsonDocument.Parse(await File.ReadAllTextAsync(configPath));
+        Assert(!saved.RootElement.TryGetProperty("VersionList", out _) &&
+            saved.RootElement.GetProperty("OlanSettings").GetProperty("LeftButtonListSpacing").GetInt32() == 17,
+            "Saving config must omit the ignored field and preserve settings");
+    }
+
+    var obsoleteConfig = "{\"VersionList\":[{\"VersionID\":\"1.20.1\"}],\"OlanSettings\":{\"LeftButtonListSpacing\":17}}";
+    await File.WriteAllTextAsync(configPath, obsoleteConfig);
+    var versions = new VersionListManager(gameRoot);
+    await versions.InitializeAsync();
+    Assert(versions.GetVersions().Count == 0, "Missing index must initialize empty without importing config or scanning versions");
+    var date = new DateTime(2025, 1, 2, 3, 4, 5);
+    await versions.RegisterInstalledVersionAsync(new() { VersionID = "1.21.1", AddTime = date });
+    var indexBytes = await File.ReadAllTextAsync(versions.IndexPath);
     var restored = new VersionListManager(gameRoot);
     await restored.InitializeAsync();
-    Assert(restored.GetVersions().Count == 1, "Switching roots must preserve the original directory index");
+    Assert(restored.GetVersions().Single() is { VersionID: "1.21.1" } &&
+        await File.ReadAllTextAsync(restored.IndexPath) == indexBytes,
+        "An existing index must remain authoritative and unchanged on initialization");
+    var empty = new VersionListManager(Path.Combine(scenario, "other-root"));
+    await empty.InitializeAsync();
+    Assert(empty.GetVersions().Count == 0 && restored.GetVersions().Count == 1,
+        "Version indexes must remain isolated by installation root");
+    Assert(await File.ReadAllTextAsync(configPath) == obsoleteConfig,
+        "Initializing missing or existing indexes must leave global config untouched");
+    Assert(!Directory.GetFiles(scenario, "config.pre-version-list-migration.*.json").Any(),
+        "Initialization must not create migration backups");
 
     foreach (var text in new[] { "", "null", "{}", "{", "{\"VersionList\":null}",
         "{\"VersionList\":[{\"VersionID\":\"../escape\"}]}" })
@@ -120,27 +169,11 @@ async Task CheckMigration()
         var broken = new VersionListManager(Path.Combine(scenario, Guid.NewGuid().ToString("N")));
         Directory.CreateDirectory(Path.GetDirectoryName(broken.IndexPath)!);
         await File.WriteAllTextAsync(broken.IndexPath, text);
-        config.Data.LegacyVersionList = [version];
-        await config.Save();
-        await ExpectFailure(() => Migrate(config, broken, configPath), broken.IndexPath);
-        Assert(config.Data.LegacyVersionList != null && await File.ReadAllTextAsync(broken.IndexPath) == text,
-            "Invalid index must not erase either source");
+        await ExpectFailure(() => broken.InitializeAsync(), broken.IndexPath);
+        Assert(await File.ReadAllTextAsync(broken.IndexPath) == text,
+            "Invalid index must not be overwritten");
     }
-
-    // Force global-config cleanup failure after successful index commit, then retry at next startup.
-    var retryPath = Path.Combine(scenario, "retry", "config.json");
-    var retry = new DBManager(retryPath);
-    await retry.InitializeAsync();
-    retry.Data.LegacyVersionList = [version];
-    await retry.Save();
-    var retryIndex = new VersionListManager(Path.Combine(scenario, "retry-game"));
-    using (File.Open(retryPath, FileMode.Open, FileAccess.Read, FileShare.Read))
-        await ExpectFailure(() => Migrate(retry, retryIndex, retryPath), retryPath);
-    Assert(retry.Data.LegacyVersionList != null && File.Exists(retryIndex.IndexPath),
-        "Cleanup failure must preserve legacy field and committed index");
-    await Migrate(retry, new VersionListManager(retryIndex.GameRootPath), retryPath);
-    Assert(retry.Data.LegacyVersionList == null, "Cleanup must be retryable");
-    Console.WriteLine("PASS: migration, authoritative empty index, invalid documents, cleanup retry, root isolation");
+    Console.WriteLine("PASS: ignored legacy version list, independent index initialization, invalid documents, root isolation");
 }
 
 async Task CheckVersionIndex()
@@ -375,7 +408,7 @@ async Task CheckNavigationShell()
     {
         // Validate the exact registrations MainWindow added, including dependencies of all pages.
         foreach (var descriptor in services.Where(d => d.ServiceType.Namespace ==
-            "OneLauncher.Views.Panes.PaneViewModels.Factories"))
+            "OneLauncher.ViewModel.PaneViewModels.Factories"))
             Assert(validated.GetRequiredService(descriptor.ServiceType) != null, $"Factory resolution failed: {descriptor.ServiceType}");
         foreach (var pageName in new[] { "VersionPageViewModel", "AccountPageViewModel", "SettingsPageViewModel",
             "GameDataPageViewModel", "DownloadPageViewModel", "ServerPageViewModel" })
@@ -384,7 +417,7 @@ async Task CheckNavigationShell()
             Assert(validated.GetRequiredService(pageType) != null, "Page resolution failed: " + pageName);
         }
         var factoryType = typeof(MainWindow).Assembly.GetType(
-            "OneLauncher.Views.Panes.PaneViewModels.Factories.PowerPlayPaneViewModelFactory", true)!;
+            "OneLauncher.ViewModel.PaneViewModels.Factories.PowerPlayPaneViewModelFactory", true)!;
         var factory = validated.GetRequiredService(factoryType);
         Assert(ReferenceEquals(factoryType.GetField("_gameDataManager", BindingFlags.NonPublic | BindingFlags.Instance)!.GetValue(factory), games),
             "PowerPlay factory must reuse the exact UnitedCore game data manager");
@@ -417,6 +450,69 @@ async Task CheckNavigationShell()
         ReferenceEquals(list.SelectedItem, main.FindControl<ListBoxItem>("HomeListBoxItem")),
         "Hiding the current page must return to the permanent home entry");
     Console.WriteLine("PASS: actual navigation shell defaults, all optional items hidden, home/settings permanent, current-page fallback");
+}
+
+async Task CheckNotificationClick()
+{
+    var config = new DBManager(Path.Combine(root, "notification", "config.json"));
+    await config.InitializeAsync();
+    typeof(Init).GetProperty("ConfigManager", BindingFlags.NonPublic | BindingFlags.Static)!.SetValue(null, config);
+    var tasks = new TaskManager();
+    var core = (UnitedCore)System.Runtime.CompilerServices.RuntimeHelpers.GetUninitializedObject(typeof(UnitedCore));
+    typeof(UnitedCore).GetProperty(nameof(UnitedCore.TaskManager))!.SetValue(core, tasks);
+    typeof(UnitedCore).GetProperty(nameof(UnitedCore.MojangVersionList))!.SetValue(core, new List<VersionBasicInfo>());
+    var services = new ServiceCollection();
+    services.AddSingleton(config);
+    services.AddSingleton(core);
+    Init.InitTask = Task.FromResult<IServiceCollection>(services);
+    var main = new MainWindow();
+    var content = main.FindControl<TransitioningContentControl>("PageContent")!;
+    var vmType = typeof(MainWindow).Assembly.GetType("OneLauncher.Views.ViewModels.DownloadPageViewModel", true)!;
+    var vm = main.provider.GetRequiredService(vmType);
+    content.Content = new download { DataContext = vm };
+    var manager = main.FindControl<Avalonia.Controls.Notifications.WindowNotificationManager>("NotificationManager")!;
+    manager.ApplyTemplate();
+
+    Avalonia.Controls.Notifications.Notification Send(bool open)
+    {
+        main.ShowFlyout("Regression", "Notification click", openTaskCenterAfterClick: open);
+        Dispatcher.UIThread.RunJobs();
+        var cards = (System.Collections.IList)manager.GetType()
+            .GetField("_items", BindingFlags.NonPublic | BindingFlags.Instance)!.GetValue(manager)!;
+        return (Avalonia.Controls.Notifications.Notification)((ContentControl)cards[cards.Count - 1]!).Content!;
+    }
+    object? Pane() => vmType.GetProperty("PaneContent")!.GetValue(vm);
+    bool IsOpen() => (bool)vmType.GetProperty("IsPaneShow")!.GetValue(vm)!;
+    int Subscriptions() => ((Delegate?)typeof(TaskManager)
+        .GetField("OnTaskCreate", BindingFlags.NonPublic | BindingFlags.Instance)!.GetValue(tasks))?.GetInvocationList().Length ?? 0;
+
+    var ordinary = Send(false);
+    Assert(ordinary.OnClick == null && Pane() == null, "Ordinary notification must not open task center");
+    var notification = Send(true);
+    Assert(notification.OnClick != null, "Task notification must supply an instance callback");
+    notification.OnClick!();
+    var firstPane = (UserControl)Pane()!;
+    Assert(IsOpen() && firstPane.DataContext?.GetType().Name == "TaskCenterPaneViewModel" && Subscriptions() == 1,
+        "Click on download View must open its ViewModel task pane without delegate errors");
+    var firstVm = firstPane.DataContext!;
+    var firstClose = (Action)firstVm.GetType().GetProperty("OnPaneClose")!.GetValue(firstVm)!;
+    notification.OnClick();
+    var secondPane = (UserControl)Pane()!;
+    Assert(!ReferenceEquals(firstPane, secondPane) && Subscriptions() == 1, "Repeated click must release previous task subscriptions");
+    firstClose();
+    Assert(IsOpen(), "Stale close callback must not close the replacement pane");
+    var secondVm = secondPane.DataContext!;
+    var closeCommand = (IRelayCommand)secondVm.GetType().GetProperty("ClosePaneCommand")!.GetValue(secondVm)!;
+    closeCommand.Execute(null);
+    Assert(!IsOpen() && Subscriptions() == 0, "Close command must close pane and release subscriptions");
+    closeCommand.Execute(null);
+    content.Content = new download();
+    notification.OnClick();
+    Assert(Subscriptions() == 0, "Page without IPageHost DataContext must safely ignore notification click");
+    content.Content = null;
+    notification.OnClick();
+    Assert(Subscriptions() == 0, "Missing page must safely ignore notification click");
+    Console.WriteLine("PASS: notification click on download, repeated open, stale callback, close command, null host, subscriptions");
 }
 
 sealed class InlineProgress<T>(Action<T> report) : IProgress<T>

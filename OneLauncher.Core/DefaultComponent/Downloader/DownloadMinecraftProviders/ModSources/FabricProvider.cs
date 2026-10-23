@@ -1,8 +1,10 @@
-﻿using OneLauncher.Core.DefaultComponent.Mod.ModLoader.fabric;
+using OneLauncher.Core.DefaultComponent.Mod.ModLoader.fabric;
+using OneLauncher.Core.DefaultComponent.Resource.Mod.Loader.Fabric;
 using OneLauncher.Core.DefaultComponent.Downloader.DownloadMinecraftProviders;
 using OneLauncher.Core.Global;
 using OneLauncher.Core.Helper.Models;
 using OneLauncher.Core.DefaultComponent.Mod.ModService.Modrinth;
+using OneLauncher.Core.DefaultComponent.Resource.ModService.Modrinth;
 using System;
 using System.Collections.Generic;
 using System.Linq;

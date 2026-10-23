@@ -1,0 +1,17 @@
+{
+  "instances": {
+    "72bb2401": {
+      "Name": "\u6E05\u5355\u4E2D\u7684\u6574\u5408\u5305",
+      "VersionId": "1.21.1",
+      "ModLoader": 0,
+      "CreationTime": "2026-10-23T17:47:44.8253191+08:00",
+      "DefaultUserModelID": "68daee54-bd93-447a-b64f-1aec2ac89ff3",
+      "CustomJvmOptimizationArguments": null,
+      "ExtraJvmArguments": null,
+      "CustomGameArguments": null
+    }
+  },
+  "defaults": {},
+  "tags": {},
+  "tagMap": {}
+}

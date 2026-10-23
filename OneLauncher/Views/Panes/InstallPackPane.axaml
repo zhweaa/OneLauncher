@@ -1,0 +1,57 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:OneLauncher.Views.Panes.PaneViewModels"
+             xmlns:controls="using:OneLauncher.Views.Controls"
+             x:Class="OneLauncher.Views.Panes.InstallPackPane"
+             x:DataType="vm:InstallPackPaneViewModel" x:CompileBindings="True">
+    <Grid RowDefinitions="Auto,Auto,*,Auto" Margin="20">
+        <controls:PaneHeader Title="{Binding PaneTitle}" BackCommand="{Binding ClosePaneCommand}"/>
+        <Separator Grid.Row="1" Classes="pane-divider"/>
+        <ScrollViewer Grid.Row="2">
+            <StackPanel MaxWidth="520" HorizontalAlignment="Stretch" Spacing="16" Margin="0,0,0,20">
+                <TextBlock Classes="pane-section-title" Text="整合包信息"/>
+                <Border Classes="pane-surface">
+                    <StackPanel Spacing="10">
+                        <TextBlock Classes="item-title" Text="{Binding PackName}" TextWrapping="Wrap"/>
+                        <TextBlock Classes="pane-help" Text="{Binding Description}"/>
+                        <Grid ColumnDefinitions="Auto,*" RowDefinitions="Auto,Auto" ColumnSpacing="12" RowSpacing="8"
+                              IsVisible="{Binding HasPackage}">
+                            <TextBlock Classes="pane-label" Text="Minecraft"/>
+                            <TextBlock Grid.Column="1" Text="{Binding MinecraftVersion}"/>
+                            <TextBlock Grid.Row="1" Classes="pane-label" Text="加载器"/>
+                            <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding LoaderInfo}" TextWrapping="Wrap"/>
+                        </Grid>
+                        <TextBlock Classes="pane-help" Text="安装后将创建新的游戏实例。" IsVisible="{Binding HasPackage}"/>
+                    </StackPanel>
+                </Border>
+                <TextBlock Classes="pane-section-title" Text="安装进度"/>
+                <Border Classes="pane-status" BorderBrush="{Binding StatusBrush}" Background="{Binding StatusSurfaceBrush}">
+                    <StackPanel Spacing="10">
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                            <PathIcon Data="{Binding StatusIcon}" Width="18" Height="18" Foreground="{Binding StatusBrush}"/>
+                            <TextBlock Text="{Binding StatusLabel}" Foreground="{Binding StatusBrush}" FontWeight="SemiBold"/>
+                        </StackPanel>
+                        <Grid ColumnDefinitions="Auto,*" ColumnSpacing="12">
+                            <TextBlock Classes="pane-help" Text="当前进度" VerticalAlignment="Center"/>
+                            <TextBlock Grid.Column="1" Text="{Binding CurrentText}" TextWrapping="Wrap" VerticalAlignment="Center"/>
+                        </Grid>
+                        <ProgressBar Classes="pane-progress" Minimum="0" Maximum="100" Value="{Binding CurrentProgress}"
+                                     Foreground="{Binding StatusBrush}"/>
+                    </StackPanel>
+                </Border>
+            </StackPanel>
+        </ScrollViewer>
+        <StackPanel Grid.Row="3" Spacing="8" Margin="0,16,0,0">
+            <Button Classes="pane-secondary" Content="重新加载信息" Command="{Binding LoadInfoCommand}"
+                    IsVisible="{Binding CanReload}" HorizontalAlignment="Stretch"/>
+            <Grid ColumnDefinitions="*,*" ColumnSpacing="10">
+                <Button Grid.Column="0" Classes="pane-danger" Content="{Binding CancelLabel}"
+                        Command="{Binding CancelInstallCommand}" HorizontalAlignment="Stretch"/>
+                <Button Grid.Column="1" Classes="pane-primary" Content="安装" Command="{Binding ToInstallCommand}"
+                        IsVisible="{Binding !IsCompleted}" HorizontalAlignment="Stretch"/>
+                <Button Grid.Column="1" Classes="pane-primary" Content="完成" Command="{Binding ClosePaneCommand}"
+                        IsVisible="{Binding IsCompleted}" HorizontalAlignment="Stretch"/>
+            </Grid>
+        </StackPanel>
+    </Grid>
+</UserControl>

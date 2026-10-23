@@ -1,5 +1,4 @@
-﻿using OneLauncher.Core.DefaultComponent.Mod.ModLoader.forgeseries;
-using OneLauncher.Core.DefaultComponent.Downloader.DownloadMinecraftProviders;
+﻿using OneLauncher.Core.DefaultComponent.Downloader.DownloadMinecraftProviders;
 using OneLauncher.Core.Global;
 using OneLauncher.Core.Helper;
 using OneLauncher.Core.Helper.Models;
@@ -8,6 +7,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using OneLauncher.Core.DefaultComponent.Resource.Mod.Loader.ForgeSeries;
 
 namespace OneLauncher.Core.DefaultComponent.Downloader.DownloadMinecraftProviders.ModSources;
 

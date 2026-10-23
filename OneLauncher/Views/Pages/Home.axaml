@@ -1,0 +1,239 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:icons="using:OneLauncher.Converters"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="using:OneLauncher.Views.ViewModels"
+             xmlns:controls="using:OneLauncher.Views.Controls"
+             xmlns:lo="using:OneLauncher.Core.Helper.Models" mc:Ignorable="d" d:DesignWidth="818" d:DesignHeight="530"
+             x:Class="OneLauncher.Home"
+             x:DataType="vm:HomePageViewModel"
+			 xmlns:asyncImageLoader="clr-namespace:AsyncImageLoader;assembly=AsyncImageLoader.Avalonia"
+             x:CompileBindings="True">
+	<UserControl.Styles>
+		<Style Selector="Button.NewsCard">
+			<Setter Property="Background" Value="#40FFFFFF" />
+			<Setter Property="Foreground" Value="White" />
+			<Setter Property="Padding" Value="12,8"/>
+			<Setter Property="CornerRadius" Value="8"/>
+			<Setter Property="VerticalAlignment" Value="Center"/>
+			<Setter Property="HorizontalContentAlignment" Value="Center"/>
+			<Setter Property="FontWeight" Value="Medium"/>
+			<Setter Property="FontSize" Value="12"/>
+			<Setter Property="BorderThickness" Value="0"/>
+		</Style>
+
+		<Style Selector="Button.NewsCard:pointerover /template/ ContentPresenter">
+			<Setter Property="Background" Value="#80FFFFFF" />
+		</Style>
+
+		<Style Selector="Button.NewsCard.Round">
+			<Setter Property="Padding" Value="8"/>
+			<Setter Property="CornerRadius" Value="100"/>
+		</Style>
+	</UserControl.Styles>
+	<controls:PageShell IsPaneOpen="{Binding IsPaneShow,Mode=TwoWay}"
+						PaneContent="{Binding PaneContent}">
+		
+		<Grid ColumnDefinitions="*,300">
+			<Grid Grid.Column="0">
+				<Panel>
+					<ScrollViewer>
+						<StackPanel>
+							<ListBox Classes="card-list">
+								<ListBoxItem>
+									<Border Width="385" Height="240" CornerRadius="12" ClipToBounds="True" Background="{DynamicResource CardBackgroundBrush}">
+										<Panel>
+											<Image asyncImageLoader:ImageLoader.Source="{Binding CurrentNews.ImageUrl}" Stretch="UniformToFill" />
+											<Border>
+												<Border.Background>
+													<LinearGradientBrush StartPoint="50%,0%" EndPoint="50%,100%">
+														<GradientStop Color="#CC000000" Offset="0" />
+														<GradientStop Color="#33000000" Offset="0.5" />
+														<GradientStop Color="#E6000000" Offset="1" />
+													</LinearGradientBrush>
+												</Border.Background>
+											</Border>
+
+											<TextBlock Text="新闻加载中..."
+													   IsVisible="{Binding IsNewsLoading}"
+													   HorizontalAlignment="Center"
+													   VerticalAlignment="Center"
+													   Foreground="White"
+													   FontSize="16"/>
+
+											<Grid IsVisible="{Binding !IsNewsLoading}"
+												  RowDefinitions="Auto, *, Auto"
+												  Margin="20">
+
+												<StackPanel Grid.Row="0" Spacing="5">
+													<TextBlock Text="MINECRAFT 新闻"
+															   Foreground="{DynamicResource SystemAccentColorLight2}"
+															   FontSize="11"
+															   FontWeight="Bold"
+															   LetterSpacing="0.1"/>
+													<TextBlock Text="{Binding CurrentNews.Title}"
+															   Foreground="White"
+															   FontSize="20"
+															   FontWeight="SemiBold"
+															   TextWrapping="WrapWithOverflow"
+															   MaxHeight="54"
+															   TextTrimming="CharacterEllipsis"/>
+												</StackPanel>
+
+												<TextBlock Grid.Row="1"
+														   Text="{Binding CurrentNews.Content}"
+														   Foreground="#E0E0E0"
+														   FontSize="13"
+														   TextWrapping="WrapWithOverflow"
+														   TextTrimming="CharacterEllipsis"
+														   VerticalAlignment="Top"
+														   Margin="0,12,0,0"/>
+
+												<StackPanel Grid.Row="2"
+															Orientation="Horizontal"
+															Spacing="8"
+															HorizontalAlignment="Right"
+															VerticalAlignment="Bottom">
+
+													<Button Command="{Binding ViewDetailsCommand}"
+															Classes="NewsCard"
+															Content="阅读详细"/>
+
+													<Button Command="{Binding PreviousNewsCommand}"
+															Classes="NewsCard Round"
+															ToolTip.Tip="上一条">
+														<PathIcon Width="16" Height="16" Data="{x:Static icons:VectorIcons.ChevronLeft}"/>
+													</Button>
+
+													<Button Command="{Binding NextNewsCommand}"
+															Classes="NewsCard Round"
+															ToolTip.Tip="下一条">
+														<PathIcon Width="16" Height="16" Data="{x:Static icons:VectorIcons.ChevronRight}"/>
+													</Button>
+												</StackPanel>
+											</Grid>
+										</Panel>
+									</Border>
+								</ListBoxItem>
+
+								<ListBoxItem>
+									<Border Width="385" MinHeight="120" Background="{DynamicResource CardBackgroundBrush}"
+											CornerRadius="12" ClipToBounds="True">
+										<Grid ColumnDefinitions="5, *, Auto">
+											<Border Grid.Column="0" Background="{DynamicResource SuccessBrush}"/>
+
+											<StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="20,0">
+												<TextBlock Text="任务中心" FontSize="22" FontWeight="SemiBold"
+														Foreground="{DynamicResource PrimaryForegroundBrush}"/>
+												<TextBlock Text="查看任务状态和实时进度" FontSize="12"
+														Foreground="{DynamicResource SecondaryForegroundBrush}"/>
+											</StackPanel>
+
+											<Button Grid.Column="2" Content="进入"
+													Command="{Binding OpenTaskCenterCommand}"
+													Background="{DynamicResource SuccessBrush}"
+													Foreground="White"
+													VerticalAlignment="Center"
+													HorizontalAlignment="Right"
+													Margin="0,0,20,0"
+													Padding="25,8"
+													CornerRadius="8"/>
+										</Grid>
+									</Border>
+								</ListBoxItem>
+
+								<ListBoxItem>
+									<Border Width="385" Height="120" Background="{DynamicResource CardBackgroundBrush}"
+											CornerRadius="12" ClipToBounds="True">
+
+										<Grid ColumnDefinitions="5, *, Auto">
+											<Border Grid.Column="0" Background="{DynamicResource AccentBrush}"/>
+
+											<StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="20,0">
+												<TextBlock Text="联机面板" FontSize="22" FontWeight="SemiBold"
+														   Foreground="{DynamicResource PrimaryForegroundBrush}"/>
+												<TextBlock Text="加入社区服务器或与朋友联机" FontSize="12"
+														   Foreground="{DynamicResource SecondaryForegroundBrush}"/>
+											</StackPanel>
+
+											<Button Grid.Column="2" Content="进入"
+													Command="{Binding PowerPlayCommand}"
+													Background="{DynamicResource AccentBrush}"
+													Foreground="White"
+													VerticalAlignment="Center"
+													HorizontalAlignment="Right"
+													Margin="0,0,20,0"
+													Padding="25,8"
+													CornerRadius="8"/>
+										</Grid>
+									</Border>
+								</ListBoxItem>
+
+								<ListBoxItem>
+									<Border Width="385" MinHeight="160" Background="{DynamicResource CardBackgroundBrush}"
+											CornerRadius="12" ClipToBounds="True">
+										<Grid ColumnDefinitions="5, *">
+											<Border Grid.Column="0" Background="{DynamicResource AccentBrush}"/>
+
+											<StackPanel Grid.Column="1" Margin="20" Spacing="10">
+												<StackPanel.Styles>
+													<Style Selector="Button.Link">
+														<Setter Property="Background" Value="Transparent"/>
+														<Setter Property="Foreground" Value="{DynamicResource AccentBrush}"/>
+														<Setter Property="HorizontalContentAlignment" Value="Left"/>
+														<Setter Property="Padding" Value="10,8"/>
+														<Setter Property="Cursor" Value="Hand"/>
+														<Setter Property="FontWeight" Value="Medium"/>
+													</Style>
+													<Style Selector="Button.Link:pointerover /template/ ContentPresenter">
+														<Setter Property="Background" Value="{DynamicResource AccentHoverBrush}"/>
+													</Style>
+												</StackPanel.Styles>
+
+												<TextBlock Text="导入游戏实例" FontSize="18" FontWeight="SemiBold"
+														   Foreground="{DynamicResource PrimaryForegroundBrush}"/>
+
+												<Button Classes="Link" Command="{Binding ImportVersionByPCL2Command}">
+													<TextBlock Text="从 PCL2 导入..."/>
+												</Button>
+
+												<Button Classes="Link" Command="{Binding ImportCommand}">
+													<TextBlock Text="从整合包 (.mrpack) 导入..."/>
+												</Button>
+											</StackPanel>
+										</Grid>
+									</Border>
+								</ListBoxItem>
+
+							</ListBox>
+						</StackPanel>
+					</ScrollViewer>
+				</Panel>
+			</Grid>
+			<Panel Grid.Column="1" Background="{DynamicResource PaneBackgroundBrush}">
+				<StackPanel VerticalAlignment="Center" HorizontalAlignment="Center" Spacing="6">
+					<Image Source="{Binding GameIcon}" Height="128" Width="128"/>
+
+					<ComboBox ItemsSource="{Binding Items}" 
+							  SelectedItem="{Binding SelectedGameData}" 
+							  PlaceholderText="选择启动实例"
+							  Width="128">
+						<ComboBox.ItemTemplate>
+							<DataTemplate x:DataType="lo:GameData">
+								<TextBlock Text="{Binding Name}"/>
+							</DataTemplate>
+						</ComboBox.ItemTemplate>
+					</ComboBox>
+
+					<Button Command="{Binding LaunchCommand}" Width="128">
+						<StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+							<Image Source="{DynamicResource IconLaunch}" Width="20" Height="20"/>
+							<TextBlock Text="快速游戏"/>
+						</StackPanel>
+					</Button>
+				</StackPanel>
+			</Panel>
+		</Grid>
+	</controls:PageShell>
+</UserControl>

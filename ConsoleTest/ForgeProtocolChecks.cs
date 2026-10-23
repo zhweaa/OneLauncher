@@ -1,6 +1,6 @@
 using System.Reflection;
 using System.Text.Json;
-using OneLauncher.Core.DefaultComponent.Mod.ModLoader.forgeseries;
+using OneLauncher.Core.DefaultComponent.Resource.Mod.Loader.ForgeSeries;
 using OneLauncher.Core.Global;
 using OneLauncher.Core.Helper;
 using OneLauncher.Core.Helper.Models;
@@ -9,7 +9,7 @@ internal static class ForgeProtocolChecks
 {
     public static async Task<int> RunAsync()
     {
-        var parser = typeof(Tools).Assembly.GetType("OneLauncher.Core.DefaultComponent.Mod.ModLoader.forgeseries.Installation.ForgeInstallerParser", true)!;
+        var parser = typeof(Tools).Assembly.GetType("OneLauncher.Core.DefaultComponent.Resource.Mod.Loader.ForgeSeries.Installation.ForgeInstallerParser", true)!;
         var output = Path.GetFullPath("build/forge-expanded-20261022/protocol");
         var count = 0;
         foreach (var fixture in Directory.GetFiles("build/forge-expanded-20261022/inputs", "*-installer.jar"))

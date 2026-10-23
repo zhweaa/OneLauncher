@@ -11,7 +11,7 @@
 	<Grid Margin="24" RowDefinitions="*,*,*">
 		<StackPanel Grid.Row="0">
 			<StackPanel Orientation="Horizontal">
-				<Image Source="/Assets/icos/error.png" Width="52" Height="52"/>
+				<Image Source="{DynamicResource IconError}" Width="52" Height="52"/>
 				<TextBlock x:Name="ErrorTitle" FontSize="24" VerticalAlignment="Center" FontWeight="Bold"/>
 			</StackPanel>
 			<ScrollViewer>

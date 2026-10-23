@@ -21,7 +21,7 @@ internal class OlanExceptionWorker
         return Dispatcher.UIThread.InvokeAsync(async () => 
         {
             if (exception.Action == OlanExceptionAction.Warning)
-                WeakReferenceMessenger.Default.Send(new MainWindowShowFlyoutMessage(exception.Message,NotificationType.Warning,exception.Title));
+                WeakReferenceMessenger.Default.Send(new MainWindowShowFlyoutMessage(exception.Message,NotificationType.Warning,title:exception.Title));
             if (exception.Action == OlanExceptionAction.Error)
                 await new ExceptionTip(exception).ShowDialog(MainWindow.mainwindow);
             if (exception.Action == OlanExceptionAction.FatalError)

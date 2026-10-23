@@ -8,12 +8,26 @@
              x:DataType="vm:DownloadPaneViewModel"
              x:CompileBindings="True"
              x:Class="OneLauncher.Views.Panes.DownloadPane">
+    <UserControl.Styles>
+        <Style Selector="Border.download-status.finished">
+            <Setter Property="BorderBrush" Value="{DynamicResource SuccessBrush}"/>
+            <Setter Property="Background" Value="{DynamicResource SuccessSubtleBrush}"/>
+        </Style>
+        <Style Selector="Border.download-status.failed">
+            <Setter Property="BorderBrush" Value="{DynamicResource DangerBrush}"/>
+            <Setter Property="Background" Value="{DynamicResource DangerSubtleBrush}"/>
+        </Style>
+        <Style Selector="Border.download-status.canceled">
+            <Setter Property="BorderBrush" Value="{DynamicResource WarningBrush}"/>
+            <Setter Property="Background" Value="{DynamicResource WarningSubtleBrush}"/>
+        </Style>
+    </UserControl.Styles>
     <Grid RowDefinitions="Auto,Auto,*,Auto" Margin="20">
         <controls:PaneHeader Grid.Row="0" Title="{Binding VersionName}" BackCommand="{Binding ClosePaneCommand}">
             <controls:PaneHeader.TrailingContent>
                 <Button Classes="pane-toolbar" Command="{Binding PopUpCommand}">
                     <StackPanel Orientation="Horizontal" Spacing="8">
-                        <Image Source="/Assets/icos/internet.png" Width="20" Height="20"/>
+                        <Image Source="{DynamicResource IconInternet}" Width="20" Height="20"/>
                         <TextBlock Text="弹出" VerticalAlignment="Center"/>
                     </StackPanel>
                 </Button>
@@ -24,7 +38,7 @@
         <ScrollViewer Grid.Row="2">
             <StackPanel MaxWidth="540" HorizontalAlignment="Stretch" Spacing="16" Margin="0,0,0,20">
                 <TextBlock Classes="pane-section-title" Text="安装选项"/>
-                <Border Classes="pane-surface">
+                <Border Classes="pane-surface" IsEnabled="{Binding !IsDownloading}">
                     <Grid ColumnDefinitions="Auto,*"
                           RowDefinitions="Auto,Auto,Auto,Auto,Auto"
                           ColumnSpacing="24"
@@ -72,17 +86,27 @@
                 </Border>
 
                 <TextBlock Classes="pane-section-title" Text="下载状态"/>
-                <Border Classes="pane-status">
+                <Border x:Name="DownloadStatusCard" Classes="pane-status download-status"
+                        Classes.finished="{Binding IsFinished}" Classes.failed="{Binding IsFailed}"
+                        Classes.canceled="{Binding IsCanceled}">
                     <StackPanel Spacing="10">
-                        <Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
-                            <TextBlock Text="{Binding Dp}" TextWrapping="Wrap"/>
-                            <TextBlock Grid.Column="1" Classes="pane-help" Text="{Binding Fs}"/>
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                            <PathIcon Data="{Binding StatusIcon}" Width="18" Height="18"
+                                      Foreground="{Binding #DownloadStatusCard.BorderBrush}"/>
+                            <TextBlock Text="{Binding StatusLabel}" FontWeight="SemiBold"
+                                       Foreground="{Binding #DownloadStatusCard.BorderBrush}"/>
+                        </StackPanel>
+                        <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="12">
+                            <TextBlock Classes="pane-help" Text="当前进度" VerticalAlignment="Center"/>
+                            <TextBlock Grid.Column="1" Text="{Binding Dp}" TextWrapping="Wrap" VerticalAlignment="Center"/>
+                            <TextBlock Grid.Column="2" Classes="pane-help" Text="{Binding Fs}" VerticalAlignment="Center"/>
                         </Grid>
                         <TextBlock Classes="pane-help" Text="{Binding FileName}" TextTrimming="CharacterEllipsis"/>
                         <ProgressBar Classes="pane-progress"
                                      Minimum="0"
                                      Maximum="100"
                                      Value="{Binding CurrentProgress}"
+                                     Foreground="{Binding #DownloadStatusCard.BorderBrush}"
                                      ShowProgressText="True"/>
                     </StackPanel>
                 </Border>
@@ -92,12 +116,13 @@
         <Grid Grid.Row="3" ColumnDefinitions="*,*" ColumnSpacing="10" Margin="0,16,0,0">
             <Button Grid.Column="0"
                     Classes="pane-danger"
-                    Content="取消任务"
-                    Command="{Binding ToCancellationDownloadTaskCommand}"
-                    IsEnabled="{Binding !#ToDownloadButton.IsEnabled}"/>
+                    HorizontalAlignment="Stretch"
+                    Content="{Binding CancelLabel}"
+                    Command="{Binding ToCancellationDownloadTaskCommand}"/>
             <Button Grid.Column="1"
                     x:Name="ToDownloadButton"
                     Classes="pane-primary"
+                    HorizontalAlignment="Stretch"
                     Content="下载版本"
                     Command="{Binding ToDownloadCommand}"
                     IsEnabled="{Binding IsAllowDownloading}"/>

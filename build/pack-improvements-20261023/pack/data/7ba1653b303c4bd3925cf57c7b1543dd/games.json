@@ -1,0 +1,47 @@
+{
+  "instances": {
+    "01f3ac9a": {
+      "Name": "\u6E05\u5355\u4E2D\u7684\u6574\u5408\u5305",
+      "VersionId": "1.21.1",
+      "ModLoader": 0,
+      "CreationTime": "2026-10-23T18:38:52.0543624+08:00",
+      "DefaultUserModelID": "a828904c-6839-4ff9-8f5d-ddb0a0208331",
+      "CustomJvmOptimizationArguments": null,
+      "ExtraJvmArguments": null,
+      "CustomGameArguments": null
+    },
+    "86ef7028": {
+      "Name": "\u6E05\u5355\u4E2D\u7684\u6574\u5408\u5305",
+      "VersionId": "1.21.1",
+      "ModLoader": 0,
+      "CreationTime": "2026-10-23T18:39:00.0874411+08:00",
+      "DefaultUserModelID": "a828904c-6839-4ff9-8f5d-ddb0a0208331",
+      "CustomJvmOptimizationArguments": null,
+      "ExtraJvmArguments": null,
+      "CustomGameArguments": null
+    },
+    "5580ebfe": {
+      "Name": "\u6E05\u5355\u4E2D\u7684\u6574\u5408\u5305",
+      "VersionId": "1.21.1",
+      "ModLoader": 0,
+      "CreationTime": "2026-10-23T18:39:00.1356467+08:00",
+      "DefaultUserModelID": "a828904c-6839-4ff9-8f5d-ddb0a0208331",
+      "CustomJvmOptimizationArguments": null,
+      "ExtraJvmArguments": null,
+      "CustomGameArguments": null
+    },
+    "749bb610": {
+      "Name": "\u6E05\u5355\u4E2D\u7684\u6574\u5408\u5305",
+      "VersionId": "1.21.1",
+      "ModLoader": 0,
+      "CreationTime": "2026-10-23T18:39:00.1792598+08:00",
+      "DefaultUserModelID": "a828904c-6839-4ff9-8f5d-ddb0a0208331",
+      "CustomJvmOptimizationArguments": null,
+      "ExtraJvmArguments": null,
+      "CustomGameArguments": null
+    }
+  },
+  "defaults": {},
+  "tags": {},
+  "tagMap": {}
+}

@@ -1,13 +1,13 @@
-﻿using OneLauncher.Core.DefaultComponent.Mod.ModLoader.forgeseries;
-using OneLauncher.Core.DefaultComponent.Downloader.DownloadMinecraftProviders;
+﻿using OneLauncher.Core.DefaultComponent.Downloader.DownloadMinecraftProviders;
 using OneLauncher.Core.Global;
 using OneLauncher.Core.Helper;
 using OneLauncher.Core.Helper.Models;
-using OneLauncher.Core.DefaultComponent.Mod.ModLoader.forgeseries.JarMod;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
+using OneLauncher.Core.DefaultComponent.Resource.Mod.Loader.ForgeSeries;
+using OneLauncher.Core.DefaultComponent.Resource.Mod.Loader.ForgeSeries.JarMod;
 
 namespace OneLauncher.Core.DefaultComponent.Downloader.DownloadMinecraftProviders.ModSources;
 

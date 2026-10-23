@@ -43,10 +43,11 @@ internal sealed class GameLauncher : IDisposable
             ));
         cancellationToken.ThrowIfCancellationRequested();
         progress?.Report(("正在配置游戏目录和启动参数...", 45));
+        var launchGamePath = useRootMode ? gameRootPath : gameData.InstancePath;
         commandBuilder
             .SetLoginUser(accountManager.GetUser(gameData.DefaultUserModelID) ?? throw new OlanException("启动失败","找不到你想要启动的用户"))
             .WithServerInfo(serverInfo)
-            .SetGamePath(useRootMode ? gameRootPath : gameData.InstancePath)
+            .SetGamePath(launchGamePath)
             .SetModType(gameData.ModLoader);
         // 设置额外参数
         JvmArguments jvmArgsToUse = gameData.CustomJvmOptimizationArguments ?? Init.ConfigManger.Data.DefaultSettings.MinecraftJvmArguments;
@@ -74,7 +75,7 @@ internal sealed class GameLauncher : IDisposable
                 var processInfo = new ProcessStartInfo
                 {
                     FileName = commandBuilder.GetJavaPath(),
-                    WorkingDirectory = Init.GameRootPath,
+                    WorkingDirectory = launchGamePath,
                     RedirectStandardOutput = true,
                     RedirectStandardError = true,
                     UseShellExecute = false,

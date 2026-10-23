@@ -2,7 +2,7 @@ using System.Diagnostics;
 using System.IO.Compression;
 using System.Text;
 using System.Text.Json;
-using OneLauncher.Core.DefaultComponent.Mod.ModLoader.forgeseries;
+using OneLauncher.Core.DefaultComponent.Resource.Mod.Loader.ForgeSeries;
 
 internal static class ForgeProbeMod
 {

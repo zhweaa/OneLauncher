@@ -1,0 +1,14 @@
+{
+  "UserDictionary": {
+    "fe9b3537-2307-47f9-8798-7e79a47a7233": {
+      "Name": "default",
+      "uuid": "00000000-0000-0000-0000-000000000000",
+      "AccessToken": "00000000-0000-0000-0000-000000000000",
+      "UserType": 0,
+      "AccountID": null,
+      "AccessTokenExpiration": null,
+      "YggdrasilInfo": null
+    }
+  },
+  "DefaultUserID": "fe9b3537-2307-47f9-8798-7e79a47a7233"
+}

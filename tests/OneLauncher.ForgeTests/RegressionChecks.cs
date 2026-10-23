@@ -4,8 +4,8 @@ using System.Reflection;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
-using OneLauncher.Core.DefaultComponent.Mod.ModLoader;
-using OneLauncher.Core.DefaultComponent.Mod.ModLoader.forgeseries;
+using OneLauncher.Core.DefaultComponent.Resource.Mod.Loader;
+using OneLauncher.Core.DefaultComponent.Resource.Mod.Loader.ForgeSeries;
 using OneLauncher.Core.Global;
 using OneLauncher.Core.Helper;
 using OneLauncher.Core.Helper.Models;
@@ -13,7 +13,7 @@ using OneLauncher.Core.Helper.Models;
 internal static class RegressionChecks
 {
     private static readonly Assembly Core = typeof(Tools).Assembly;
-    private const string Prefix = "OneLauncher.Core.DefaultComponent.Mod.ModLoader.forgeseries.";
+    private const string Prefix = "OneLauncher.Core.DefaultComponent.Resource.Mod.Loader.ForgeSeries.";
     private const string Java17 = "C:/Program Files/Eclipse Adoptium/jdk-17.0.15.6-hotspot/bin/java.exe";
     private const string Coordinate = "net.minecraftforge:forge:1";
     private const string RelativeJar = "net/minecraftforge/forge/1/forge-1.jar";

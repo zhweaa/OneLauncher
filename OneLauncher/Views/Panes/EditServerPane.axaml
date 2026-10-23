@@ -88,7 +88,7 @@
                     <StackPanel Orientation="Horizontal"
                                 HorizontalAlignment="Center"
                                 Spacing="8">
-                        <Image Source="/Assets/icos/del.png" Width="20" Height="20" />
+                        <Image Source="{DynamicResource IconDel}" Width="20" Height="20" />
                         <TextBlock Text="删除服务器收藏" />
                     </StackPanel>
                     <Button.Flyout>
@@ -149,7 +149,7 @@
                 <StackPanel Orientation="Horizontal"
                             HorizontalAlignment="Center"
                             Spacing="8">
-                    <Image Source="/Assets/icos/save.png" Width="20" Height="20" />
+                    <Image Source="{DynamicResource IconSave}" Width="20" Height="20" />
                     <TextBlock Text="保存" />
                 </StackPanel>
             </Button>

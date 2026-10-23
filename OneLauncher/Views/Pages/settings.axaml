@@ -1,0 +1,134 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d" d:DesignWidth="818" d:DesignHeight="1000"
+			 xmlns:vm="using:OneLauncher.Views.ViewModels"
+			 xmlns:controls="using:OneLauncher.Views.Controls"
+			 xmlns:downmc="using:OneLauncher.Core.DefaultComponent.Downloader.DownloadMinecraftProviders"
+			 x:DataType="vm:SettingsPageViewModel"
+			 x:CompileBindings="True"
+             x:Class="OneLauncher.Views.settings">
+	<controls:PageShell IsPaneOpen="{Binding IsPaneShow,Mode=TwoWay}"
+						PaneContent="{Binding PaneContent}">
+  <ScrollViewer>
+	  <StackPanel Margin="40,28" Spacing="28">
+		  <TextBlock Classes="page-title" Text="设置"/>
+		  <ComboBox x:Name="SettingsCategoryComboBox" Width="220" HorizontalAlignment="Left"
+					ItemsSource="{Binding SettingsCategories}"
+					SelectedItem="{Binding SelectedSettingsCategory, Mode=TwoWay}"
+					AutomationProperties.Name="筛选设置板块"/>
+		  <!-- UI 选项 -->
+		  <StackPanel Classes="settings-section" IsVisible="{Binding IsInterfaceSectionVisible}">
+			  <TextBlock Classes="section-title" Text="界面"/>
+			  <Separator Classes="section-divider"/>
+			  <CheckBox Content="是否显示标识符" Margin="0,6,0,0"
+						IsChecked="{Binding ShowIdentifiers, Mode=TwoWay}"
+						IsEnabled="{Binding !IsSavingIdentifiers}"/>
+			  <StackPanel Margin="0,6,0,0">
+				  <TextBlock Text="左侧导航项间距："/>
+				  <NumericUpDown Classes="settings-number" Value="{Binding LeftButtonListSpacing}"
+								 Minimum="0"
+								 Maximum="30"/>
+			  </StackPanel>
+			  <StackPanel Margin="0,16,0,0">
+				  <Button x:Name="NavigationVisibilityButton" Classes="item-action"
+						  Content="控制左侧导航栏页面" HorizontalAlignment="Left">
+					  <Button.Flyout>
+						  <controls:SettingsFlyout Placement="BottomEdgeAlignedLeft"
+											   IsEditing="{Binding IsNavigationEditing, Mode=TwoWay}"
+											   IsBusy="{Binding IsSavingNavigation}">
+							  <Grid RowDefinitions="Auto,Auto,*,Auto" Width="270" RowSpacing="12">
+								  <TextBlock Grid.Row="0" Classes="section-title" Text="左侧导航栏页面"/>
+								  <TextBlock Grid.Row="1" Text="主页和设置始终显示" TextWrapping="Wrap"/>
+								  <ScrollViewer Grid.Row="2" MaxHeight="260">
+									  <ItemsControl ItemsSource="{Binding Items}" IsEnabled="{Binding !IsSavingNavigation}">
+										  <ItemsControl.ItemTemplate>
+											  <DataTemplate x:DataType="vm:NavigationVisibilityItem">
+												  <CheckBox Content="{Binding DisplayName}" IsChecked="{Binding IsVisible, Mode=TwoWay}"/>
+											  </DataTemplate>
+										  </ItemsControl.ItemTemplate>
+									  </ItemsControl>
+								  </ScrollViewer>
+								  <Button Grid.Row="3" Classes="toolbar-action" Content="保存并应用"
+										  HorizontalAlignment="Stretch" Command="{Binding SaveNavigationCommand}"/>
+							  </Grid>
+						  </controls:SettingsFlyout>
+					  </Button.Flyout>
+				  </Button>
+			  </StackPanel>
+		  </StackPanel>
+		  <!-- 游戏启动选项 -->
+		  <StackPanel Classes="settings-section" IsVisible="{Binding IsGameLaunchSectionVisible}">
+			  <TextBlock Classes="section-title" Text="游戏启动"/>
+			  <Separator Classes="section-divider"/>
+			  <StackPanel Margin="0,6,0,0">
+				  <TextBlock Text="Jvm参数优化选项"/>
+				  
+				  <RadioButton IsChecked="{Binding IsM1}" Margin="0,4,0,0" GroupName="JvmMode" Content="保守模式"/>
+				  <RadioButton IsChecked="{Binding IsM2}" GroupName="JvmMode" Content="标准模式" />
+				  <RadioButton IsChecked="{Binding IsM3}" GroupName="JvmMode" Content="激进模式" />
+				  
+				  <Button Content="释放内存（预览版）" Command="{Binding ReleaseMemoryCommand}" Margin="0,4,0,0"/>
+			  </StackPanel>
+		  </StackPanel>
+		  <!-- 下载选项 -->
+		  <StackPanel Classes="settings-section" IsVisible="{Binding IsDownloadSectionVisible}">
+			  <TextBlock Classes="section-title" Text="下载"/>
+			  <Separator Classes="section-divider"/>
+			  <StackPanel Margin="0,6,0,0">
+				  <TextBlock Text="最大下载线程："/>
+				  <NumericUpDown Classes="settings-number" Value="{Binding MaxDownloadThreadsValue}" Minimum="1" Maximum="128"/>
+			  </StackPanel>
+			  <StackPanel Margin="0,16,0,0">
+				  <TextBlock Text="最大Sha1校验线程："/>
+				  <NumericUpDown Classes="settings-number" Value="{Binding MaxSha1ThreadsValue}" Minimum="1" Maximum="128"/>
+				  <TextBlock Text="是否校验Sha1" Margin="0,8,0,0"/>
+				  <ToggleSwitch IsChecked="{Binding IsSha1Enabled}">
+					  <ToggleSwitch.OnContent>
+						  <TextBlock Text="校验Sha1"/>
+					  </ToggleSwitch.OnContent>
+					  <ToggleSwitch.OffContent>
+						  <TextBlock Text="不再校验Sha1"/>
+					  </ToggleSwitch.OffContent>
+				  </ToggleSwitch>
+				  <TextBlock Text="下载源与镜像" Margin="0,8,0,0"/>
+				  <ComboBox ItemsSource="{Binding DownloadSources}" SelectedItem="{Binding SelectedDownloadSource}">
+					  <ComboBox.ItemTemplate>
+						  <DataTemplate x:DataType="downmc:DownloadSourceStrategy">
+							  <TextBlock Text="{Binding Converter={StaticResource DownloadSourceStrategyConverter},Mode=OneWay}"/>
+						  </DataTemplate>
+					  </ComboBox.ItemTemplate>
+				  </ComboBox>
+			  </StackPanel>
+		  </StackPanel>
+		  <!-- 运行环境 -->
+		  <StackPanel Classes="settings-section" IsVisible="{Binding IsRuntimeSectionVisible}">
+			  <TextBlock Classes="section-title" Text="运行环境"/>
+			  <Separator Classes="section-divider"/>
+			  <StackPanel Margin="0,6,0,0">
+				  <TextBlock Text="Java 运行环境"/>
+				  <Button Content="安装 Java" Command="{Binding OpenJavaInstallPaneCommand}" Margin="0,4,0,0"/>
+			  </StackPanel>
+		  </StackPanel>
+		  <!-- 关于 -->
+		  <StackPanel Classes="settings-section">
+			  <TextBlock Classes="section-title" Text="关于"/>
+			  <Separator Classes="section-divider"/>
+			  <StackPanel Margin="0,6,0,0">
+				  <StackPanel Orientation="Horizontal">
+					  <TextBlock Text="开发人员：Lnetface（Zhi Wei）" VerticalAlignment="Center"/>
+					  <TextBlock Text="打开项目网站：" Margin="8,0,0,0" VerticalAlignment="Center"/>
+					  <Button x:Name="GitHubLink" Classes="link-button" Content="GitHub"
+							  Command="{Binding OpenGithubCommand}"/>
+				  </StackPanel>
+				  <TextBlock Tapped="TextBlock_Tapped">
+					  <Run Text="版本号："/>
+					  <Run Text="{Binding Version}"/>
+				  </TextBlock>
+			  </StackPanel>
+		  </StackPanel>
+	  </StackPanel>
+  </ScrollViewer>
+		</controls:PageShell>
+</UserControl>

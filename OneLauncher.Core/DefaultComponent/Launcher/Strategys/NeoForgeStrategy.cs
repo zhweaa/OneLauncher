@@ -1,12 +1,12 @@
-﻿using OneLauncher.Core.DefaultComponent.Mod.ModLoader.forgeseries;
-using OneLauncher.Core.Global;
+﻿using OneLauncher.Core.Global;
 using OneLauncher.Core.Helper;
-using OneLauncher.Core.DefaultComponent.Mod.ModLoader.forgeseries.Launch;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using OneLauncher.Core.DefaultComponent.Resource.Mod.Loader.ForgeSeries;
+using OneLauncher.Core.DefaultComponent.Resource.Mod.Loader.ForgeSeries.Launch;
 
 namespace OneLauncher.Core.DefaultComponent.Launcher.Strategys;
 internal class NeoForgeStrategy : IModArgStrategy

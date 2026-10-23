@@ -6,8 +6,18 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <AvaloniaResource Include="Assets\**" />
+    <AvaloniaResource Include="Assets\**" Exclude="Assets\Resources\**" />
 
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Update="Assets\Resources\SKGT.resx">
+      <ManifestResourceName>OneLauncher.Assets.Resources.SKGT</ManifestResourceName>
+      <StronglyTypedLanguage>C#</StronglyTypedLanguage>
+      <StronglyTypedClassName>SKGT</StronglyTypedClassName>
+      <StronglyTypedNamespace>OneLauncher.Assets.Resources</StronglyTypedNamespace>
+      <StronglyTypedFileName>$(IntermediateOutputPath)SKGT.Designer.cs</StronglyTypedFileName>
+    </EmbeddedResource>
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="AsyncImageLoader.Avalonia" Version="3.7.0" />

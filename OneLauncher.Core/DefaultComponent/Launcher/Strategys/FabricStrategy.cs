@@ -1,4 +1,5 @@
 ﻿using OneLauncher.Core.DefaultComponent.Mod.ModLoader.fabric;
+using OneLauncher.Core.DefaultComponent.Resource.Mod.Loader.Fabric;
 using OneLauncher.Core.Global;
 using System;
 using System.Collections.Generic;

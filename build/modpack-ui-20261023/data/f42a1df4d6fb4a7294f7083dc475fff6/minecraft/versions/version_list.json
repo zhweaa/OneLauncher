@@ -1,0 +1,14 @@
+{
+  "VersionList": [
+    {
+      "VersionID": "1.21.1",
+      "modType": {
+        "IsFabric": false,
+        "IsNeoForge": false,
+        "IsForge": false,
+        "IsQuilt": false
+      },
+      "AddTime": "0001-01-01T00:00:00"
+    }
+  ]
+}

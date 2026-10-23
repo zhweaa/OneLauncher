@@ -38,6 +38,7 @@ public class AppSettings
     // 每天一更新
     public DateTimeOffset LastVersionManifestRefreshTime { get; set; } = DateTimeOffset.UtcNow;
     public int LeftButtonListSpacing { get; set; } = 8;
+    public bool ShowIdentifiers { get; set; } = true;
     // 主页和设置始终显示，不提供可关闭的配置。
     public bool IsVersionPageVisible { get; set; } = false;
     public bool IsGameDataPageVisible { get; set; } = true;
@@ -46,15 +47,11 @@ public class AppSettings
     public bool IsModsBrowserPageVisible { get; set; } = true;
     public bool IsAccountPageVisible { get; set; } = true;
 }
-//[JsonUnmappedMemberHandling(JsonUnmappedMemberHandling.Skip)]
+[JsonUnmappedMemberHandling(JsonUnmappedMemberHandling.Skip)]
 public class AppConfig
 {
     // 除了系统自带的Java以外启动器安装的所有Java版本列表
     public Dictionary<int,string?> AvailableJavas { get; set; } = new();
-    // 仅用于读取旧配置；迁移成功后清空，不再写入全局配置。
-    [JsonPropertyName("VersionList")]
-    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-    public List<UserVersion>? LegacyVersionList { get; set; }
     // 玩家收藏的所有服务器列表，内部对应GameData
     public List<ServerEntry> ServerList { get; set; } = new();
     public AppSettings OlanSettings { get; set; } = new AppSettings();

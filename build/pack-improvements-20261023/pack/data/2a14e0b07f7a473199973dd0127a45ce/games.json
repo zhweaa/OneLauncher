@@ -1,0 +1,17 @@
+{
+  "instances": {
+    "dc1f11e1": {
+      "Name": "\u6E05\u5355\u4E2D\u7684\u6574\u5408\u5305",
+      "VersionId": "1.21.1",
+      "ModLoader": 0,
+      "CreationTime": "2026-10-23T18:34:58.1676068+08:00",
+      "DefaultUserModelID": "5d74e981-e26a-46b5-9e5a-49ebe1ad06dc",
+      "CustomJvmOptimizationArguments": null,
+      "ExtraJvmArguments": null,
+      "CustomGameArguments": null
+    }
+  },
+  "defaults": {},
+  "tags": {},
+  "tagMap": {}
+}
