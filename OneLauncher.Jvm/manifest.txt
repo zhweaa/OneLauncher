@@ -1,3 +1,0 @@
-Manifest-Version: 1.0
-Premain-Class: OneLauncherAgent
-Can-Retransform-Classes: true
