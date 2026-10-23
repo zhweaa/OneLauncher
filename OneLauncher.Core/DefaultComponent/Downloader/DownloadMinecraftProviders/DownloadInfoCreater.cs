@@ -30,7 +30,7 @@ public partial class DownloadInfo
         SpecifiedFabricVersionConfig? fabricConfig = null,
         // 下面是一些可传递可不传递的参数，不传递会自动获取
         VersionBasicInfo? versionBasic = null,
-        GameData? gameDataD = null,
+        GameData? defaultGameData = null,
         string? gameRootPathD = null
         )
     {
@@ -42,20 +42,22 @@ public partial class DownloadInfo
         var download = Init.Download;
         #region 查找一些资源
         // 创建默认实例
-        ModEnum modEnum = modType.ToModEnum();
-        string defaultInstanceModLoaderDisplayName =
-            modEnum == ModEnum.fabric
-            ? "fabric"
-            : modEnum == ModEnum.neoforge
-            ? "neoforge"
-            : modEnum == ModEnum.forge
-            ? "forge"
-            : modEnum == ModEnum.quilt
-            ? "quilt"
-            : "原版";
-        string defaultInstanceName = $"{versionId} - {defaultInstanceModLoaderDisplayName}";
-        GameData gameData = gameDataD ?? new GameData(defaultInstanceName, versionId, modEnum, UnitedCore.Core.AccountManager.GetDefaultUser().UserID);
-
+        List<GameData> gameData = new List<GameData>();
+        if (defaultGameData != null)
+        {
+            gameData.Add(defaultGameData);// ?? new GameData(defaultInstanceName, versionId, modEnum, UnitedCore.Core.AccountManager.GetDefaultUser().UserID));
+        }
+        else
+        {
+            if(modType.IsFabric)
+                gameData.Add(new GameData($"{versionId} - fabric", versionId, ModEnum.fabric, UnitedCore.Core.AccountManager.GetDefaultUser().UserID));
+            if(modType.IsForge)
+                gameData.Add(new GameData($"{versionId} - forge", versionId, ModEnum.forge, UnitedCore.Core.AccountManager.GetDefaultUser().UserID));
+            if (modType.IsNeoForge)
+                gameData.Add(new GameData($"{versionId} - neoforge", versionId, ModEnum.neoforge, UnitedCore.Core.AccountManager.GetDefaultUser().UserID));
+            if (modType.IsQuilt)
+                gameData.Add(new GameData($"{versionId} - quilt", versionId, ModEnum.quilt, UnitedCore.Core.AccountManager.GetDefaultUser().UserID));
+        }
         // 确定下载信息
         VersionBasicInfo versionDownloadInfo =
             versionBasic ??

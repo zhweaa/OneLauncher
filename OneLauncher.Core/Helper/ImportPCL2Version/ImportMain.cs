@@ -60,7 +60,7 @@ public class PCL2Importer
         _progress?.Report((DownProgress.Meta, 0, 0, "正在规划文件迁移与下载..."));
         var downloadInfo = await DownloadInfo.Create(
             gameData.VersionId,
-            new ModType { IsFabric = modLoader == ModEnum.fabric, IsNeoForge = modLoader == ModEnum.neoforge, IsForge = modLoader == ModEnum.forge, IsQuilt = modLoader == ModEnum.quilt },gameDataD: gameData);
+            new ModType { IsFabric = modLoader == ModEnum.fabric, IsNeoForge = modLoader == ModEnum.neoforge, IsForge = modLoader == ModEnum.forge, IsQuilt = modLoader == ModEnum.quilt },defaultGameData: gameData);
 
         // 4. **核心改进：执行文件迁移（本地优先）**
         //    创建一个临时的DownloadMinecraft实例，仅为调用其内部Planner

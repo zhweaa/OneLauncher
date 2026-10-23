@@ -53,7 +53,7 @@ internal class QuiltProvider : IModLoaderConcreteProviders
                 "qsl", // Quilt Standard Libraries (QSL)
                 _context.ID,
                 ModEnum.quilt,
-                Path.Combine(_context.UserInfo.InstancePath, "mods")
+                Path.Combine(_context.UserInfo.FirstOrDefault(x => x.ModLoader == ModEnum.quilt)!.InstancePath, "mods")
             );
             await modrinthTask.Init();
             var quiltApiFile = modrinthTask.GetDownloadInfos();

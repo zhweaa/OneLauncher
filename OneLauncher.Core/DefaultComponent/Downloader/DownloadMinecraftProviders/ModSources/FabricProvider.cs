@@ -64,7 +64,7 @@ internal class FabricProvider : IModLoaderConcreteProviders
                 "fabric-api", 
                 _context.ID,  
                 ModEnum.fabric,
-                Path.Combine(_context.UserInfo.InstancePath, "mods") 
+                Path.Combine(_context.UserInfo.FirstOrDefault(x => x.ModLoader == ModEnum.fabric)!.InstancePath, "mods") 
             );
             await modrinthTask.Init();
             var fabricApiFile = modrinthTask.GetDownloadInfos();

@@ -95,7 +95,7 @@ internal static class ForgeIntegrationTests
                         var info = await DownloadInfo.Create(test.Minecraft,
                             new ModType { IsForge = test.Loader == "forge", IsNeoForge = test.Loader == "neoforge" },
                             isAllowToUseBetaNeoforge: args.Contains("--allow-beta"),
-                            isUseRecommendedToInstallForge: args.Contains("--recommended"), gameDataD: game);
+                            isUseRecommendedToInstallForge: args.Contains("--recommended"), defaultGameData: game);
                         var previous = "";
                         var last = Stopwatch.StartNew();
                         var progress = new InlineProgress<(DownProgress Title, int AllFiles, int DownedFiles, string DowingFileName)>(p =>

@@ -53,6 +53,7 @@ internal partial class DownloadPaneViewModel : BaseViewModel, IPaneHost
         IsAllowForge = new Version(Version.ID) < new System.Version("1.2") ? false : true;
         IsAllowQuilt = new Version(Version.ID) < new System.Version("1.14") ? false : true;
     }
+    #region 一堆属性定义
     private TaskInstance? task;
     public bool IsFinished => DownloadStatus == TaskInfoStatus.Finished;
     public bool IsFailed => DownloadStatus == TaskInfoStatus.Failed;
@@ -102,6 +103,7 @@ internal partial class DownloadPaneViewModel : BaseViewModel, IPaneHost
     [ObservableProperty] public string _FileName = "操作文件名：（下载未开始）";
     [ObservableProperty] public double _CurrentProgress = 0;
     private VersionBasicInfo thisVersionBasicInfo;
+    #endregion
     #endregion
     private bool CanDownload() => !IsDownloading && !IsFinished;
     private bool CanCancel() => IsDownloading && !IsCancelling && task?.Status == TaskInfoStatus.Running;
@@ -180,16 +182,19 @@ internal partial class DownloadPaneViewModel : BaseViewModel, IPaneHost
                 return info;
             }, cancellation);
             cancellation.ThrowIfCancellationRequested();
-            await _gameDataManager.AddGameDataAsync(content.UserInfo);
+            content.UserInfo.ForEach(async u =>
+            {
+                await _gameDataManager.AddGameDataAsync(u);
+            });
             cancellation.ThrowIfCancellationRequested();
-            await _gameDataManager.SetDefaultInstanceAsync(content.UserInfo.InstanceId);
+            await _gameDataManager.SetDefaultInstanceAsync(content.UserInfo.FirstOrDefault()!.InstanceId);
             cancellation.ThrowIfCancellationRequested();
             Dp = "下载完成";
             CurrentProgress = 100;
             downloadTask.SetProgress(Dp, 100);
             downloadTask.SetDone();
             DownloadStatus = TaskInfoStatus.Finished;
-            WeakReferenceMessenger.Default.Send(new MainWindowShowFlyoutMessage($"“{content.UserInfo.Name}”已成功创建并设为默认启动项。", openTaskCenterAfterClick: true));
+            WeakReferenceMessenger.Default.Send(new MainWindowShowFlyoutMessage($"“{content.UserInfo.FirstOrDefault()!.Name}”已成功创建并设为默认启动项。", openTaskCenterAfterClick: true));
         }
         catch (Exception) when (cancellation.IsCancellationRequested)
         {

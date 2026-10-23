@@ -159,7 +159,7 @@ public class ModpackImporter : IDisposable
         var downInfo = await DownloadInfo.Create(
             versionId: gameData.VersionId,
             modType: new ModType { IsFabric = gameData.ModLoader == ModEnum.fabric, IsNeoForge = gameData.ModLoader == ModEnum.neoforge, IsForge = gameData.ModLoader == ModEnum.forge, IsQuilt = gameData.ModLoader == ModEnum.quilt },
-            gameDataD: gameData
+            defaultGameData: gameData
         );
 
         await UnitedCore.Core.VersionInstallerService.InstallNewVersion(downInfo, progress, token);

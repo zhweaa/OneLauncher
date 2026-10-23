@@ -19,7 +19,7 @@ public enum DownloadSourceStrategy
 public partial class DownloadInfo
 {
     // 基本信息
-    public string ID => VersionDownloadInfo.ID ?? VersionInstallInfo.VersionID ?? UserInfo.VersionId;
+    public string ID => VersionDownloadInfo.ID ?? VersionInstallInfo.VersionID ?? UserInfo.FirstOrDefault()!.VersionId;
     public string GameRootPath { get; init; }
     
     // 核心下载组件与配置
@@ -28,7 +28,7 @@ public partial class DownloadInfo
 
     // 用户意图与版本选择
     public UserVersion VersionInstallInfo { get; init; } 
-    public GameData UserInfo { get; init; } 
+    public List<GameData> UserInfo { get; init; } 
     public VersionBasicInfo VersionDownloadInfo { get; init; }
 
     // 可选参数

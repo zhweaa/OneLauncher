@@ -74,7 +74,7 @@ internal partial class DownloadMinecraft
             return;
         // 模组加载器的下载和安装是后台任务
         Task modInstallTasker = 
-            plan.ModProviders != null && info.UserInfo.ModLoader != ModEnum.none 
+            plan.ModProviders != null && (info.UserInfo.Select(x => x.ModLoader == ModEnum.none ? false : true).All(x => x == true))
             ? UnityModsInstallTasker(plan.ModLoaderFiles, plan.ModProviders,javaInstallTask)
             : Task.CompletedTask;
         
