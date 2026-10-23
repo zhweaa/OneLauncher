@@ -60,8 +60,6 @@ public class AppSettings
     public bool IsHomeTaskCenterVisible { get; set; } = true;
     public bool IsHomePowerPlayVisible { get; set; } = true;
     public bool IsHomeImportVisible { get; set; } = true;
-    // 为 null 时不显示主页背景。
-    public string? HomeBackgroundImagePath { get; set; }
 }
 [JsonUnmappedMemberHandling(JsonUnmappedMemberHandling.Skip)]
 public class AppConfig

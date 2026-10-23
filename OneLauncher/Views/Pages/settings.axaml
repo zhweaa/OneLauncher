@@ -86,7 +86,7 @@
 								  IsEnabled="{Binding !IsSavingHomeAppearance}"/>
 						  <TextBlock Grid.Column="2" Text="{Binding HomeBackgroundDisplayName}"
 									 VerticalAlignment="Center" TextTrimming="CharacterEllipsis"
-									 ToolTip.Tip="{Binding HomeBackgroundImagePath}"/>
+									 ToolTip.Tip="{Binding CurrentHomeBackgroundPath}"/>
 					  </Grid>
 				  </StackPanel>
 			  </StackPanel>

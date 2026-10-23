@@ -47,23 +47,21 @@
 		<!-- 自定义背景下卡片改用半透明底色，让背景透出而不显得突兀。 -->
 		<Style Selector="ListBox.card-list.on-image ListBoxItem > Border">
 			<Setter Property="Background" Value="{DynamicResource HomeCardOnImageBrush}"/>
-			<Setter Property="BorderBrush" Value="{DynamicResource HomeCardOnImageBorderBrush}"/>
 		</Style>
 		<Style Selector="ListBox.card-list.on-image ListBoxItem:pointerover > Border">
 			<Setter Property="Background" Value="{DynamicResource HomeCardOnImageHoverBrush}"/>
+		</Style>
+		<!-- 新闻卡自带图片与深色遮罩，不需要描边。 -->
+		<Style Selector="ListBox.card-list ListBoxItem > Border.home-news-card">
+			<Setter Property="BorderThickness" Value="0"/>
 		</Style>
 		<Style Selector="controls|MagicLaunchButton.on-image TextBlock.magic-launch-title">
 			<Setter Property="Foreground" Value="White"/>
 			<Setter Property="Effect" Value="drop-shadow(0 3 10 #99000000)"/>
 		</Style>
-		<!-- 背景图明暗不可预知：悬停时同时加深底色并加亮色内描边，深浅背景下都能看清按钮边界。 -->
-		<Style Selector="controls|MagicLaunchButton.on-image:pointerover /template/ Border#PART_Surface">
-			<Setter Property="Background" Value="#80000000"/>
-			<Setter Property="BoxShadow" Value="inset 0 0 0 2 #A6FFFFFF, 0 14 34 2 #73000000"/>
-		</Style>
-		<Style Selector="controls|MagicLaunchButton.on-image:pressed /template/ Border#PART_Surface">
-			<Setter Property="Background" Value="#99000000"/>
-			<Setter Property="BoxShadow" Value="inset 0 0 0 2 #80FFFFFF, 0 4 12 0 #59000000"/>
+		<!-- 背景图明暗不可预知，悬停阴影加深，保证白色文字下方始终有可见的暗部。 -->
+		<Style Selector="controls|MagicLaunchButton.on-image">
+			<Setter Property="HoverGlowColor" Value="#8C000000"/>
 		</Style>
 		<Style Selector="controls|MagicLaunchButton:not(.on-image) TextBlock.magic-launch-title">
 			<Setter Property="Foreground" Value="{DynamicResource PrimaryForegroundBrush}"/>
@@ -100,7 +98,7 @@
 									</ItemsPanelTemplate>
 								</ListBox.ItemsPanel>
 								<ListBoxItem IsVisible="{Binding IsNewsSectionVisible}">
-									<Border Width="385" Height="240">
+									<Border Classes="home-news-card" Width="385" Height="240">
 									<Border Classes="home-card-clip">
 										<Panel>
 											<Image asyncImageLoader:ImageLoader.Source="{Binding CurrentNews.ImageUrl}" Stretch="UniformToFill" />
@@ -283,7 +281,7 @@
 										AutomationProperties.Name="启动主页默认启动项">
 				<!-- 按钮主体只显示启动项名称；类型与地址保留在悬停提示中。 -->
 				<Viewbox Stretch="Uniform" StretchDirection="DownOnly" HorizontalAlignment="Center">
-					<TextBlock Classes="magic-launch-title" Text="{Binding MagicLaunchTitle}"/>
+					<controls:InkCenteredTextBlock Classes="magic-launch-title" Text="{Binding MagicLaunchTitle}"/>
 				</Viewbox>
 			</controls:MagicLaunchButton>
 			<Panel Grid.Column="2" Width="300"

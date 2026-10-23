@@ -9,17 +9,23 @@ using System;
 namespace OneLauncher.Views.Controls;
 
 /// <summary>
-/// 主页魔法按钮：按下时阴影以点击位置为中心快速向四周扩散，扩散过程中阴影逐渐加深，
-/// 覆盖整个按钮后迅速淡出。命令仍由 ViewModel 提供。
+/// 主页魔法按钮：悬停时以指针为中心显示向外渐隐的阴影；按下时阴影以点击位置为中心
+/// 快速向四周扩散，扩散过程中阴影逐渐加深，覆盖整个按钮后迅速淡出。命令仍由 ViewModel 提供。
 /// </summary>
 public sealed class MagicLaunchButton : Button
 {
+    public static readonly StyledProperty<Color> HoverGlowColorProperty =
+        AvaloniaProperty.Register<MagicLaunchButton, Color>(nameof(HoverGlowColor), Color.FromArgb(0x40, 0, 0, 0));
+
     private const double SpreadSeconds = 0.42;
     private const double FadeSeconds = 0.22;
     private const double MinOpacity = 0.18;
     private const double MaxOpacity = 0.72;
+    private const double MinHoverDiameter = 220;
 
     private Canvas? _burstLayer;
+    private Canvas? _hoverLayer;
+    private Ellipse? _hoverGlow;
     private Ellipse? _shadow;
     private Point _burstOrigin;
     private double _maxDiameter;
@@ -29,19 +35,95 @@ public sealed class MagicLaunchButton : Button
 
     protected override Type StyleKeyOverride => typeof(MagicLaunchButton);
 
+    /// <summary>悬停阴影中心的颜色，边缘始终完全透明。</summary>
+    public Color HoverGlowColor
+    {
+        get => GetValue(HoverGlowColorProperty);
+        set => SetValue(HoverGlowColorProperty, value);
+    }
+
     /// <summary>扩散阴影当前的不透明度；没有进行中的效果时为 0。</summary>
     public double BurstShadowOpacity => _shadow?.Opacity ?? 0;
 
     /// <summary>扩散阴影当前的直径；没有进行中的效果时为 0。</summary>
     public double BurstShadowDiameter => _shadow?.Width ?? 0;
 
+    /// <summary>悬停阴影当前的中心（按钮坐标）；未显示时为 null。</summary>
+    public Point? HoverGlowCenter => _hoverGlow is { Opacity: > 0 } glow
+        ? new Point(Canvas.GetLeft(glow) + glow.Width / 2, Canvas.GetTop(glow) + glow.Height / 2)
+        : null;
+
     protected override void OnApplyTemplate(TemplateAppliedEventArgs e)
     {
         base.OnApplyTemplate(e);
         _burstLayer?.Children.Clear();
         _burstLayer = e.NameScope.Find<Canvas>("PART_BurstLayer");
+        _hoverLayer = e.NameScope.Find<Canvas>("PART_HoverLayer");
+        _hoverGlow = e.NameScope.Find<Ellipse>("PART_HoverGlow");
+        UpdateHoverGlowBrush();
         _shadow = null;
         _burstStart = null;
+    }
+
+    protected override void OnPropertyChanged(AvaloniaPropertyChangedEventArgs change)
+    {
+        base.OnPropertyChanged(change);
+        if (change.Property == HoverGlowColorProperty)
+            UpdateHoverGlowBrush();
+    }
+
+    protected override void OnPointerEntered(PointerEventArgs e)
+    {
+        base.OnPointerEntered(e);
+        ShowHoverGlow(e.GetPosition(_hoverLayer ?? (Visual)this));
+    }
+
+    protected override void OnPointerMoved(PointerEventArgs e)
+    {
+        base.OnPointerMoved(e);
+        ShowHoverGlow(e.GetPosition(_hoverLayer ?? (Visual)this));
+    }
+
+    protected override void OnPointerExited(PointerEventArgs e)
+    {
+        base.OnPointerExited(e);
+        HideHoverGlow();
+    }
+
+    /// <summary>把悬停阴影移动到按钮内的指定位置并显示。</summary>
+    public void ShowHoverGlow(Point position)
+    {
+        if (_hoverGlow == null)
+            return;
+        // 半径与按钮高度相关：靠近指针处最深，超过半径后完全透明，与背景融为一体。
+        var diameter = Math.Max(MinHoverDiameter, Bounds.Height * 3.2);
+        _hoverGlow.Width = diameter;
+        _hoverGlow.Height = diameter;
+        Canvas.SetLeft(_hoverGlow, position.X - diameter / 2);
+        Canvas.SetTop(_hoverGlow, position.Y - diameter / 2);
+        _hoverGlow.Opacity = 1;
+    }
+
+    public void HideHoverGlow()
+    {
+        if (_hoverGlow != null)
+            _hoverGlow.Opacity = 0;
+    }
+
+    private void UpdateHoverGlowBrush()
+    {
+        if (_hoverGlow == null)
+            return;
+        var color = HoverGlowColor;
+        _hoverGlow.Fill = new RadialGradientBrush
+        {
+            GradientStops =
+            {
+                new GradientStop(color, 0),
+                new GradientStop(Color.FromArgb((byte)(color.A * 0.55), color.R, color.G, color.B), 0.45),
+                new GradientStop(Color.FromArgb(0, color.R, color.G, color.B), 1)
+            }
+        };
     }
 
     protected override void OnPointerPressed(PointerPressedEventArgs e)

@@ -44,7 +44,6 @@
             <SolidColorBrush x:Key="ListItemBackgroundBrush" Color="#FFF7F7F9"/>
             <SolidColorBrush x:Key="HomeCardOnImageBrush" Color="#C2F7F7F9"/>
             <SolidColorBrush x:Key="HomeCardOnImageHoverBrush" Color="#E0FFFFFF"/>
-            <SolidColorBrush x:Key="HomeCardOnImageBorderBrush" Color="#66FFFFFF"/>
             <SolidColorBrush x:Key="CardBackgroundBrush" Color="#FFF5F5F7"/>
             <SolidColorBrush x:Key="CardHoverBrush" Color="#FFFFFFFF"/>
             <SolidColorBrush x:Key="InputBackgroundBrush" Color="#FFFFFFFF"/>
@@ -103,7 +102,6 @@
             <SolidColorBrush x:Key="ListItemBackgroundBrush" Color="#FF2C2D32"/>
             <SolidColorBrush x:Key="HomeCardOnImageBrush" Color="#B32C2D32"/>
             <SolidColorBrush x:Key="HomeCardOnImageHoverBrush" Color="#D938393F"/>
-            <SolidColorBrush x:Key="HomeCardOnImageBorderBrush" Color="#33FFFFFF"/>
             <SolidColorBrush x:Key="CardBackgroundBrush" Color="#FF292A2F"/>
             <SolidColorBrush x:Key="CardHoverBrush" Color="#FF38393F"/>
             <SolidColorBrush x:Key="InputBackgroundBrush" Color="#FF242529"/>

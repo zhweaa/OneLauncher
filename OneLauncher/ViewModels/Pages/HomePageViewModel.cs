@@ -209,8 +209,18 @@ internal partial class HomePageViewModel : BaseViewModel, IPageHost, IListTempla
         IsTaskCenterEnabled = settings.IsHomeTaskCenterVisible;
         IsPowerPlayEnabled = settings.IsHomePowerPlayVisible;
         IsImportEnabled = settings.IsHomeImportVisible;
-        // 默认样式不显示背景，也不占用背景图内存。
-        LoadHomeBackground(IsMagicButtonStyle ? settings.HomeBackgroundImagePath : null);
+        RefreshHomeBackground();
+    }
+
+    // 背景只看 customdata 中的物理文件：魔法按钮样式且存在有效图片时显示；默认样式不占用背景图内存。
+    private void RefreshHomeBackground()
+    {
+        if (!Dispatcher.UIThread.CheckAccess())
+        {
+            Dispatcher.UIThread.Post(RefreshHomeBackground);
+            return;
+        }
+        LoadHomeBackground(IsMagicButtonStyle ? HomeBackgroundStore.FindCurrent() : null);
     }
 
     private void LoadHomeBackground(string? path)
@@ -262,6 +272,7 @@ internal partial class HomePageViewModel : BaseViewModel, IPageHost, IListTempla
         // 构建快速启动列表并选中设置中的默认启动项。
         ApplyHomeSettings();
         _configManager.OnDataChanged += OnConfigDataChanged;
+        HomeBackgroundStore.Changed += RefreshHomeBackground;
 #if DEBUG
         if (Design.IsDesignMode)
             return;

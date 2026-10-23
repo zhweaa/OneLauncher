@@ -23,8 +23,8 @@ internal static class MagicHomeUiChecks
         var root = Path.Combine(output, "data", Guid.NewGuid().ToString("N"));
         Directory.CreateDirectory(root);
         // 背景副本目录指向测试数据目录，绝不读写用户真实的 customdata。
-        typeof(MainWindow).Assembly.GetType("OneLauncher.Codes.HomeBackgroundStore", true)!
-            .GetProperty("CustomDataPath", BindingFlags.NonPublic | BindingFlags.Static)!
+        var store = typeof(MainWindow).Assembly.GetType("OneLauncher.Codes.HomeBackgroundStore", true)!;
+        store.GetProperty("CustomDataPath", BindingFlags.NonPublic | BindingFlags.Static)!
             .SetValue(null, Path.Combine(root, "customdata"));
         var config = new DBManager(Path.Combine(root, "config.json"));
         await config.InitializeAsync();
@@ -57,6 +57,10 @@ internal static class MagicHomeUiChecks
         var apply = homeType.GetMethod("ApplyHomeSettings", BindingFlags.NonPublic | BindingFlags.Instance)!;
         apply.Invoke(home, null);
         config.OnDataChanged += () => apply.Invoke(home, null);
+        var refreshBackground = (Action)Delegate.CreateDelegate(typeof(Action), home,
+            homeType.GetMethod("RefreshHomeBackground", BindingFlags.NonPublic | BindingFlags.Instance)!);
+        var changedEvent = store.GetEvent("Changed")!;
+        changedEvent.AddEventHandler(null, refreshBackground);
         var launchItems = ((System.Collections.IEnumerable)homeType.GetProperty("Items")!.GetValue(home)!).Cast<object>().ToArray();
         Assert(launchItems.Length == 2 && launchItems.Any(i => Name(i) == game.Name) && launchItems.Any(i => Name(i) == server.Name),
             "Quick launch list must contain game data and favorite servers");
@@ -76,9 +80,10 @@ internal static class MagicHomeUiChecks
             "Home section cards must use the card-list shadow");
         var imagePath = Path.Combine(root, "background.png");
         CreateBackground(imagePath);
-        config.Data.OlanSettings.HomeBackgroundImagePath = imagePath;
-        await config.Save();
+        var imported = await (Task<string>)store.GetMethod("ImportAsync")!.Invoke(null, [imagePath])!;
         Settle();
+        Assert(!Path.GetFullPath(imported).Equals(Path.GetFullPath(imagePath), StringComparison.OrdinalIgnoreCase),
+            "Background must be copied into customdata");
         Assert(!(bool)homeType.GetProperty("HasHomeBackground")!.GetValue(home)!, "Default style must not show background");
         Save(window, output, "home-classic.png");
 
@@ -121,12 +126,34 @@ internal static class MagicHomeUiChecks
         Save(window, output, "home-magic-two-sections.png");
 
         var surface = button.GetVisualDescendants().OfType<Border>().First(b => b.Name == "PART_Surface");
-        ((IPseudoClasses)button.Classes).Set(":pointerover", true);
+        Assert(surface.BoxShadow.Count == 0 && surface.BorderThickness == default,
+            "Magic button must not draw an outline or frame shadow");
+        var newsCard = page.GetVisualDescendants().OfType<Border>().Single(b => b.Classes.Contains("home-news-card"));
+        Assert(newsCard.BorderThickness == default, "News card must not draw an outline");
+        var titleBlock = button.GetVisualDescendants().OfType<InkCenteredTextBlock>().Single();
+        var layout = titleBlock.TextLayout;
+        var inkTop = layout.Height + layout.OverhangAfter - layout.Extent + titleBlock.InkOffsetY;
+        var inkBottom = layout.Height + layout.OverhangAfter + titleBlock.InkOffsetY;
+        Assert(Math.Abs(inkTop - (titleBlock.Bounds.Height - inkBottom)) < 1.5 && titleBlock.InkOffsetY < 0,
+            $"Magic button title strokes must be vertically centered: {inkTop}/{titleBlock.Bounds.Height - inkBottom}");
+
+        // 用真实的鼠标移动触发悬停：阴影中心跟随指针，远离指针处与背景完全一致。
+        var buttonOrigin = button.TranslatePoint(default, window)!.Value;
+        var before = Pixel(window, buttonOrigin + new Point(button.Bounds.Width - 6, 6));
+        var hoverPoint = new Point(button.Bounds.Width * 0.25, button.Bounds.Height * 0.5);
+        window.MouseMove(buttonOrigin + hoverPoint);
         Settle();
-        Assert(surface.BoxShadow.Count == 2 && surface.BoxShadow[0].IsInset && surface.BoxShadow[0].Spread > 0 &&
-            surface.BoxShadow[1].Blur > 0 && surface.Background is ISolidColorBrush { Color.A: >= 0x80 },
-            "Hover on a custom background must add an outline, darker base and outer shadow");
+        var glowCenter = button.HoverGlowCenter;
+        Assert(button.IsPointerOver && glowCenter is { } c && Math.Abs(c.X - hoverPoint.X) < 2 && Math.Abs(c.Y - hoverPoint.Y) < 2,
+            $"Hover shadow must center on the pointer: {glowCenter}/{hoverPoint}");
+        var farAfter = Pixel(window, buttonOrigin + new Point(button.Bounds.Width - 6, 6));
+        Assert(Math.Abs(farAfter.R - before.R) + Math.Abs(farAfter.G - before.G) + Math.Abs(farAfter.B - before.B) <= 6,
+            $"Hover shadow must fade into the background far from the pointer: {before}/{farAfter}");
         Save(window, output, "home-magic-hover.png");
+        window.MouseMove(buttonOrigin + new Point(button.Bounds.Width * 0.75, button.Bounds.Height * 0.5));
+        Settle();
+        Assert(button.HoverGlowCenter is { X: > 0 } moved && moved.X > hoverPoint.X + 20, "Hover shadow must follow the pointer");
+        Save(window, output, "home-magic-hover-moved.png");
         button.StartBurst(new Point(button.Bounds.Width * 0.3, button.Bounds.Height * 0.6));
         var startDiameter = button.BurstShadowDiameter;
         var startOpacity = button.BurstShadowOpacity;
@@ -141,8 +168,11 @@ internal static class MagicHomeUiChecks
             $"{button.BurstShadowDiameter}/{button.BurstShadowOpacity}");
         Save(window, output, "home-magic-burst-late.png");
         RunFrames(700);
-        Assert(button.GetVisualDescendants().OfType<Canvas>().Single().Children.Count == 0, "Burst shadow must clean up");
-        ((IPseudoClasses)button.Classes).Set(":pointerover", false);
+        Assert(button.GetVisualDescendants().OfType<Canvas>().Single(c => c.Name == "PART_BurstLayer").Children.Count == 0,
+            "Burst shadow must clean up");
+        window.MouseMove(new Point(2, 2));
+        Settle();
+        Assert(button.HoverGlowCenter == null, "Hover shadow must hide when the pointer leaves");
 
         config.Data.OlanSettings.IsHomeNewsVisible = false;
         config.Data.OlanSettings.IsHomeTaskCenterVisible = false;
@@ -157,9 +187,10 @@ internal static class MagicHomeUiChecks
         window.Background = new SolidColorBrush(Color.Parse("#1D1E21"));
         config.Data.OlanSettings.IsHomeNewsVisible = true;
         config.Data.OlanSettings.IsHomeTaskCenterVisible = true;
-        config.Data.OlanSettings.HomeBackgroundImagePath = null;
         await config.Save();
+        store.GetMethod("Clear")!.Invoke(null, null);
         Settle();
+        Assert(!(bool)homeType.GetProperty("HasHomeBackground")!.GetValue(home)!, "Clearing the directory must hide the background");
         Save(window, output, "home-magic-dark-small.png");
 
         settingsType.GetProperty("SelectedHomePageStyle")!.SetValue(settingsVm, "默认");
@@ -172,6 +203,7 @@ internal static class MagicHomeUiChecks
             string.Join(",", sectionItems.Select(i => i.IsVisible)));
         Save(window, output, "home-classic-dark-server.png");
         window.Close();
+        changedEvent.RemoveEventHandler(null, refreshBackground);
 
         await CheckSettingsAsync(output, config, core, settingsType);
         await CheckBackgroundStoreAsync(root, imagePath);
@@ -179,8 +211,7 @@ internal static class MagicHomeUiChecks
         Console.WriteLine("PASS: magic home style, quick launch list, section visibility, background, hover and burst");
     }
 
-    // 复现：配置被旧版本启动器重写（样式回到默认、背景字段丢失），但 customdata 中的背景副本仍在；
-    // 之后在设置页（主页不在窗口中）切换为魔法按钮，应自动找回该背景。
+    // 配置以默认样式启动但 customdata 中已有背景文件；在设置页（主页不在窗口中）切换为魔法按钮后应直接显示。
     private static async Task CheckStartupClassicThenMagicAsync(string output, string root, UnitedCore core, string imagePath)
     {
         var store = typeof(MainWindow).Assembly.GetType("OneLauncher.Codes.HomeBackgroundStore", true)!;
@@ -190,7 +221,6 @@ internal static class MagicHomeUiChecks
         var config = new DBManager(Path.Combine(configRoot, "config.json"));
         await config.InitializeAsync();
         config.Data.OlanSettings.HomePageStyle = HomePageStyle.Classic;
-        config.Data.OlanSettings.HomeBackgroundImagePath = null;
         await config.Save();
 
         var assembly = typeof(MainWindow).Assembly;
@@ -221,24 +251,29 @@ internal static class MagicHomeUiChecks
         host.Content = page;
         Settle();
         var image = page.GetVisualDescendants().OfType<Image>().First();
-        Assert(config.Data.OlanSettings.HomeBackgroundImagePath == copied &&
+        Assert((string?)settingsType.GetProperty("CurrentHomeBackgroundPath")!.GetValue(settingsVm) == copied &&
             (bool)homeType.GetProperty("HasHomeBackground")!.GetValue(home)! && image.IsEffectivelyVisible &&
             image.Source != null && image.Bounds.Width > 0,
             $"Switching to magic style must apply the saved background: {homeType.GetProperty("HasHomeBackground")!.GetValue(home)}, " +
             $"{image.IsEffectivelyVisible}, {image.Source != null}, {image.Bounds}");
         Save(window, output, "home-startup-classic-then-magic.png");
 
-        // 移除背景会清空所有副本，再次切换样式不能把已移除的背景找回来。
-        await ((IAsyncRelayCommand)settingsType.GetProperty("ClearHomeBackgroundCommand")!.GetValue(settingsVm)!).ExecuteAsync(null);
+        // 移除背景会清空目录，再次切换样式也不会显示背景。
+        var refreshBackground = (Action)Delegate.CreateDelegate(typeof(Action), home,
+            homeType.GetMethod("RefreshHomeBackground", BindingFlags.NonPublic | BindingFlags.Instance)!);
+        store.GetEvent("Changed")!.AddEventHandler(null, refreshBackground);
+        ((System.Windows.Input.ICommand)settingsType.GetProperty("ClearHomeBackgroundCommand")!.GetValue(settingsVm)!).Execute(null);
         Settle();
+        Assert(!(bool)homeType.GetProperty("HasHomeBackground")!.GetValue(home)!, "Removing the background must hide it immediately");
         settingsType.GetProperty("SelectedHomePageStyle")!.SetValue(settingsVm, "默认");
         await WaitUntil(() => config.Data.OlanSettings.HomePageStyle == HomePageStyle.Classic);
         settingsType.GetProperty("SelectedHomePageStyle")!.SetValue(settingsVm, "魔法按钮");
         await WaitUntil(() => config.Data.OlanSettings.HomePageStyle == HomePageStyle.MagicButton);
         Settle();
-        Assert(config.Data.OlanSettings.HomeBackgroundImagePath == null && !File.Exists(copied) &&
+        Assert(!File.Exists(copied) && settingsType.GetProperty("CurrentHomeBackgroundPath")!.GetValue(settingsVm) == null &&
             !(bool)homeType.GetProperty("HasHomeBackground")!.GetValue(home)!,
             "A removed background must stay removed after switching styles");
+        store.GetEvent("Changed")!.RemoveEventHandler(null, refreshBackground);
         window.Close();
     }
 
@@ -247,17 +282,27 @@ internal static class MagicHomeUiChecks
         var store = typeof(MainWindow).Assembly.GetType("OneLauncher.Codes.HomeBackgroundStore", true)!;
         var customData = Path.Combine(root, "customdata");
         var import = store.GetMethod("ImportAsync")!;
+        var first = await (Task<string>)import.Invoke(null, [sourcePath])!;
         var copied = await (Task<string>)import.Invoke(null, [sourcePath])!;
         var expectedRoot = Path.Combine(customData, "home-background") + Path.DirectorySeparatorChar;
         Assert(copied.StartsWith(expectedRoot, StringComparison.OrdinalIgnoreCase) && File.Exists(copied) &&
             File.ReadAllBytes(copied).SequenceEqual(File.ReadAllBytes(sourcePath)),
             $"Background must be copied into customdata: {copied}");
-        Assert((string?)store.GetMethod("FindLatest")!.Invoke(null, null) == copied, "Latest background copy must be discoverable");
-        store.GetMethod("TryDelete")!.Invoke(null, [sourcePath]);
-        Assert(File.Exists(sourcePath), "Deleting a background must never remove the user's original file");
-        store.GetMethod("TryDelete")!.Invoke(null, [copied]);
-        Assert(!File.Exists(copied) && !Directory.Exists(Path.GetDirectoryName(copied)) && Directory.Exists(expectedRoot),
-            "Replaced background copy must be removed while keeping the store root");
+        Assert(!File.Exists(first) && (string?)store.GetMethod("FindCurrent")!.Invoke(null, null) == copied,
+            "Replacing a background must remove the previous copy and use the new one");
+
+        var invalid = Path.Combine(root, "broken.png");
+        File.WriteAllText(invalid, "not an image");
+        var rejected = false;
+        try { await (Task<string>)import.Invoke(null, [invalid])!; }
+        catch (OlanException) { rejected = true; }
+        Assert(rejected && (string?)store.GetMethod("FindCurrent")!.Invoke(null, null) == copied,
+            "Invalid images must be rejected without replacing the current background");
+
+        store.GetMethod("Clear")!.Invoke(null, null);
+        Assert(File.Exists(sourcePath) && !File.Exists(copied) && Directory.Exists(expectedRoot) &&
+            store.GetMethod("FindCurrent")!.Invoke(null, null) == null,
+            "Clearing must remove copies only, never the user's original file or the store root");
     }
 
     private static string? Name(object? item) => item?.GetType().GetProperty("Name")?.GetValue(item) as string;
@@ -343,6 +388,27 @@ internal static class MagicHomeUiChecks
     {
         using var frame = window.CaptureRenderedFrame();
         frame?.Save(Path.Combine(output, name));
+    }
+
+    private static Color Pixel(Window window, Point point)
+    {
+        using var frame = window.CaptureRenderedFrame()!;
+        var scale = frame.PixelSize.Width / window.Bounds.Width;
+        var x = (int)Math.Round(point.X * scale);
+        var y = (int)Math.Round(point.Y * scale);
+        var buffer = new byte[4];
+        var handle = System.Runtime.InteropServices.GCHandle.Alloc(buffer, System.Runtime.InteropServices.GCHandleType.Pinned);
+        try
+        {
+            frame.CopyPixels(new PixelRect(x, y, 1, 1), handle.AddrOfPinnedObject(), buffer.Length, 4);
+        }
+        finally
+        {
+            handle.Free();
+        }
+        return frame.Format == Avalonia.Platform.PixelFormat.Rgba8888
+            ? Color.FromArgb(buffer[3], buffer[0], buffer[1], buffer[2])
+            : Color.FromArgb(buffer[3], buffer[2], buffer[1], buffer[0]);
     }
 
     private static void SetField(Type type, object target, string name, object value)

@@ -281,7 +281,7 @@ internal partial class SettingsPageViewModel : BaseViewModel, IPageHost, IListTe
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(HomeBackgroundDisplayName))]
     [NotifyPropertyChangedFor(nameof(HasHomeBackground))]
-    private string? homeBackgroundImagePath;
+    private string? currentHomeBackgroundPath;
 
     [ObservableProperty]
     private bool isSavingHomeAppearance;
@@ -307,8 +307,8 @@ internal partial class SettingsPageViewModel : BaseViewModel, IPageHost, IListTe
     private string? _homeLaunchItemsSignature;
 
     public bool IsMagicHomeOptionsVisible => SelectedHomePageStyle == "魔法按钮";
-    public bool HasHomeBackground => !string.IsNullOrWhiteSpace(HomeBackgroundImagePath);
-    public string HomeBackgroundDisplayName => HasHomeBackground ? Path.GetFileName(HomeBackgroundImagePath)! : "未设置背景";
+    public bool HasHomeBackground => CurrentHomeBackgroundPath != null;
+    public string HomeBackgroundDisplayName => HasHomeBackground ? Path.GetFileName(CurrentHomeBackgroundPath)! : "未设置背景";
 
     partial void OnSelectedHomePageStyleChanged(string value)
     {
@@ -319,13 +319,7 @@ internal partial class SettingsPageViewModel : BaseViewModel, IPageHost, IListTe
             return;
 #endif
         var style = value == "魔法按钮" ? HomePageStyle.MagicButton : HomePageStyle.Classic;
-        _ = SaveHomeAppearanceAsync(settings =>
-        {
-            settings.HomePageStyle = style;
-            // 配置中的背景丢失（如被旧版本重写）或文件已不存在时，使用 customdata 中已复制的背景。
-            if (style == HomePageStyle.MagicButton && !File.Exists(settings.HomeBackgroundImagePath))
-                settings.HomeBackgroundImagePath = HomeBackgroundStore.FindLatest();
-        }, "主页样式已保存并应用");
+        _ = SaveHomePageStyleAsync(style);
     }
 
     partial void OnIsHomeSectionEditingChanged(bool value)
@@ -403,14 +397,16 @@ internal partial class SettingsPageViewModel : BaseViewModel, IPageHost, IListTe
         try
         {
             SelectedHomePageStyle = settings.HomePageStyle == HomePageStyle.MagicButton ? "魔法按钮" : "默认";
-            HomeBackgroundImagePath = settings.HomeBackgroundImagePath;
         }
         finally
         {
             _isLoadingHomeSettings = false;
         }
+        RefreshHomeBackgroundPath();
         RebuildHomeSectionItems();
     }
+
+    private void RefreshHomeBackgroundPath() => CurrentHomeBackgroundPath = HomeBackgroundStore.FindCurrent();
 
     private void RebuildHomeSectionItems()
     {
@@ -487,52 +483,54 @@ internal partial class SettingsPageViewModel : BaseViewModel, IPageHost, IListTe
             {
                 Title = "选择主页背景图片",
                 AllowMultiple = false,
-                FileTypeFilter = [new FilePickerFileType("图片") { Patterns = ["*.png", "*.jpg", "*.jpeg", "*.bmp", "*.webp"] }]
+                FileTypeFilter = [new FilePickerFileType("图片") { Patterns = HomeBackgroundStore.ImagePatterns }]
             });
             if (files.FirstOrDefault()?.TryGetLocalPath() is not { } path)
                 return;
-            var previous = _dbManger.Data.OlanSettings.HomeBackgroundImagePath;
-            // 复制到 customdata 后再保存，原图被移动或删除也不影响主页背景。
-            var copied = await HomeBackgroundStore.ImportAsync(path);
-            if (await SaveHomeAppearanceAsync(settings => settings.HomeBackgroundImagePath = copied, "主页背景已保存并应用"))
-                HomeBackgroundStore.TryDelete(previous);
-            else
-                HomeBackgroundStore.TryDelete(copied);
+            IsSavingHomeAppearance = true;
+            // 复制到 customdata 后主页直接从目录读取，原图被移动或删除也不影响背景。
+            await HomeBackgroundStore.ImportAsync(path);
+            RefreshHomeBackgroundPath();
+            WeakReferenceMessenger.Default.Send(new MainWindowShowFlyoutMessage("主页背景已保存并应用", NotificationType.Success));
         }
         catch (Exception ex)
         {
+            RefreshHomeBackgroundPath();
             await ShowSettingsException(ex);
+        }
+        finally
+        {
+            IsSavingHomeAppearance = false;
         }
     }
 
     [RelayCommand]
-    private async Task ClearHomeBackground()
+    private void ClearHomeBackground()
     {
-        if (await SaveHomeAppearanceAsync(settings => settings.HomeBackgroundImagePath = null, "已移除主页背景"))
-            HomeBackgroundStore.TryDeleteAll();
+        HomeBackgroundStore.Clear();
+        RefreshHomeBackgroundPath();
+        WeakReferenceMessenger.Default.Send(new MainWindowShowFlyoutMessage(
+            HasHomeBackground ? "主页背景文件正在被占用，请稍后重试" : "已移除主页背景",
+            HasHomeBackground ? NotificationType.Warning : NotificationType.Success));
     }
 
-    private async Task<bool> SaveHomeAppearanceAsync(Action<AppSettings> apply, string successMessage)
+    private async Task SaveHomePageStyleAsync(HomePageStyle style)
     {
         var settings = _dbManger.Data.OlanSettings;
         var previousStyle = settings.HomePageStyle;
-        var previousBackground = settings.HomeBackgroundImagePath;
         IsSavingHomeAppearance = true;
         try
         {
-            apply(settings);
+            settings.HomePageStyle = style;
             await _dbManger.Save();
-            HomeBackgroundImagePath = settings.HomeBackgroundImagePath;
-            WeakReferenceMessenger.Default.Send(new MainWindowShowFlyoutMessage(successMessage, NotificationType.Success));
-            return true;
+            RefreshHomeBackgroundPath();
+            WeakReferenceMessenger.Default.Send(new MainWindowShowFlyoutMessage("主页样式已保存并应用", NotificationType.Success));
         }
         catch (Exception ex)
         {
             settings.HomePageStyle = previousStyle;
-            settings.HomeBackgroundImagePath = previousBackground;
             LoadHomeSettings(settings);
             await ShowSettingsException(ex);
-            return false;
         }
         finally
         {
