@@ -22,7 +22,7 @@
 						<TextBlock Text="新建实例"/>
 					</StackPanel>
 				</Button>
-				<ComboBox x:Name="TagFilterComboBox"
+				<ComboBox x:Name="TagFilterComboBox" Classes="toolbar-field"
 						  MinWidth="168" VerticalAlignment="Center"
 						  PlaceholderText="标签过滤选项"
 						  ItemsSource="{Binding AvailableTags}"

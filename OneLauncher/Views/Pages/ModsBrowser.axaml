@@ -23,9 +23,9 @@
 							<KeyBinding Gesture="Enter" Command="{Binding RefListCommand,Mode=TwoWay}" />
 						</TextBox.KeyBindings>
 					</TextBox>
-					<ComboBox Grid.Column="1" x:Name="ResourceTypeSelector"
+					<ComboBox Grid.Column="1" x:Name="ResourceTypeSelector" Classes="toolbar-field"
 							  ItemsSource="{Binding ResourceTypes}" SelectedItem="{Binding SelectedResourceType, Mode=TwoWay}"
-							  MinWidth="106" MinHeight="38" VerticalAlignment="Center"
+							  MinWidth="106"
 							  AutomationProperties.Name="资源类型">
 						<ComboBox.ItemTemplate>
 							<DataTemplate x:DataType="vm:ResourceTypeOption">

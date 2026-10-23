@@ -1,5 +1,9 @@
 <ResourceDictionary xmlns="https://github.com/avaloniaui"
-                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:sys="clr-namespace:System;assembly=System.Runtime">
+    <sys:Double x:Key="ToolbarControlHeight">40</sys:Double>
+    <sys:TimeSpan x:Key="MotionPaneDuration">0:0:0.16</sys:TimeSpan>
+    <sys:TimeSpan x:Key="MotionPageDuration">0:0:0.18</sys:TimeSpan>
     <Thickness x:Key="PagePadding">24</Thickness>
     <Thickness x:Key="PanePadding">20</Thickness>
     <CornerRadius x:Key="ControlCornerRadius">6</CornerRadius>

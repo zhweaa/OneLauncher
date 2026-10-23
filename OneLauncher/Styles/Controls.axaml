@@ -1,7 +1,9 @@
 <Styles xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
     <Style Selector="Button.toolbar-action">
-        <Setter Property="MinHeight" Value="40"/>
+        <Setter Property="Height" Value="{StaticResource ToolbarControlHeight}"/>
+        <Setter Property="MinHeight" Value="{StaticResource ToolbarControlHeight}"/>
+        <Setter Property="VerticalAlignment" Value="Center"/>
         <Setter Property="Padding" Value="12,7"/>
         <Setter Property="CornerRadius" Value="8"/>
         <Setter Property="Background" Value="{DynamicResource ListItemBackgroundBrush}"/>
@@ -105,12 +107,27 @@
     </Style>
 
     <Style Selector="TextBox.search-field">
-        <Setter Property="MinHeight" Value="38"/>
+        <Setter Property="Height" Value="{StaticResource ToolbarControlHeight}"/>
+        <Setter Property="MinHeight" Value="{StaticResource ToolbarControlHeight}"/>
+        <Setter Property="VerticalAlignment" Value="Center"/>
+        <Setter Property="VerticalContentAlignment" Value="Center"/>
         <Setter Property="CornerRadius" Value="{StaticResource ControlCornerRadius}"/>
     </Style>
     <Style Selector="AutoCompleteBox.search-field">
-        <Setter Property="MinHeight" Value="38"/>
+        <Setter Property="Height" Value="{StaticResource ToolbarControlHeight}"/>
+        <Setter Property="MinHeight" Value="{StaticResource ToolbarControlHeight}"/>
+        <Setter Property="VerticalAlignment" Value="Center"/>
         <Setter Property="CornerRadius" Value="{StaticResource ControlCornerRadius}"/>
+    </Style>
+    <Style Selector="AutoCompleteBox.search-field /template/ TextBox">
+        <Setter Property="VerticalContentAlignment" Value="Center"/>
+    </Style>
+    <Style Selector="ComboBox.toolbar-field">
+        <Setter Property="Height" Value="{StaticResource ToolbarControlHeight}"/>
+        <Setter Property="MinHeight" Value="{StaticResource ToolbarControlHeight}"/>
+        <Setter Property="Padding" Value="12,4"/>
+        <Setter Property="VerticalAlignment" Value="Center"/>
+        <Setter Property="VerticalContentAlignment" Value="Center"/>
     </Style>
     <Style Selector="NumericUpDown.settings-number">
         <Setter Property="Width" Value="150"/>

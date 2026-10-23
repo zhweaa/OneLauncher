@@ -157,14 +157,8 @@
 				<TransitioningContentControl
                     x:Name="PageContent" Background="{DynamicResource PageBackgroundBrush}">
 					<TransitioningContentControl.PageTransition>
-						<PageSlide Orientation="Vertical" Duration="0:00:00.15">
-							<PageSlide.SlideInEasing>
-								<CubicEaseIn />
-							</PageSlide.SlideInEasing>
-							<PageSlide.SlideOutEasing>
-								<CubicEaseOut />
-							</PageSlide.SlideOutEasing>
-						</PageSlide>
+                        <CrossFade Duration="{StaticResource MotionPageDuration}"
+                                   FadeInEasing="CubicEaseOut" FadeOutEasing="CubicEaseIn"/>
 					</TransitioningContentControl.PageTransition>
 				</TransitioningContentControl>
 				<WindowNotificationManager Name="NotificationManager"

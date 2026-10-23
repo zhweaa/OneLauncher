@@ -16,7 +16,8 @@
                         <TransitioningContentControl Content="{TemplateBinding PaneContent}"
                                                      Background="{DynamicResource PaneBackgroundBrush}">
                             <TransitioningContentControl.PageTransition>
-                                <CrossFade Duration="0:0:0.16"/>
+                                <CrossFade Duration="{StaticResource MotionPaneDuration}"
+                                           FadeInEasing="CubicEaseOut" FadeOutEasing="CubicEaseIn"/>
                             </TransitioningContentControl.PageTransition>
                         </TransitioningContentControl>
                     </SplitView.Pane>
@@ -25,12 +26,24 @@
                                           ContentTemplate="{TemplateBinding ContentTemplate}"
                                           HorizontalContentAlignment="{TemplateBinding HorizontalContentAlignment}"
                                           VerticalContentAlignment="{TemplateBinding VerticalContentAlignment}"/>
-                        <Border IsVisible="{TemplateBinding IsPaneOpen}"
+                        <Border Classes="pane-scrim" IsHitTestVisible="False"
                                 Background="{DynamicResource ModalScrimBrush}"/>
                     </Grid>
                 </SplitView>
             </ControlTemplate>
         </Setter>
+    </Style>
+
+    <Style Selector="controls|PageShell /template/ Border.pane-scrim">
+        <Setter Property="Opacity" Value="0"/>
+        <Setter Property="Transitions">
+            <Transitions>
+                <DoubleTransition Property="Opacity" Duration="{StaticResource MotionPaneDuration}" Easing="CubicEaseOut"/>
+            </Transitions>
+        </Setter>
+    </Style>
+    <Style Selector="controls|PageShell[IsPaneOpen=true] /template/ Border.pane-scrim">
+        <Setter Property="Opacity" Value="1"/>
     </Style>
 
     <Style Selector="controls|PaneHeader">
