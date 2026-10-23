@@ -47,12 +47,35 @@ internal static class ModpackUiChecks
     public static async Task RunAsync(string output)
     {
         string root = Path.Combine(output, "data", Guid.NewGuid().ToString("N"));
+        var temporaryRoot = Path.Combine(root, "temp");
+        Directory.CreateDirectory(temporaryRoot);
+        Environment.SetEnvironmentVariable("TEMP", temporaryRoot);
+        Environment.SetEnvironmentVariable("TMP", temporaryRoot);
+        void AssertTemporaryFilesReleased()
+        {
+            Assert(!Directory.EnumerateFileSystemEntries(temporaryRoot, "olan-*").Any(), "downloaded pack and extraction directory released");
+            Assert(!Directory.EnumerateFiles(Init.GameRootPath, "*.downloading", SearchOption.AllDirectories).Any(), "partial manifest downloads released");
+            Assert(!Directory.EnumerateFiles(Init.GameRootPath, "customicon.*.tmp", SearchOption.AllDirectories).Any(), "temporary icon writes released");
+        }
         Init.GameRootPath = Path.Combine(root, "minecraft");
         var config = new DBManager(Path.Combine(root, "config.json"));
         await config.InitializeAsync();
         typeof(Init).GetProperty("ConfigManager", BindingFlags.NonPublic | BindingFlags.Static)!.SetValue(null, config);
         var games = new GameDataManager(Path.Combine(root, "games.json"));
         await games.InitializeAsync();
+        // 既有未登记目录也不能被安装回滚当作本次残留删除。
+        var existingDirectory = Path.Combine(Init.GameRootPath, "instance", "existing-unregistered");
+        Directory.CreateDirectory(existingDirectory);
+        await File.WriteAllTextAsync(Path.Combine(existingDirectory, "keep.txt"), "existing instance data");
+        void AssertInstanceDirectoriesMatchRegistered()
+        {
+            var directories = Directory.EnumerateDirectories(Path.Combine(Init.GameRootPath, "instance"))
+                .Select(Path.GetFullPath).ToHashSet(StringComparer.OrdinalIgnoreCase);
+            var expected = games.AllGameData.Select(game => Path.GetFullPath(game.InstancePath))
+                .Append(existingDirectory).ToHashSet(StringComparer.OrdinalIgnoreCase);
+            Assert(directories.SetEquals(expected), "only pre-existing and registered instance directories remain");
+            Assert(File.ReadAllText(Path.Combine(existingDirectory, "keep.txt")) == "existing instance data", "existing unregistered directory preserved");
+        }
         var accounts = new AccountManager(Path.Combine(root, "accounts.json"));
         await accounts.InitializeAsync();
         var versions = new VersionListManager(Init.GameRootPath);
@@ -140,7 +163,7 @@ internal static class ModpackUiChecks
         var originalPackage = File.ReadAllBytes(packagePath);
         int packDownloads = handler.PackDownloads;
 
-        // 慢速清单文件可取消；取消后允许复用包文件重试，迟到回调不覆盖终态。
+        // 慢速清单文件可取消；侧栏保持打开也释放包文件，重试重新获取。
         handler.HoldFiles = true;
         var installing = Call(vm, "ToInstall");
         await Until(() => handler.FileStarted.Task.IsCompleted);
@@ -148,15 +171,23 @@ internal static class ModpackUiChecks
         Assert(tasks.TaskQueue.Count == 1, "duplicate click cannot create another task");
         var centerRows = (System.Collections.IList)Get(center, "Tasks");
         Assert(centerRows.Count == 1 && ReferenceEquals(Get(centerRows[0]!, "Task"), tasks.TaskQueue.Last()), "already-open task center receives pack installation");
+        var textBeforeCancel = (string)Get(vm, "CurrentText");
         ((IRelayCommand)Get(vm, "CancelInstallCommand")).Execute(null);
         Assert((bool)Get(vm, "IsCancelling") && !((IRelayCommand)Get(vm, "CancelInstallCommand")).CanExecute(null), "cancel is visible and cannot repeat");
         await installing;
+        Assert((string)Get(vm, "CurrentText") == textBeforeCancel, "cancellation keeps last file or step text");
         Assert(tasks.TaskQueue.Last().Status == TaskInfoStatus.Canceled && games.AllGameData.Count == 0, "cancel does not register an instance");
+        AssertInstanceDirectoriesMatchRegistered();
+        Assert(!File.Exists(packagePath) && !(bool)Get(vm, "HasPackage") &&
+            ((IAsyncRelayCommand)Get(vm, "ToInstallCommand")).CanExecute(null), "cancel releases package without closing pane and allows retry");
+        AssertTemporaryFilesReleased();
         Capture(main, output, "pack-canceled.png", ThemeVariant.Light);
         handler.HoldFiles = false;
         await Call(vm, "ToInstall");
+        packagePath = PackagePath(vm);
         Dispatcher.UIThread.RunJobs();
         Assert(tasks.TaskQueue.Last().Status == TaskInfoStatus.Finished && games.AllGameData.Count == 1, "retry registers new instance");
+        AssertInstanceDirectoriesMatchRegistered();
         var instance = games.AllGameData.Single();
         Assert(instance.Name == "清单中的整合包" && File.ReadAllBytes(Path.Combine(instance.InstancePath, "mods", "fixture.jar")).SequenceEqual(PackHandler.FileBytes), "manifest name and downloaded file installed");
         Assert(File.ReadAllText(Path.Combine(instance.InstancePath, "config", "fixture.txt")) == "override fixture", "overrides applied");
@@ -165,7 +196,7 @@ internal static class ModpackUiChecks
         var reloaded = new GameDataManager(Path.Combine(root, "games.json"));
         await reloaded.InitializeAsync();
         using (var bitmap = (IDisposable)UiType("OneLauncher.Views.ViewModels.GameDataItem").GetMethod("GetGameDataIcon")!.Invoke(null, [reloaded.AllGameData.Single()])!) { }
-        Assert(handler.PackDownloads == packDownloads && (double)Get(vm, "CurrentProgress") == 100, "install reuses package and final progress stable");
+        Assert(handler.PackDownloads == packDownloads + 1 && (double)Get(vm, "CurrentProgress") == 100, "retry downloads a fresh package and final progress stays stable");
         Assert(!((IAsyncRelayCommand)Get(vm, "ToInstallCommand")).CanExecute(null), "completed pane cannot import twice");
         Capture(main, output, "pack-completed.png", ThemeVariant.Light);
         var footerButtons = pane.GetVisualDescendants().OfType<Button>().Where(button =>
@@ -186,12 +217,16 @@ internal static class ModpackUiChecks
         await handler.FileStarted.Task;
         var externalCenter = Activator.CreateInstance(UiType("OneLauncher.Views.Panes.PaneViewModels.TaskCenterPaneViewModel"), core, (Action)(() => { }))!;
         var externalRow = ((System.Collections.IList)Get(externalCenter, "Tasks"))[0]!;
+        textBeforeCancel = (string)Get(vm, "CurrentText");
         ((IRelayCommand)Get(externalRow, "CancelTaskCommand")).Execute(null);
         ((IDisposable)externalCenter).Dispose();
         Assert((bool)Get(vm, "IsCancelling"), "external cancellation updates pack pane");
         ((IRelayCommand)Get(vm, "ClosePaneCommand")).Execute(null);
         await installing;
+        Assert((string)Get(vm, "CurrentText") == textBeforeCancel, "task center cancellation keeps last file or step text");
         Assert(!File.Exists(packagePath) && games.AllGameData.Count == 1, "close cancels install and releases zip after exit");
+        AssertInstanceDirectoriesMatchRegistered();
+        AssertTemporaryFilesReleased();
         handler.HoldFiles = false;
 
         // 加载网络流期间关闭侧栏，响应令牌取消；重新打开后仍可获取信息。
@@ -202,6 +237,8 @@ internal static class ModpackUiChecks
         ((IRelayCommand)Get(vm, "ClosePaneCommand")).Execute(null);
         await Until(() => !(bool)Get(vm, "IsLoading"));
         Assert((TaskInfoStatus)Get(vm, "InstallationStatus") == TaskInfoStatus.Canceled && !(bool)Get(vm, "HasPackage"), "closing preview cancels network request");
+        Assert(!((string)Get(vm, "CurrentText")).Contains("取消"), "preview cancellation does not duplicate status text");
+        AssertTemporaryFilesReleased();
         handler.HoldPackage = false;
 
         // 错误信息进入失败状态，通过现有异常界面显示，重试后可恢复。
@@ -217,8 +254,12 @@ internal static class ModpackUiChecks
         Assert((bool)Get(vm, "HasPackage"), "preview recovers");
         packagePath = PackagePath(vm);
         handler.FailFiles = true;
+        iconServer.Mode = "hold";
         installing = Call(vm, "ToInstall");
         await Until(() => main.OwnedWindows.Count > 0);
+        Assert(!File.Exists(packagePath) && !(bool)Get(vm, "HasPackage"), "failure releases package before error dialog closes");
+        AssertInstanceDirectoriesMatchRegistered();
+        AssertTemporaryFilesReleased();
         foreach (var dialog in main.OwnedWindows.ToArray()) dialog.Close();
         await installing;
         Assert(tasks.TaskQueue.Last().Status == TaskInfoStatus.Failed && games.AllGameData.Count == 1, "download failure never registers instance");
@@ -242,11 +283,13 @@ internal static class ModpackUiChecks
             ((IRelayCommand)Get(vm, "ClosePaneCommand")).Execute(null);
         }
         iconServer.Mode = "hold";
+        handler.HoldFiles = true;
         Set(resource, "IconUrl", iconServer.Url);
         int registered = games.AllGameData.Count;
         ((IRelayCommand)Get(browser, "ToInstallResourceCommand")).Execute(resource);
         vm = ((UserControl)Get(browser, "PaneContent")).DataContext!;
         await Until(() => !(bool)Get(vm, "IsLoading"));
+        packagePath = PackagePath(vm);
         int iconRequests = iconServer.Requests;
         installing = Call(vm, "ToInstall");
         await Until(() => iconServer.Requests > iconRequests);
@@ -254,7 +297,11 @@ internal static class ModpackUiChecks
         await installing;
         Assert(tasks.TaskQueue.Last().Status == TaskInfoStatus.Canceled && games.AllGameData.Count == registered,
             "canceling icon fetch does not create an instance");
+        Assert(!File.Exists(packagePath), "cancel during parallel icon fetch releases package");
+        AssertInstanceDirectoriesMatchRegistered();
+        AssertTemporaryFilesReleased();
         ((IRelayCommand)Get(vm, "ClosePaneCommand")).Execute(null);
+        handler.HoldFiles = false;
 
         // 在图标完成后的刷新事件中取消，不能让取消状态被 Done 覆盖或允许再次创建实例。
         iconServer.Mode = "success";
@@ -267,11 +314,15 @@ internal static class ModpackUiChecks
         ((IRelayCommand)Get(browser, "ToInstallResourceCommand")).Execute(resource);
         vm = ((UserControl)Get(browser, "PaneContent")).DataContext!;
         await Until(() => !(bool)Get(vm, "IsLoading"));
+        packagePath = PackagePath(vm);
         await Call(vm, "ToInstall");
         games.OnDataChanged -= CancelAfterIconSaved;
         Assert(tasks.TaskQueue.Last().Status == TaskInfoStatus.Canceled && games.AllGameData.Count == registered + 1 &&
             (bool)Get(vm, "IsCompleted") && !((IAsyncRelayCommand)Get(vm, "ToInstallCommand")).CanExecute(null),
             "late cancellation keeps committed instance, preserves canceled status and prevents duplicate import");
+        Assert(!File.Exists(packagePath) && Directory.Exists(games.AllGameData.Last().InstancePath), "late cancellation releases temporary pack and preserves committed instance");
+        AssertInstanceDirectoriesMatchRegistered();
+        AssertTemporaryFilesReleased();
         ((IRelayCommand)Get(vm, "ClosePaneCommand")).Execute(null);
 
         // 两个侧栏各自从返回的实例保存图标，不能按名称或全局最后实例猜测目标。
@@ -289,17 +340,51 @@ internal static class ModpackUiChecks
         var firstPane = Activator.CreateInstance(paneType, firstResource, core, (Action)(() => { }))!;
         var secondPane = Activator.CreateInstance(paneType, secondResource, core, (Action)(() => { }))!;
         await Task.WhenAll(Call(firstPane, "LoadInfo"), Call(secondPane, "LoadInfo"));
-        await Task.WhenAll(Call(firstPane, "ToInstall"), Call(secondPane, "ToInstall"));
+        var concurrentImports = Task.WhenAll(Call(firstPane, "ToInstall"), Call(secondPane, "ToInstall"));
+        await Until(() =>
+        {
+            foreach (var dialog in main.OwnedWindows.ToArray()) dialog.Close();
+            return concurrentImports.IsCompleted;
+        });
+        await concurrentImports;
         foreach (var pair in new[] { (firstPane, IconServer.Png), (secondPane, IconServer.BluePng) })
         {
+            var importTask = (TaskInstance)paneType.GetField("_task", BindingFlags.NonPublic | BindingFlags.Instance)!.GetValue(pair.Item1)!;
+            Assert(importTask.Status == TaskInfoStatus.Finished, "concurrent import failed: " + importTask.Exception);
             var created = (GameData)paneType.GetField("_importedInstance", BindingFlags.NonPublic | BindingFlags.Instance)!.GetValue(pair.Item1)!;
             Assert(File.ReadAllBytes(Path.Combine(created.InstancePath, ".olc", "customicon")).SequenceEqual(pair.Item2),
                 "concurrent installs preserve each returned instance's own icon");
             ((IRelayCommand)Get(pair.Item1, "ClosePaneCommand")).Execute(null);
         }
+
+        // 登记阶段保存失败时，目录和 AddGameDataAsync 提前更新的内存都要回滚。
+        var indexPath = Path.Combine(root, "games.json");
+        var backupPath = indexPath + ".backup";
+        int beforeFailedSave = games.AllGameData.Count;
+        File.Move(indexPath, backupPath);
+        try
+        {
+            Directory.CreateDirectory(indexPath); // 让原子替换配置文件失败。
+            using var package = await service.GetModpackInfoAsync("pack-project");
+            try
+            {
+                await service.ImportModpack(package, new Progress<(OneLauncher.Core.DefaultComponent.Downloader.DownloadMinecraftProviders.DownProgress, int, int, string)>());
+                throw new Exception("expected instance registration failure");
+            }
+            catch (OlanException ex) { Assert(ex.Title == "保存配置文件失败", "original registration error is preserved"); }
+            Assert(games.AllGameData.Count == beforeFailedSave, "failed registration removes pending in-memory instance");
+            AssertInstanceDirectoriesMatchRegistered();
+        }
+        finally
+        {
+            Directory.Delete(indexPath);
+            File.Move(backupPath, indexPath);
+        }
         ((IDisposable)center).Dispose();
         main.Close();
-        Console.WriteLine("PASS modpack preview/import, instance icons and restart, unchanged package, optional icon failure, concurrent attribution, task center, early/late cancellation, terminal guards and screenshots");
+        AssertTemporaryFilesReleased();
+        AssertInstanceDirectoriesMatchRegistered();
+        Console.WriteLine("PASS modpack instance rollback on cancellation/failure, preserved existing and committed instances, temporary cleanup, retry, icons, task center and screenshots");
     }
 
     private static void Capture(Window window, string output, string name, ThemeVariant theme)

@@ -9,10 +9,14 @@
   <ItemGroup>
     <PackageReference Include="BenchmarkDotNet" Version="0.15.2" />
     <PackageReference Include="Microsoft.NET.HostModel" Version="3.1.16" />
+    <PackageReference Include="Avalonia.Headless" Version="$(AvaloniaVersion)" />
+    <PackageReference Include="Avalonia.Skia" Version="$(AvaloniaVersion)" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\OneLauncher.Core\OneLauncher.Core.csproj" />
+    <ProjectReference Include="..\OneLauncher\OneLauncher.csproj" />
+    <Compile Include="..\tests\OneLauncher.RegressionTests\ModpackUiChecks.cs" Link="ModpackUiChecks.cs" />
     <None Update="ProbeMod.java" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 

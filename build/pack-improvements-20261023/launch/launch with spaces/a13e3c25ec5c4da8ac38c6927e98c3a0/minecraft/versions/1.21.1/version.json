@@ -1,3 +1,0 @@
-{"id":"1.21.1","mainClass":"WorkingDirectoryProbe","javaVersion":{"majorVersion":21},"libraries":[],
- "downloads":{"client":{"url":"","size":0}},"assetIndex":{"id":"fixture"},
- "arguments":{"jvm":["-cp","${classpath}"],"game":[]}}

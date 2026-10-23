@@ -455,3 +455,6 @@ $RECYCLE.BIN/
 !.vscode/extensions.json
 /OneLauncher.Desktop/libs/
 
+# Dated local validation outputs; keep build/*.props and build/*.targets tracked.
+/build/*-20??????*/
+

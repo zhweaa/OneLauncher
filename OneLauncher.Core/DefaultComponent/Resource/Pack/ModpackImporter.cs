@@ -19,6 +19,7 @@ namespace OneLauncher.Core.DefaultComponent.Resource.Pack;
 /// </summary>
 public class ModpackImporter : IDisposable
 {
+    private static readonly SemaphoreSlim InstanceRegistrationLock = new(1, 1);
     private readonly string _gameRootPath;
     private readonly GameDataManager _gameDataManager;
     private readonly DBManager _dbManager;
@@ -91,23 +92,63 @@ public class ModpackImporter : IDisposable
             loader: loaderType,
             userModel: UnitedCore.Core.AccountManager.GetDefaultUser().UserID // 默认为当前用户
         );
-        Directory.CreateDirectory(packGameData.InstancePath);
+        // 仅回滚本次创建的目录；固定绝对路径并排除已有实例。
+        string instanceRoot = Path.GetFullPath(Path.Combine(_gameRootPath, "instance"));
+        string instancePath = Path.GetFullPath(packGameData.InstancePath);
+        if (!string.Equals(Path.GetDirectoryName(instancePath), instanceRoot, StringComparison.OrdinalIgnoreCase)
+            || Directory.Exists(instancePath) || File.Exists(instancePath)
+            || _gameDataManager.GetInstanceFromId(packGameData.InstanceId) != null)
+            throw new OlanException("创建实例失败", $"实例目录无效或已存在：{instancePath}");
 
-        // --- 步骤 3: 先应用覆盖文件，使其可参与清单文件查重 ---
-        await InstallModpackFilesAsync(parser, packGameData, progress, token);
-        token.ThrowIfCancellationRequested();
+        bool registered = false;
+        bool registrationLockHeld = false;
+        try
+        {
+            Directory.CreateDirectory(instancePath);
 
-        // --- 步骤 4: 仅在基础游戏或指定加载器版本缺失时安装 ---
-        if (!IsBaseGameAndLoaderInstalled(packGameData, loaderType, loaderVersion))
-            await InstallBaseGameAsync(packGameData, progress, token);
-        token.ThrowIfCancellationRequested();
+            // --- 步骤 3: 先应用覆盖文件，使其可参与清单文件查重 ---
+            await InstallModpackFilesAsync(parser, packGameData, progress, token);
+            token.ThrowIfCancellationRequested();
 
-        // --- 步骤 5: 注册新的游戏实例并保存 ---
-        await _gameDataManager.AddGameDataAsync(packGameData);
-        progress.Report((DownProgress.Done, 1, 1, "整合包导入成功！"));
+            // --- 步骤 4: 仅在基础游戏或指定加载器版本缺失时安装 ---
+            if (!IsBaseGameAndLoaderInstalled(packGameData, loaderType, loaderVersion))
+                await InstallBaseGameAsync(packGameData, progress, token);
+            token.ThrowIfCancellationRequested();
 
-
-        return packGameData;
+            // --- 步骤 5: 注册新的游戏实例并保存 ---
+            // 登记和失败回滚串行执行，避免并行导入在保存期间修改同一实例字典。
+            await InstanceRegistrationLock.WaitAsync(token);
+            registrationLockHeld = true;
+            await _gameDataManager.AddGameDataAsync(packGameData);
+            registered = true;
+            progress.Report((DownProgress.Done, 1, 1, "整合包导入成功！"));
+            return packGameData;
+        }
+        catch
+        {
+            if (!registered)
+            {
+                // AddGameDataAsync 在保存前更新内存；保存失败也要撤销本次登记。
+                if (ReferenceEquals(_gameDataManager.GetInstanceFromId(packGameData.InstanceId), packGameData))
+                {
+                    try { await _gameDataManager.RemoveGameDataAsync(packGameData.InstanceId); }
+                    catch (Exception ex) { Trace.TraceWarning($"[ModpackImporter] 撤销实例登记失败：{ex.Message}"); }
+                }
+                try
+                {
+                    if (Directory.Exists(instancePath)) Directory.Delete(instancePath, recursive: true);
+                }
+                catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+                {
+                    Trace.TraceWarning($"[ModpackImporter] 清理未完成的实例目录 '{instancePath}' 失败：{ex.Message}");
+                }
+            }
+            throw;
+        }
+        finally
+        {
+            if (registrationLockHeld) InstanceRegistrationLock.Release();
+        }
     }
 
     /// <summary>
