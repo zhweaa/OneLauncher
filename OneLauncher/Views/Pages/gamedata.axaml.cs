@@ -32,9 +32,11 @@ public partial class gamedata : UserControl
 
     private void TagFilterComboBox_OnSelectionChanged(object? sender, SelectionChangedEventArgs e)
     {
-        if (TagFilterComboBox.SelectedItem is not GameDataTagItem { IsCreateAction: true }) return;
+        if (TagFilterComboBox.SelectedItem is not GameDataTagItem action ||
+            (!action.IsCreateAction && !action.IsResetAction)) return;
 
         TagFilterComboBox.SelectedItem = null;
+        if (action.IsResetAction) return;
         Dispatcher.UIThread.Post(
             () => FlyoutBase.ShowAttachedFlyout(TagFilterComboBox),
             DispatcherPriority.Input);

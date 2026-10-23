@@ -134,9 +134,12 @@ Pane 使用 `PaneHeader`，不要复制返回按钮、标题和右侧工具区�
 游戏数据页的标签交互是特殊动作项模式：
 
 - `AvailableTags` 的索引 0 固定为 `新建标签...`。
+- 索引 1 固定为 `重置筛选`，使用 `IsResetAction` 标识。选择后清空选择并显示全部实例；特殊项不能删除，也不作为标签持久化。工具栏不再提供独立重置按钮。
 - 该项使用 `IsCreateAction` 标识，不伪造数据库中的 `GameDataTag`。
-- 选择特殊项后打开创建 Flyout，并立即清空 ComboBox 选择，因此它不参与过滤。
+- 选择“新建标签...”后打开创建 Flyout，并立即清空 ComboBox 选择，因此它不参与过滤。
 - 创建按钮与 TextBox 的 Enter 都绑定同一个 `CreateNewTagCommand`。
+- `SelectionBoxItemTemplate` 只显示标签名称；包含“移除标签”按钮的 `ItemTemplate` 仅用于下拉列表，避免按钮出现在收起的工具栏字段中。
+- 顶部标签框用于筛选，实例的标签在“编辑”Pane 中分配。刷新按标签 ID 保持筛选；排序保存完整实例集合，不能把过滤后的展示列表写回实例数据库。
 
 ## 8. MVVM 与 code-behind 边界
 

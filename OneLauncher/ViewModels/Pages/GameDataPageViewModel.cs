@@ -101,12 +101,14 @@ internal partial class GameDataTagItem : BaseViewModel
     private readonly GameDataManager? _gameDataManager;
     public GameDataTag? Data { get; }
     public bool IsCreateAction { get; }
-    public bool CanDelete => !IsCreateAction;
-    public string DisplayName => IsCreateAction ? "新建标签..." : Data?.Name ?? string.Empty;
+    public bool IsResetAction { get; }
+    public bool CanDelete => Data is not null;
+    public string DisplayName => IsCreateAction ? "新建标签..." : IsResetAction ? "重置筛选" : Data?.Name ?? string.Empty;
 
-    private GameDataTagItem()
+    private GameDataTagItem(bool isResetAction = false)
     {
-        IsCreateAction = true;
+        IsResetAction = isResetAction;
+        IsCreateAction = !isResetAction;
     }
 
     public GameDataTagItem(GameDataTag tag, GameDataManager? gameDataManager)
@@ -116,6 +118,7 @@ internal partial class GameDataTagItem : BaseViewModel
     }
 
     public static GameDataTagItem CreateAction() => new();
+    public static GameDataTagItem ResetAction() => new(isResetAction: true);
 
     [RelayCommand]
     private async Task DeleteTag()
@@ -133,6 +136,7 @@ internal partial class GameDataPageViewModel : BaseViewModel,IPageHost,IListTemp
     private readonly UnitedCore _unitedCore;
     private readonly EditGameDataPaneViewModelFactory _editVMFactory;
     private readonly NewGameDataPaneViewModelFactory _newGameDataPaneViewModelFactory;
+    private bool _isRefreshingTags;
     [ObservableProperty] private ObservableCollection<GameDataItem> items = new();
     [ObservableProperty] public string type;
     [ObservableProperty] private UserControl? paneContent;
@@ -142,16 +146,37 @@ internal partial class GameDataPageViewModel : BaseViewModel,IPageHost,IListTemp
     {
         await Dispatcher.UIThread.InvokeAsync(() => 
         {
-            Items = new ObservableCollection<GameDataItem>(_gameDataManager.AllGameData.Select(x => new GameDataItem(x, _gameDataManager, _unitedCore)));
-            AvailableTags = BuildAvailableTags();
+            var selectedTagId = SelectedTag?.Data?.ID;
+            _isRefreshingTags = true;
+            try
+            {
+                AvailableTags = BuildAvailableTags();
+                SelectedTag = AvailableTags.FirstOrDefault(tag => tag.Data is { } data && data.ID == selectedTagId);
+            }
+            finally
+            {
+                _isRefreshingTags = false;
+            }
+            RefreshItems();
         });
+    }
+
+    private void RefreshItems()
+    {
+        IEnumerable<GameData> instances = _gameDataManager.AllGameData;
+        if (SelectedTag?.Data is { } tag)
+            instances = instances.Where(instance =>
+                _gameDataManager.Data.TagMap.TryGetValue(instance.InstanceId, out var tagId) && tagId == tag.ID);
+        Items = new ObservableCollection<GameDataItem>(instances.Select(
+            instance => new GameDataItem(instance, _gameDataManager, _unitedCore)));
     }
 
     private ObservableCollection<GameDataTagItem> BuildAvailableTags()
     {
         var items = new ObservableCollection<GameDataTagItem>
         {
-            GameDataTagItem.CreateAction()
+            GameDataTagItem.CreateAction(),
+            GameDataTagItem.ResetAction()
         };
         foreach (var tag in _gameDataManager.Data.Tags.Values)
             items.Add(new GameDataTagItem(tag, _gameDataManager));
@@ -207,6 +232,7 @@ internal partial class GameDataPageViewModel : BaseViewModel,IPageHost,IListTemp
             AvailableTags = new ObservableCollection<GameDataTagItem>()
             {
                 GameDataTagItem.CreateAction(),
+                GameDataTagItem.ResetAction(),
                 gameTag1
             };
         }
@@ -282,26 +308,36 @@ internal partial class GameDataPageViewModel : BaseViewModel,IPageHost,IListTemp
     }
     partial void OnSelectedTagChanged(GameDataTagItem? value)
     {
-        if (value?.IsCreateAction == true) return;
+        if (_isRefreshingTags || value?.IsCreateAction == true) return;
+        if (value?.IsResetAction == true)
+        {
+            ResetFilter();
+            return;
+        }
+        RefreshItems();
     }
     [RelayCommand]
     private void ResetFilter()
     {
-        SelectedTag = null; // 里面有空值检查所以这里手动刷新
-        _ = RefList();
+        SelectedTag = null;
     }
     [RelayCommand]
     public void Sorting(SortingType type)
     {
-        List<GameDataItem> orderedList = type switch
+        // Sort all persisted instances; a tag filter only controls what the page displays.
+        var instances = _gameDataManager.AllGameData;
+        List<GameData> orderedList = type switch
         {
-            SortingType.AnTime_OldFront => Items.OrderBy(x => x.data.CreationTime).ToList(),
-            SortingType.AnTime_NewFront => Items.OrderByDescending(x => x.data.CreationTime).ToList(),
-            SortingType.AnVersion_OldFront => Items.OrderBy(x => new Version(x.data.VersionId)).ToList(),
-            SortingType.AnVersion_NewFront => Items.OrderByDescending(x => new Version(x.data.VersionId)).ToList(),
-            _ => Items.ToList() // 默认不排序
+            SortingType.AnTime_OldFront => instances.OrderBy(x => x.CreationTime).ToList(),
+            SortingType.AnTime_NewFront => instances.OrderByDescending(x => x.CreationTime).ToList(),
+            SortingType.AnVersion_OldFront => instances.OrderBy(x => Version.TryParse(x.VersionId, out var version) ? version : null)
+                .ThenBy(x => x.VersionId, StringComparer.OrdinalIgnoreCase).ToList(),
+            SortingType.AnVersion_NewFront => instances.OrderByDescending(x => Version.TryParse(x.VersionId, out var version) ? version : null)
+                .ThenByDescending(x => x.VersionId, StringComparer.OrdinalIgnoreCase).ToList(),
+            _ => instances
         };
-        _gameDataManager.Data.Instances = Items.ToDictionary(x => x.data.InstanceId,x => x.data);
+        _gameDataManager.Data.Instances = orderedList.ToDictionary(x => x.InstanceId, x => x);
+        RefreshItems();
         _=_gameDataManager.Save();
     }
     #endregion
