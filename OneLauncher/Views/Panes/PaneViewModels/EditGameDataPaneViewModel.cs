@@ -113,9 +113,26 @@ internal partial class EditGameDataPaneViewModel : BaseViewModel
         Tools.OpenFolder(modsPath);
     }
     [RelayCommand]
-    private void AddToQuicklyPlay()
+    private async Task AddToQuicklyPlay()
     {
-        File.WriteAllTextAsync(
+#if ONELAUNCHER_TARGET_LINUX
+        static string EscapeValue(string value) => value.Replace("\\", "\\\\")
+            .Replace("\n", "\\n").Replace("\r", "\\r").Replace("\t", "\\t");
+
+        // Exec 的参数引用和 desktop entry 的字符串转义是两层规则。
+        var executable = Environment.ProcessPath!.Replace("\\", "\\\\")
+            .Replace("\"", "\\\"").Replace("`", "\\`").Replace("$", "\\$").Replace("%", "%%");
+        var shortcutPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Desktop),
+            $"快速启动 - {editingGameData.Name}.desktop");
+        await File.WriteAllTextAsync(shortcutPath,
+            "[Desktop Entry]\nType=Application\n" +
+            $"Name={EscapeValue($"快速启动 - {editingGameData.Name}")}\n" +
+            $"Exec={EscapeValue($"\"{executable}\"")} --quicklyPlay {editingGameData.InstanceId}\n" +
+            "Terminal=false\n");
+        if (OperatingSystem.IsLinux())
+            File.SetUnixFileMode(shortcutPath, File.GetUnixFileMode(shortcutPath) | UnixFileMode.UserExecute);
+#else
+        await File.WriteAllTextAsync(
             Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Desktop),$"快速启动 - {editingGameData.Name}"+
             #if ONELAUNCHER_TARGET_WINDOWS
             ".bat"
@@ -125,6 +142,7 @@ internal partial class EditGameDataPaneViewModel : BaseViewModel
             ), 
             $"{Environment.ProcessPath} --quicklyPlay {editingGameData.InstanceId}"
             );
+#endif
     }
     [RelayCommand]
     private async Task CopyThisInstance()
