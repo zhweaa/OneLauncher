@@ -22,6 +22,74 @@
 		  <StackPanel Classes="settings-section" IsVisible="{Binding IsInterfaceSectionVisible}">
 			  <TextBlock Classes="section-title" Text="界面"/>
 			  <Separator Classes="section-divider"/>
+			  <StackPanel Margin="0,6,0,0" Spacing="8">
+				  <TextBlock Text="主页样式"/>
+				  <ComboBox x:Name="HomePageStyleComboBox" Width="220"
+							ItemsSource="{Binding HomePageStyles}"
+							SelectedItem="{Binding SelectedHomePageStyle, Mode=TwoWay}"
+							IsEnabled="{Binding !IsSavingHomeAppearance}"
+							AutomationProperties.Name="主页样式"/>
+				  <TextBlock Text="主页默认启动项" Margin="0,8,0,0"/>
+				  <ComboBox x:Name="HomeDefaultLaunchComboBox" Width="320"
+							ItemsSource="{Binding HomeLaunchItems}"
+							SelectedItem="{Binding SelectedHomeLaunchItem, Mode=TwoWay}"
+							IsEnabled="{Binding !IsSavingHomeLaunchItem}"
+							PlaceholderText="选择游戏数据或服务器收藏"
+							AutomationProperties.Name="主页默认启动项">
+					  <ComboBox.ItemTemplate>
+						  <DataTemplate x:DataType="vm:IQuicklyLaunchItem">
+							  <Grid ColumnDefinitions="Auto,*" ColumnSpacing="8">
+								  <Image Grid.Column="0" Source="{Binding Icon}" Width="22" Height="22"
+										 RenderOptions.BitmapInterpolationMode="None" VerticalAlignment="Center"/>
+								  <StackPanel Grid.Column="1" VerticalAlignment="Center">
+									  <TextBlock Text="{Binding Name}" TextTrimming="CharacterEllipsis"/>
+									  <TextBlock Text="{Binding Description}" FontSize="11" TextTrimming="CharacterEllipsis"
+												 Foreground="{DynamicResource SecondaryForegroundBrush}"/>
+								  </StackPanel>
+							  </Grid>
+						  </DataTemplate>
+					  </ComboBox.ItemTemplate>
+				  </ComboBox>
+				  <StackPanel IsVisible="{Binding IsMagicHomeOptionsVisible}" Spacing="10" Margin="0,4,0,0">
+					  <Button x:Name="HomeSectionVisibilityButton" Classes="item-action"
+							  Content="控制主页板块" HorizontalAlignment="Left">
+						  <Button.Flyout>
+							  <controls:SettingsFlyout Placement="BottomEdgeAlignedLeft"
+												   IsEditing="{Binding IsHomeSectionEditing, Mode=TwoWay}"
+												   IsBusy="{Binding IsSavingHomeSections}">
+								  <Grid RowDefinitions="Auto,Auto,*,Auto" Width="270" RowSpacing="12">
+									  <TextBlock Grid.Row="0" Classes="section-title" Text="主页板块"/>
+									  <TextBlock Grid.Row="1" Text="仅在魔法按钮样式中生效" TextWrapping="Wrap"/>
+									  <ScrollViewer Grid.Row="2" MaxHeight="260">
+										  <ItemsControl ItemsSource="{Binding HomeSectionItems}" IsEnabled="{Binding !IsSavingHomeSections}">
+											  <ItemsControl.ItemTemplate>
+												  <DataTemplate x:DataType="vm:HomeSectionVisibilityItem">
+													  <CheckBox Content="{Binding DisplayName}" IsChecked="{Binding IsVisible, Mode=TwoWay}"/>
+												  </DataTemplate>
+											  </ItemsControl.ItemTemplate>
+										  </ItemsControl>
+									  </ScrollViewer>
+									  <Button Grid.Row="3" Classes="toolbar-action" Content="保存并应用"
+											  HorizontalAlignment="Stretch" Command="{Binding SaveHomeSectionsCommand}"/>
+								  </Grid>
+							  </controls:SettingsFlyout>
+						  </Button.Flyout>
+					  </Button>
+					  <TextBlock Text="主页背景"/>
+					  <Grid ColumnDefinitions="Auto,Auto,*" ColumnSpacing="8" MaxWidth="560" HorizontalAlignment="Left">
+						  <Button Grid.Column="0" Classes="item-action" Content="选择背景图片"
+								  Command="{Binding ChooseHomeBackgroundCommand}"
+								  IsEnabled="{Binding !IsSavingHomeAppearance}"/>
+						  <Button Grid.Column="1" Classes="item-action" Content="移除背景"
+								  Command="{Binding ClearHomeBackgroundCommand}"
+								  IsVisible="{Binding HasHomeBackground}"
+								  IsEnabled="{Binding !IsSavingHomeAppearance}"/>
+						  <TextBlock Grid.Column="2" Text="{Binding HomeBackgroundDisplayName}"
+									 VerticalAlignment="Center" TextTrimming="CharacterEllipsis"
+									 ToolTip.Tip="{Binding HomeBackgroundImagePath}"/>
+					  </Grid>
+				  </StackPanel>
+			  </StackPanel>
 			  <CheckBox Content="是否显示标识符" Margin="0,6,0,0"
 						IsChecked="{Binding ShowIdentifiers, Mode=TwoWay}"
 						IsEnabled="{Binding !IsSavingIdentifiers}"/>

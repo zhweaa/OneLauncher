@@ -77,6 +77,18 @@ if (args.Contains("--notification-click"))
     return;
 }
 
+if (args.Contains("--magic-home"))
+{
+    AppBuilder.Configure<OneLauncher.App>().UseSkia()
+        .UseHeadless(new AvaloniaHeadlessPlatformOptions { UseHeadlessDrawing = false })
+        .SetupWithoutStarting();
+    var magicTask = MagicHomeUiChecks.RunAsync(output);
+    while (!magicTask.IsCompleted)
+        Dispatcher.UIThread.RunJobs();
+    await magicTask;
+    return;
+}
+
 await CheckLegacyVersionListIgnored();
 await CheckVersionIndex();
 await CheckSharedManagers();

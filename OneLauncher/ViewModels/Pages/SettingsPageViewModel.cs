@@ -1,4 +1,5 @@
 ﻿using Avalonia.Controls;
+using Avalonia.Platform.Storage;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Avalonia.Controls.Notifications;
@@ -269,6 +270,282 @@ internal partial class SettingsPageViewModel : BaseViewModel, IPageHost, IListTe
     }
     #endregion
 
+    #region 主页样式
+    public string[] HomePageStyles { get; } = ["默认", "魔法按钮"];
+    private bool _isLoadingHomeSettings;
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(IsMagicHomeOptionsVisible))]
+    private string selectedHomePageStyle = "默认";
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HomeBackgroundDisplayName))]
+    [NotifyPropertyChangedFor(nameof(HasHomeBackground))]
+    private string? homeBackgroundImagePath;
+
+    [ObservableProperty]
+    private bool isSavingHomeAppearance;
+
+    [ObservableProperty]
+    private ObservableCollection<HomeSectionVisibilityItem> homeSectionItems = new();
+
+    [ObservableProperty]
+    private bool isHomeSectionEditing;
+
+    [ObservableProperty]
+    private bool isSavingHomeSections;
+
+    [ObservableProperty]
+    private ObservableCollection<IQuicklyLaunchItem> homeLaunchItems = new();
+
+    [ObservableProperty]
+    private IQuicklyLaunchItem? selectedHomeLaunchItem;
+
+    [ObservableProperty]
+    private bool isSavingHomeLaunchItem;
+
+    private string? _homeLaunchItemsSignature;
+
+    public bool IsMagicHomeOptionsVisible => SelectedHomePageStyle == "魔法按钮";
+    public bool HasHomeBackground => !string.IsNullOrWhiteSpace(HomeBackgroundImagePath);
+    public string HomeBackgroundDisplayName => HasHomeBackground ? Path.GetFileName(HomeBackgroundImagePath)! : "未设置背景";
+
+    partial void OnSelectedHomePageStyleChanged(string value)
+    {
+        if (_isLoadingHomeSettings)
+            return;
+#if DEBUG
+        if (Design.IsDesignMode)
+            return;
+#endif
+        var style = value == "魔法按钮" ? HomePageStyle.MagicButton : HomePageStyle.Classic;
+        _ = SaveHomeAppearanceAsync(settings =>
+        {
+            settings.HomePageStyle = style;
+            // 配置中的背景丢失（如被旧版本重写）或文件已不存在时，使用 customdata 中已复制的背景。
+            if (style == HomePageStyle.MagicButton && !File.Exists(settings.HomeBackgroundImagePath))
+                settings.HomeBackgroundImagePath = HomeBackgroundStore.FindLatest();
+        }, "主页样式已保存并应用");
+    }
+
+    partial void OnIsHomeSectionEditingChanged(bool value)
+    {
+        if (value && !IsSavingHomeSections)
+            RebuildHomeSectionItems();
+    }
+
+    partial void OnSelectedHomeLaunchItemChanged(IQuicklyLaunchItem? value)
+    {
+        if (_isLoadingHomeSettings || value == null)
+            return;
+#if DEBUG
+        if (Design.IsDesignMode)
+            return;
+#endif
+        _ = SaveHomeLaunchItemAsync(value);
+    }
+
+    private async Task SaveHomeLaunchItemAsync(IQuicklyLaunchItem item)
+    {
+        var settings = _dbManger.Data.OlanSettings;
+        var previousInstance = settings.DefaultInstanceID;
+        var previousServer = settings.HomeDefaultServerID;
+        IsSavingHomeLaunchItem = true;
+        try
+        {
+            QuicklyLaunchItems.SaveAsDefault(settings, item);
+            await _dbManger.Save();
+            WeakReferenceMessenger.Default.Send(new MainWindowShowFlyoutMessage(
+                $"主页默认启动项已设为：{item.Name}", NotificationType.Success));
+        }
+        catch (Exception ex)
+        {
+            settings.DefaultInstanceID = previousInstance;
+            settings.HomeDefaultServerID = previousServer;
+            RefreshHomeLaunchItems(force: true);
+            await ShowSettingsException(ex);
+        }
+        finally
+        {
+            IsSavingHomeLaunchItem = false;
+        }
+    }
+
+    // 游戏数据或服务器收藏变化后同步下拉列表，并重新对齐当前默认项。
+    private void RefreshHomeLaunchItems(bool force = false)
+    {
+        if (!Dispatcher.UIThread.CheckAccess())
+        {
+            Dispatcher.UIThread.Post(() => RefreshHomeLaunchItems(force));
+            return;
+        }
+        _isLoadingHomeSettings = true;
+        try
+        {
+            var signature = QuicklyLaunchItems.Signature(_unitedCore, _dbManger);
+            if (force || signature != _homeLaunchItemsSignature)
+            {
+                _homeLaunchItemsSignature = signature;
+                HomeLaunchItems = new ObservableCollection<IQuicklyLaunchItem>(
+                    QuicklyLaunchItems.Create(_unitedCore, _dbManger));
+            }
+            SelectedHomeLaunchItem = QuicklyLaunchItems.ResolveDefault(HomeLaunchItems, _dbManger.Data.OlanSettings);
+        }
+        finally
+        {
+            _isLoadingHomeSettings = false;
+        }
+    }
+
+    private void LoadHomeSettings(AppSettings settings)
+    {
+        _isLoadingHomeSettings = true;
+        try
+        {
+            SelectedHomePageStyle = settings.HomePageStyle == HomePageStyle.MagicButton ? "魔法按钮" : "默认";
+            HomeBackgroundImagePath = settings.HomeBackgroundImagePath;
+        }
+        finally
+        {
+            _isLoadingHomeSettings = false;
+        }
+        RebuildHomeSectionItems();
+    }
+
+    private void RebuildHomeSectionItems()
+    {
+#if DEBUG
+        var settings = Design.IsDesignMode ? new AppSettings() : _dbManger.Data.OlanSettings;
+#else
+        var settings = _dbManger.Data.OlanSettings;
+#endif
+        HomeSectionItems = new ObservableCollection<HomeSectionVisibilityItem>(CreateHomeSectionItems(settings));
+    }
+
+    private static List<HomeSectionVisibilityItem> CreateHomeSectionItems(AppSettings settings) =>
+    [
+        new(HomeSection.News, "MC新闻", settings.IsHomeNewsVisible),
+        new(HomeSection.TaskCenter, "任务中心", settings.IsHomeTaskCenterVisible),
+        new(HomeSection.PowerPlay, "联机面板", settings.IsHomePowerPlayVisible),
+        new(HomeSection.Import, "导入游戏实例", settings.IsHomeImportVisible)
+    ];
+
+    private static void ApplyHomeSectionItems(AppSettings settings, IEnumerable<HomeSectionVisibilityItem> items)
+    {
+        foreach (var item in items)
+        {
+            switch (item.Section)
+            {
+                case HomeSection.News: settings.IsHomeNewsVisible = item.IsVisible; break;
+                case HomeSection.TaskCenter: settings.IsHomeTaskCenterVisible = item.IsVisible; break;
+                case HomeSection.PowerPlay: settings.IsHomePowerPlayVisible = item.IsVisible; break;
+                case HomeSection.Import: settings.IsHomeImportVisible = item.IsVisible; break;
+            }
+        }
+    }
+
+    [RelayCommand]
+    private async Task SaveHomeSections()
+    {
+#if DEBUG
+        if (Design.IsDesignMode)
+            return;
+#endif
+        var settings = _dbManger.Data.OlanSettings;
+        var previousItems = CreateHomeSectionItems(settings);
+        IsSavingHomeSections = true;
+        try
+        {
+            ApplyHomeSectionItems(settings, HomeSectionItems);
+            await _dbManger.Save();
+            IsHomeSectionEditing = false;
+            WeakReferenceMessenger.Default.Send(new MainWindowShowFlyoutMessage(
+                "主页板块设置已保存并应用", NotificationType.Success));
+        }
+        catch (Exception ex)
+        {
+            ApplyHomeSectionItems(settings, previousItems);
+            await ShowSettingsException(ex);
+        }
+        finally
+        {
+            IsSavingHomeSections = false;
+        }
+    }
+
+    [RelayCommand]
+    private async Task ChooseHomeBackground()
+    {
+        if (IsSavingHomeAppearance)
+            return;
+        try
+        {
+            var topLevel = TopLevel.GetTopLevel(MainWindow.mainwindow);
+            if (topLevel?.StorageProvider is not { CanOpen: true } storageProvider)
+                return;
+            var files = await storageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
+            {
+                Title = "选择主页背景图片",
+                AllowMultiple = false,
+                FileTypeFilter = [new FilePickerFileType("图片") { Patterns = ["*.png", "*.jpg", "*.jpeg", "*.bmp", "*.webp"] }]
+            });
+            if (files.FirstOrDefault()?.TryGetLocalPath() is not { } path)
+                return;
+            var previous = _dbManger.Data.OlanSettings.HomeBackgroundImagePath;
+            // 复制到 customdata 后再保存，原图被移动或删除也不影响主页背景。
+            var copied = await HomeBackgroundStore.ImportAsync(path);
+            if (await SaveHomeAppearanceAsync(settings => settings.HomeBackgroundImagePath = copied, "主页背景已保存并应用"))
+                HomeBackgroundStore.TryDelete(previous);
+            else
+                HomeBackgroundStore.TryDelete(copied);
+        }
+        catch (Exception ex)
+        {
+            await ShowSettingsException(ex);
+        }
+    }
+
+    [RelayCommand]
+    private async Task ClearHomeBackground()
+    {
+        if (await SaveHomeAppearanceAsync(settings => settings.HomeBackgroundImagePath = null, "已移除主页背景"))
+            HomeBackgroundStore.TryDeleteAll();
+    }
+
+    private async Task<bool> SaveHomeAppearanceAsync(Action<AppSettings> apply, string successMessage)
+    {
+        var settings = _dbManger.Data.OlanSettings;
+        var previousStyle = settings.HomePageStyle;
+        var previousBackground = settings.HomeBackgroundImagePath;
+        IsSavingHomeAppearance = true;
+        try
+        {
+            apply(settings);
+            await _dbManger.Save();
+            HomeBackgroundImagePath = settings.HomeBackgroundImagePath;
+            WeakReferenceMessenger.Default.Send(new MainWindowShowFlyoutMessage(successMessage, NotificationType.Success));
+            return true;
+        }
+        catch (Exception ex)
+        {
+            settings.HomePageStyle = previousStyle;
+            settings.HomeBackgroundImagePath = previousBackground;
+            LoadHomeSettings(settings);
+            await ShowSettingsException(ex);
+            return false;
+        }
+        finally
+        {
+            IsSavingHomeAppearance = false;
+        }
+    }
+
+    private static Task ShowSettingsException(Exception ex)
+        => ex is OlanException olanException
+            ? OlanExceptionWorker.ForOlanException(olanException)
+            : OlanExceptionWorker.ForUnknowException(ex);
+    #endregion
+
     #region 下载选项
     [ObservableProperty]
     public int _MaxDownloadThreadsValue;
@@ -358,6 +635,7 @@ internal partial class SettingsPageViewModel : BaseViewModel, IPageHost, IListTe
         {
             LeftButtonListSpacing = 8;
             _ = RefList();
+            LoadHomeSettings(new AppSettings());
             MaxDownloadThreadsValue = 24;
             MaxSha1ThreadsValue = 24;
             IsSha1Enabled = true;
@@ -372,6 +650,10 @@ internal partial class SettingsPageViewModel : BaseViewModel, IPageHost, IListTe
             showIdentifiers = _dbManger.Data.OlanSettings.ShowIdentifiers;
             LeftButtonListSpacing = _dbManger.Data.OlanSettings.LeftButtonListSpacing;
             _ = RefList();
+            LoadHomeSettings(_dbManger.Data.OlanSettings);
+            RefreshHomeLaunchItems();
+            _dbManger.OnDataChanged += () => RefreshHomeLaunchItems();
+            _gameDataManager.OnDataChanged += () => RefreshHomeLaunchItems();
             switch (_dbManger.Data.DefaultSettings.MinecraftJvmArguments.mode)
             {
                 case OptimizationMode.Conservative:

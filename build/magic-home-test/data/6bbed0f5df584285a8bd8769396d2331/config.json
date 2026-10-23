@@ -1,0 +1,66 @@
+{
+  "AvailableJavas": {},
+  "ServerList": [
+    {
+      "Id": "a76cb580-2c92-4a7c-bfba-cba5adac0def",
+      "InstanceId": "magic001",
+      "ServerInfo": {
+        "Ip": "mc.example.net",
+        "Port": 25565
+      },
+      "Name": "\u751F\u5B58\u670D\u52A1\u5668",
+      "Description": null
+    }
+  ],
+  "OlanSettings": {
+    "MaximumDownloadThreads": 24,
+    "MaximumSha1Threads": 24,
+    "IsSha1Enabled": true,
+    "DownloadMinecraftSourceStrategy": 0,
+    "InstallPath": null,
+    "DefaultInstanceID": "magic001",
+    "DefaultServerID": null,
+    "HomeDefaultServerID": "a76cb580-2c92-4a7c-bfba-cba5adac0def",
+    "LastVersionManifestRefreshTime": "2026-10-23T15:04:05.9735621+00:00",
+    "LeftButtonListSpacing": 8,
+    "ShowIdentifiers": true,
+    "IsVersionPageVisible": false,
+    "IsGameDataPageVisible": true,
+    "IsServerPageVisible": true,
+    "IsDownloadPageVisible": true,
+    "IsModsBrowserPageVisible": true,
+    "IsAccountPageVisible": true,
+    "HomePageStyle": 1,
+    "IsHomeNewsVisible": true,
+    "IsHomeTaskCenterVisible": true,
+    "IsHomePowerPlayVisible": false,
+    "IsHomeImportVisible": false,
+    "HomeBackgroundImagePath": null
+  },
+  "DefaultSettings": {
+    "MinecraftJvmArguments": {
+      "mode": 2,
+      "MaxHeapSize": 0,
+      "InitialHeapSize": 0,
+      "UseG1GC": true,
+      "UseZGC": false,
+      "UseShenandoahGC": false,
+      "MaxGCPauseMillis": 50,
+      "G1HeapRegionSize": 16,
+      "G1NewSizePercent": 30,
+      "G1MaxNewSizePercent": 60,
+      "G1ReservePercent": 15,
+      "G1UseStringDeduplication": true,
+      "UseGenerationalGCForZOrShenandoah": true,
+      "DisableExplicitGC": true,
+      "ParallelRefProcEnabled": true,
+      "AlwaysPreTouch": false,
+      "PerfDisableSharedMem": true,
+      "UseAikarFlags": true
+    },
+    "CrafatarUrl": "http://106.55.4.15:18792/renders/body/",
+    "ApiKey": null,
+    "RecommandedModsForServer": [],
+    "RecommandedModsForSurvival": []
+  }
+}

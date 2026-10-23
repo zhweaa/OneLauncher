@@ -31,18 +31,77 @@
 			<Setter Property="Padding" Value="8"/>
 			<Setter Property="CornerRadius" Value="100"/>
 		</Style>
+
+		<!-- 默认样式中卡片跨越空白列以保持原有居中构图；魔法按钮样式中卡片靠左并为按钮让出空间。 -->
+		<Style Selector="ScrollViewer.home-sections">
+			<Setter Property="Grid.ColumnSpan" Value="2"/>
+		</Style>
+		<Style Selector="ScrollViewer.home-sections.magic">
+			<Setter Property="Grid.ColumnSpan" Value="1"/>
+		</Style>
+		<!-- 外层 Border 由 card-list 样式提供阴影与悬停；内层负责圆角裁剪，避免裁掉外层阴影。 -->
+		<Style Selector="Border.home-card-clip">
+			<Setter Property="CornerRadius" Value="{StaticResource CardCornerRadius}"/>
+			<Setter Property="ClipToBounds" Value="True"/>
+		</Style>
+		<!-- 自定义背景下卡片改用半透明底色，让背景透出而不显得突兀。 -->
+		<Style Selector="ListBox.card-list.on-image ListBoxItem > Border">
+			<Setter Property="Background" Value="{DynamicResource HomeCardOnImageBrush}"/>
+			<Setter Property="BorderBrush" Value="{DynamicResource HomeCardOnImageBorderBrush}"/>
+		</Style>
+		<Style Selector="ListBox.card-list.on-image ListBoxItem:pointerover > Border">
+			<Setter Property="Background" Value="{DynamicResource HomeCardOnImageHoverBrush}"/>
+		</Style>
+		<Style Selector="controls|MagicLaunchButton.on-image TextBlock.magic-launch-title">
+			<Setter Property="Foreground" Value="White"/>
+			<Setter Property="Effect" Value="drop-shadow(0 3 10 #99000000)"/>
+		</Style>
+		<!-- 背景图明暗不可预知：悬停时同时加深底色并加亮色内描边，深浅背景下都能看清按钮边界。 -->
+		<Style Selector="controls|MagicLaunchButton.on-image:pointerover /template/ Border#PART_Surface">
+			<Setter Property="Background" Value="#80000000"/>
+			<Setter Property="BoxShadow" Value="inset 0 0 0 2 #A6FFFFFF, 0 14 34 2 #73000000"/>
+		</Style>
+		<Style Selector="controls|MagicLaunchButton.on-image:pressed /template/ Border#PART_Surface">
+			<Setter Property="Background" Value="#99000000"/>
+			<Setter Property="BoxShadow" Value="inset 0 0 0 2 #80FFFFFF, 0 4 12 0 #59000000"/>
+		</Style>
+		<Style Selector="controls|MagicLaunchButton:not(.on-image) TextBlock.magic-launch-title">
+			<Setter Property="Foreground" Value="{DynamicResource PrimaryForegroundBrush}"/>
+		</Style>
 	</UserControl.Styles>
+	<Panel>
+		<Image Source="{Binding HomeBackground}"
+			   IsVisible="{Binding HasHomeBackground}"
+			   Stretch="UniformToFill"
+			   HorizontalAlignment="Stretch"
+			   VerticalAlignment="Stretch"/>
+		<Border IsVisible="{Binding HasHomeBackground}" IsHitTestVisible="False">
+			<Border.Background>
+				<LinearGradientBrush StartPoint="0%,0%" EndPoint="100%,100%">
+					<GradientStop Color="#00000000" Offset="0.35"/>
+					<GradientStop Color="#73000000" Offset="1"/>
+				</LinearGradientBrush>
+			</Border.Background>
+		</Border>
 	<controls:PageShell IsPaneOpen="{Binding IsPaneShow,Mode=TwoWay}"
 						PaneContent="{Binding PaneContent}">
 		
-		<Grid ColumnDefinitions="*,300">
-			<Grid Grid.Column="0">
-				<Panel>
-					<ScrollViewer>
+		<Grid ColumnDefinitions="Auto,*,Auto">
+					<ScrollViewer Grid.Column="0" Classes="home-sections"
+								  Classes.magic="{Binding IsMagicButtonStyle}"
+								  VerticalScrollBarVisibility="Hidden"
+								  IsVisible="{Binding IsHomeSectionsVisible}">
 						<StackPanel>
-							<ListBox Classes="card-list">
-								<ListBoxItem>
-									<Border Width="385" Height="240" CornerRadius="12" ClipToBounds="True" Background="{DynamicResource CardBackgroundBrush}">
+							<ListBox Classes="card-list" Classes.on-image="{Binding HasHomeBackground}">
+								<!-- 板块为固定声明的 ListBoxItem；虚拟化面板回收时会直接改写 IsVisible，覆盖可见性绑定。 -->
+								<ListBox.ItemsPanel>
+									<ItemsPanelTemplate>
+										<StackPanel/>
+									</ItemsPanelTemplate>
+								</ListBox.ItemsPanel>
+								<ListBoxItem IsVisible="{Binding IsNewsSectionVisible}">
+									<Border Width="385" Height="240">
+									<Border Classes="home-card-clip">
 										<Panel>
 											<Image asyncImageLoader:ImageLoader.Source="{Binding CurrentNews.ImageUrl}" Stretch="UniformToFill" />
 											<Border>
@@ -115,11 +174,12 @@
 											</Grid>
 										</Panel>
 									</Border>
+									</Border>
 								</ListBoxItem>
 
-								<ListBoxItem>
-									<Border Width="385" MinHeight="120" Background="{DynamicResource CardBackgroundBrush}"
-											CornerRadius="12" ClipToBounds="True">
+								<ListBoxItem IsVisible="{Binding IsTaskCenterSectionVisible}">
+									<Border Width="385" MinHeight="120">
+									<Border Classes="home-card-clip">
 										<Grid ColumnDefinitions="5, *, Auto">
 											<Border Grid.Column="0" Background="{DynamicResource SuccessBrush}"/>
 
@@ -141,12 +201,12 @@
 													CornerRadius="8"/>
 										</Grid>
 									</Border>
+									</Border>
 								</ListBoxItem>
 
-								<ListBoxItem>
-									<Border Width="385" Height="120" Background="{DynamicResource CardBackgroundBrush}"
-											CornerRadius="12" ClipToBounds="True">
-
+								<ListBoxItem IsVisible="{Binding IsPowerPlaySectionVisible}">
+									<Border Width="385" Height="120">
+									<Border Classes="home-card-clip">
 										<Grid ColumnDefinitions="5, *, Auto">
 											<Border Grid.Column="0" Background="{DynamicResource AccentBrush}"/>
 
@@ -168,11 +228,12 @@
 													CornerRadius="8"/>
 										</Grid>
 									</Border>
+									</Border>
 								</ListBoxItem>
 
-								<ListBoxItem>
-									<Border Width="385" MinHeight="160" Background="{DynamicResource CardBackgroundBrush}"
-											CornerRadius="12" ClipToBounds="True">
+								<ListBoxItem IsVisible="{Binding IsImportSectionVisible}">
+									<Border Width="385" MinHeight="160">
+									<Border Classes="home-card-clip">
 										<Grid ColumnDefinitions="5, *">
 											<Border Grid.Column="0" Background="{DynamicResource AccentBrush}"/>
 
@@ -204,24 +265,42 @@
 											</StackPanel>
 										</Grid>
 									</Border>
+									</Border>
 								</ListBoxItem>
 
 							</ListBox>
 						</StackPanel>
 					</ScrollViewer>
-				</Panel>
-			</Grid>
-			<Panel Grid.Column="1" Background="{DynamicResource PaneBackgroundBrush}">
+			<!-- 魔法按钮只启动设置页中的主页默认启动项，不在主页提供选择。 -->
+			<controls:MagicLaunchButton Grid.Column="1" x:Name="MagicLaunchButton"
+										IsVisible="{Binding IsMagicButtonStyle}"
+										Command="{Binding LaunchDefaultCommand}"
+										Classes.on-image="{Binding HasHomeBackground}"
+										HorizontalAlignment="Right"
+										VerticalAlignment="Bottom"
+										Margin="24,24,28,26"
+										ToolTip.Tip="{Binding MagicLaunchDescription}"
+										AutomationProperties.Name="启动主页默认启动项">
+				<!-- 按钮主体只显示启动项名称；类型与地址保留在悬停提示中。 -->
+				<Viewbox Stretch="Uniform" StretchDirection="DownOnly" HorizontalAlignment="Center">
+					<TextBlock Classes="magic-launch-title" Text="{Binding MagicLaunchTitle}"/>
+				</Viewbox>
+			</controls:MagicLaunchButton>
+			<Panel Grid.Column="2" Width="300"
+				   IsVisible="{Binding IsClassicStyle}"
+				   Background="{DynamicResource PaneBackgroundBrush}">
 				<StackPanel VerticalAlignment="Center" HorizontalAlignment="Center" Spacing="6">
 					<Image Source="{Binding GameIcon}" Height="128" Width="128"/>
 
-					<ComboBox ItemsSource="{Binding Items}" 
-							  SelectedItem="{Binding SelectedGameData}" 
-							  PlaceholderText="选择启动实例"
+					<ComboBox x:Name="QuickLaunchComboBox"
+							  ItemsSource="{Binding Items}" 
+							  SelectedItem="{Binding SelectedLaunchItem}" 
+							  PlaceholderText="选择启动项"
 							  Width="128">
 						<ComboBox.ItemTemplate>
-							<DataTemplate x:DataType="lo:GameData">
-								<TextBlock Text="{Binding Name}"/>
+							<DataTemplate x:DataType="vm:IQuicklyLaunchItem">
+								<TextBlock Text="{Binding Name}" TextTrimming="CharacterEllipsis"
+										   ToolTip.Tip="{Binding Description}"/>
 							</DataTemplate>
 						</ComboBox.ItemTemplate>
 					</ComboBox>
@@ -236,4 +315,5 @@
 			</Panel>
 		</Grid>
 	</controls:PageShell>
+	</Panel>
 </UserControl>

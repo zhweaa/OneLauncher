@@ -16,7 +16,13 @@ namespace OneLauncher.Core.Global.ModelDataMangers;
 [JsonSerializable(typeof(ServerEntry))]
 [JsonSerializable(typeof(ModType))]
 [JsonSerializable(typeof(ModEnum))]
+[JsonSerializable(typeof(HomePageStyle))]
 public partial class OneLauncherAppConfigsJsonContext : JsonSerializerContext { }
+public enum HomePageStyle
+{
+    Classic = 0,
+    MagicButton = 1
+}
 public class DefaultConfig
 {
     public JvmArguments MinecraftJvmArguments { get; set; } = JvmArguments.CreateFromMode();
@@ -35,6 +41,8 @@ public class AppSettings
     public string? InstallPath { get; set; }
     public string? DefaultInstanceID { get; set; }
     public Guid? DefaultServerID { get; set; }
+    // 主页默认启动项为服务器收藏时记录其 Id；为 null 时主页使用 DefaultInstanceID 对应的游戏数据。
+    public Guid? HomeDefaultServerID { get; set; }
     // 每天一更新
     public DateTimeOffset LastVersionManifestRefreshTime { get; set; } = DateTimeOffset.UtcNow;
     public int LeftButtonListSpacing { get; set; } = 8;
@@ -46,6 +54,14 @@ public class AppSettings
     public bool IsDownloadPageVisible { get; set; } = true;
     public bool IsModsBrowserPageVisible { get; set; } = true;
     public bool IsAccountPageVisible { get; set; } = true;
+    // 主页样式；板块可见性只在魔法按钮样式下生效，默认样式始终显示全部板块。
+    public HomePageStyle HomePageStyle { get; set; } = HomePageStyle.Classic;
+    public bool IsHomeNewsVisible { get; set; } = true;
+    public bool IsHomeTaskCenterVisible { get; set; } = true;
+    public bool IsHomePowerPlayVisible { get; set; } = true;
+    public bool IsHomeImportVisible { get; set; } = true;
+    // 为 null 时不显示主页背景。
+    public string? HomeBackgroundImagePath { get; set; }
 }
 [JsonUnmappedMemberHandling(JsonUnmappedMemberHandling.Skip)]
 public class AppConfig
