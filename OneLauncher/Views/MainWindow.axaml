@@ -17,6 +17,7 @@
         x:Name="MainWindowLabel">
 	<Window.Resources>
 		<Thickness x:Key="LeftButtonListItemMargin">8</Thickness>
+		<SolidColorBrush x:Key="SidebarActiveForegroundBrush" Color="White"/>
 	</Window.Resources>
 	<SplitView x:Name="SidebarSplitView"
                IsPaneOpen="False"
@@ -38,7 +39,11 @@
 						<ListBox x:Name="SplitListBox" Background="Transparent" SelectionChanged="ListBox_SelectionChanged">
 							<ListBoxItem x:Name="HomeListBoxItem" Tag="Home">
 								<StackPanel Orientation="Horizontal" Spacing="8">
-									<Image Source="/Assets/icos/home.png" Width="32" Height="32"/>
+									<Border Classes="sidebar-icon">
+										<Border.OpacityMask>
+											<ImageBrush Source="/Assets/icos/home.png" Stretch="Uniform"/>
+										</Border.OpacityMask>
+									</Border>
 									<TextBlock x:Name="HomeText"
                                                Text="开始菜单"
                                                VerticalAlignment="Center"
@@ -48,7 +53,11 @@
 							</ListBoxItem>
 							<ListBoxItem x:Name="VersionListBoxItem" Tag="Version">
 								<StackPanel Orientation="Horizontal" Spacing="8">
-									<Image Source="/Assets/icos/version.png" Width="32" Height="32"/>
+									<Border Classes="sidebar-icon">
+										<Border.OpacityMask>
+											<ImageBrush Source="/Assets/icos/version.png" Stretch="Uniform"/>
+										</Border.OpacityMask>
+									</Border>
 									<TextBlock x:Name="VersionText"
                                                Text="版本管理"
                                                VerticalAlignment="Center"
@@ -58,7 +67,11 @@
 							</ListBoxItem>
 							<ListBoxItem x:Name="GameDataListBoxItem" Tag="GameData">
 								<StackPanel Orientation="Horizontal" Spacing="8">
-									<Image Source="/Assets/icos/game.png" Width="32" Height="32"/>
+									<Border Classes="sidebar-icon">
+										<Border.OpacityMask>
+											<ImageBrush Source="/Assets/icos/game.png" Stretch="Uniform"/>
+										</Border.OpacityMask>
+									</Border>
 									<TextBlock x:Name="GameDataText"
 									 Text="游戏数据"
 									 VerticalAlignment="Center"
@@ -68,7 +81,11 @@
 							</ListBoxItem>
 							<ListBoxItem x:Name="ServerListBoxItem" Tag="Server">
 								<StackPanel Orientation="Horizontal" Spacing="8">
-									<Image Source="/Assets/icos/server.png" Width="32" Height="32"/>
+									<Border Classes="sidebar-icon">
+										<Border.OpacityMask>
+											<ImageBrush Source="/Assets/icos/server.png" Stretch="Uniform"/>
+										</Border.OpacityMask>
+									</Border>
 									<TextBlock x:Name="ServerText"
 										 Text="服务器收藏"
 										 VerticalAlignment="Center"
@@ -78,7 +95,11 @@
 							</ListBoxItem>
 							<ListBoxItem x:Name="DownloadListBoxItem" Tag="Download">
 								<StackPanel Orientation="Horizontal" Spacing="8">
-									<Image Source="/Assets/icos/download.png" Width="32" Height="32"/>
+									<Border Classes="sidebar-icon">
+										<Border.OpacityMask>
+											<ImageBrush Source="/Assets/icos/download.png" Stretch="Uniform"/>
+										</Border.OpacityMask>
+									</Border>
 									<TextBlock x:Name="DownloadText"
                                                Text="下载管理"
                                                VerticalAlignment="Center"
@@ -88,7 +109,11 @@
 							</ListBoxItem>
 							<ListBoxItem x:Name="ModsBrowserListBoxItem" Tag="ModsBrowser">
 								<StackPanel Orientation="Horizontal" Spacing="8">
-									<Image Source="/Assets/icos/browser.png" Width="32" Height="32"/>
+									<Border Classes="sidebar-icon">
+										<Border.OpacityMask>
+											<ImageBrush Source="/Assets/icos/browser.png" Stretch="Uniform"/>
+										</Border.OpacityMask>
+									</Border>
 									<TextBlock x:Name="ModsBrowserText"
                                                Text="资源检索"
                                                VerticalAlignment="Center"
@@ -98,7 +123,11 @@
 							</ListBoxItem>
 							<ListBoxItem x:Name="AccountListBoxItem" Tag="Account">
 								<StackPanel Orientation="Horizontal" Spacing="8">
-									<Image Source="/Assets/icos/account.png" Width="32" Height="32"/>
+									<Border Classes="sidebar-icon">
+										<Border.OpacityMask>
+											<ImageBrush Source="/Assets/icos/account.png" Stretch="Uniform"/>
+										</Border.OpacityMask>
+									</Border>
 									<TextBlock x:Name="AccountText"
                                                Text="账户管理"
                                                VerticalAlignment="Center"
@@ -108,7 +137,11 @@
 							</ListBoxItem>
 							<ListBoxItem x:Name="SettingsListBoxItem" Tag="Settings">
 								<StackPanel Orientation="Horizontal" Spacing="8">
-									<Image Source="/Assets/icos/settings1.png" Width="32" Height="32"/>
+									<Border Classes="sidebar-icon">
+										<Border.OpacityMask>
+											<ImageBrush Source="/Assets/icos/settings1.png" Stretch="Uniform"/>
+										</Border.OpacityMask>
+									</Border>
 									<TextBlock x:Name="SettingsText"
                                                Text="设置选项"
                                                VerticalAlignment="Center"
@@ -117,23 +150,36 @@
 								</StackPanel>
 							</ListBoxItem>
 							<ListBox.Styles>
+								<!-- 复用 PNG 的透明轮廓，由主题前景色绘制图标。 -->
+								<Style Selector="Border.sidebar-icon">
+									<Setter Property="Width" Value="32"/>
+									<Setter Property="Height" Value="32"/>
+									<Setter Property="Background" Value="{DynamicResource PrimaryForegroundBrush}"/>
+								</Style>
+								<Style Selector="ListBoxItem:pointerover Border.sidebar-icon, ListBoxItem:pressed Border.sidebar-icon, ListBoxItem:selected Border.sidebar-icon">
+									<Setter Property="Background" Value="{DynamicResource SidebarActiveForegroundBrush}"/>
+								</Style>
 								<Style Selector="ListBox /template/ ContentPresenter">
 									<Setter Property="Background" Value="Transparent"/>
 									<Setter Property="CornerRadius" Value="16"/>
 								</Style>
 								<Style Selector="ListBoxItem:pointerover /template/ ContentPresenter">
+									<Setter Property="Foreground" Value="{DynamicResource SidebarActiveForegroundBrush}"/>
 									<Setter Property="Background" Value="#777777"/>
 									<Setter Property="CornerRadius" Value="16"/>
 								</Style>
 								<Style Selector="ListBoxItem:pressed /template/ ContentPresenter">
+									<Setter Property="Foreground" Value="{DynamicResource SidebarActiveForegroundBrush}"/>
 									<Setter Property="Background" Value="#666666"/>
 									<Setter Property="CornerRadius" Value="16"/>
 								</Style>
 								<Style Selector="ListBoxItem:selected /template/ ContentPresenter">
+									<Setter Property="Foreground" Value="{DynamicResource SidebarActiveForegroundBrush}"/>
 									<Setter Property="Background" Value="#555555"/>
 									<Setter Property="CornerRadius" Value="24"/>
 								</Style>
 								<Style Selector="ListBoxItem /template/ ContentPresenter">
+									<Setter Property="Foreground" Value="{DynamicResource PrimaryForegroundBrush}"/>
 									<Setter Property="Margin" Value="{DynamicResource LeftButtonListItemMargin}"/>
 									<Setter Property="Background" Value="Transparent"/>
 									<Setter Property="CornerRadius" Value="16"/>
